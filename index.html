@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="fi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Leikkausraja — AM Digipaino</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1c1917;--ink2:#57534e;--ink3:#a8a29e;
+  --paper:#fafaf9;--paper2:#f5f5f4;--paper3:#e7e5e4;
+  --cut:#e11d48;--cut-bg:#fff1f2;
+  --blue:#2563eb;--blue-bg:#eff6ff;
+  --green:#16a34a;--green-bg:#f0fdf4;
+  --r:6px;--r-lg:10px;
+}
+html,body{height:100%;overflow:hidden}
+body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);font-size:14px}
+.app{display:grid;grid-template-columns:280px 1fr;grid-template-rows:48px 1fr;height:100vh}
+.topbar{grid-column:1/-1;background:var(--ink);display:flex;align-items:center;padding:0 16px;gap:12px}
+.topbar-logo{font-family:'DM Mono',monospace;font-size:13px;color:#fff;letter-spacing:.08em}
+.topbar-sep{width:1px;height:20px;background:#44403c}
+.topbar-title{font-size:13px;color:#a8a29e}
+.topbar-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.sidebar{background:var(--paper);border-right:1px solid var(--paper3);overflow-y:auto;display:flex;flex-direction:column}
+.main{overflow:hidden;display:flex;flex-direction:column;background:var(--paper2)}
+.s-section{padding:12px 14px;border-bottom:1px solid var(--paper3)}
+.s-section:last-child{border-bottom:none;flex:1}
+.s-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+.upload-zone{border:1.5px dashed var(--paper3);border-radius:var(--r-lg);padding:18px 12px;text-align:center;cursor:pointer;transition:all .2s;color:var(--ink2)}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--blue);background:var(--blue-bg);color:var(--blue)}
+.upload-zone svg{margin:0 auto 6px;display:block}
+.upload-zone .uz-t{font-weight:500;font-size:13px;margin-bottom:2px}
+.upload-zone .uz-s{font-size:11px;color:var(--ink3)}
+.file-info{margin-top:8px;padding:7px 9px;background:var(--paper2);border-radius:var(--r);font-size:12px}
+.file-name{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-meta{color:var(--ink3);margin-top:2px;font-size:11px}
+.page-thumbs{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
+.thumb{border:2px solid transparent;border-radius:4px;overflow:hidden;cursor:pointer;transition:border-color .15s}
+.thumb.active{border-color:var(--blue)}
+.thumb canvas{display:block}
+.obj-list{display:flex;flex-direction:column;gap:4px;margin-bottom:8px}
+.obj-row{display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:var(--r);border:1px solid var(--paper3);cursor:pointer;transition:all .15s}
+.obj-row:hover{border-color:var(--ink3)}
+.obj-row.sel{border-color:var(--blue);background:var(--blue-bg)}
+.obj-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;border:1.5px solid currentColor}
+.obj-name{flex:1;font-size:12px;font-weight:500}
+.obj-shape{font-size:10px;color:var(--ink3);font-family:'DM Mono',monospace}
+.obj-del{opacity:0;font-size:16px;line-height:1;color:var(--ink3);cursor:pointer;padding:0 2px}
+.obj-row:hover .obj-del{opacity:1}
+.obj-del:hover{color:var(--cut)}
+.obj-empty{font-size:12px;color:var(--ink3);text-align:center;padding:12px 0}
+.edit-panel{display:none}
+.edit-panel.vis{display:block}
+.prop-row{margin-bottom:9px}
+.prop-label{font-size:11px;color:var(--ink2);font-weight:500;margin-bottom:4px;display:flex;justify-content:space-between}
+.prop-row input[type=range]{width:100%;accent-color:var(--cut);height:3px}
+.prop-row input[type=color]{width:100%;height:28px;border:1px solid var(--paper3);border-radius:var(--r);padding:2px;cursor:pointer}
+.prop-row input[type=text],.prop-row select{width:100%;padding:5px 8px;border:1px solid var(--paper3);border-radius:var(--r);font-size:12px;font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink)}
+.pval{font-family:'DM Mono',monospace;font-size:11px;color:var(--ink3)}
+.tgl{display:flex;border:1px solid var(--paper3);border-radius:var(--r);overflow:hidden}
+.tgl button{flex:1;padding:5px 4px;font-size:11px;border:none;background:transparent;cursor:pointer;color:var(--ink2);font-family:'DM Sans',sans-serif;transition:background .15s}
+.tgl button.on{background:var(--ink);color:#fff;font-weight:500}
+.nudge-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px}
+.nudge-cell{display:flex;align-items:center;gap:3px;background:var(--paper2);border-radius:var(--r);padding:4px 6px}
+.nudge-cell label{flex:1;font-size:10px;color:var(--ink3);font-family:'DM Mono',monospace}
+.nb{width:20px;height:20px;border:1px solid var(--paper3);border-radius:3px;background:var(--paper);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.nb:hover{background:var(--paper2)}
+.nv{font-size:10px;font-family:'DM Mono',monospace;min-width:22px;text-align:center}
+.toolbar{padding:8px 12px;background:var(--paper);border-bottom:1px solid var(--paper3);display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0}
+.tool-group{display:flex;gap:2px;border:1px solid var(--paper3);border-radius:var(--r);padding:2px}
+.tbtn{padding:5px 9px;border:none;background:transparent;border-radius:4px;cursor:pointer;color:var(--ink2);font-size:12px;display:flex;align-items:center;gap:5px;white-space:nowrap;transition:all .15s;font-family:'DM Sans',sans-serif;font-weight:500}
+.tbtn:hover{background:var(--paper2);color:var(--ink)}
+.tbtn.active{background:var(--ink);color:#fff}
+.tsep{width:1px;height:20px;background:var(--paper3)}
+.page-nav{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2);font-family:'DM Mono',monospace}
+.page-nav button{width:24px;height:24px;border:1px solid var(--paper3);border-radius:var(--r);background:var(--paper);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.canvas-area{flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:24px}
+.canvas-wrap{position:relative;box-shadow:0 4px 16px rgba(0,0,0,.10);display:inline-block}
+#pdfCanvas{display:block}
+#overlayCanvas{position:absolute;top:0;left:0;cursor:default}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;font-size:12px;font-weight:500;border-radius:var(--r);cursor:pointer;border:1px solid var(--paper3);background:var(--paper);color:var(--ink);transition:all .15s;font-family:'DM Sans',sans-serif;white-space:nowrap}
+.btn:hover{background:var(--paper2)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn.primary:hover{opacity:.85}
+.btn.sm{padding:4px 8px;font-size:11px}
+.brow{display:flex;gap:5px;flex-wrap:wrap}
+.export-sel{padding:5px 8px;border:1px solid var(--paper3);border-radius:var(--r);font-size:12px;background:var(--paper);color:var(--ink);font-family:'DM Sans',sans-serif}
+.sbar{font-size:11px;font-family:'DM Mono',monospace;padding:3px 8px;border-radius:var(--r);color:var(--ink2);background:var(--paper2)}
+.sbar.ok{background:var(--green-bg);color:var(--green)}
+.sbar.err{background:var(--cut-bg);color:var(--cut)}
+.sbar.info{background:var(--blue-bg);color:var(--blue)}
+.ai-box{background:var(--blue-bg);border:1px solid #bfdbfe;border-radius:var(--r);padding:8px 10px;font-size:12px;line-height:1.6;margin-top:8px}
+.conf{display:inline-block;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600;margin-left:4px;font-family:'DM Mono',monospace}
+.conf.hi{background:#d1fae5;color:#065f46}.conf.med{background:#fef3c7;color:#92400e}.conf.lo{background:#fee2e2;color:#991b1b}
+.spin{width:12px;height:12px;border:2px solid var(--paper3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--paper3);border-radius:2px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="topbar">
+  <span class="topbar-logo">AM DIGIPAINO</span>
+  <div class="topbar-sep"></div>
+  <span class="topbar-title">Leikkausraja-työkalu</span>
+  <div class="topbar-right">
+    <span id="sbar" class="sbar">Lataa PDF aloittaaksesi</span>
+  </div>
+</div>
+
+<div class="sidebar">
+  <div class="s-section">
+    <div class="s-label">Aineisto</div>
+    <div class="upload-zone" id="uz" onclick="document.getElementById('pdfIn').click()">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+      <div class="uz-t">Lataa PDF</div>
+      <div class="uz-s">Raahaa tai klikkaa</div>
+    </div>
+    <input type="file" id="pdfIn" accept=".pdf" style="display:none">
+    <div id="fileInfo" style="display:none">
+      <div class="file-info"><div class="file-name" id="fName"></div><div class="file-meta" id="fMeta"></div></div>
+      <div class="page-thumbs" id="thumbs"></div>
+    </div>
+  </div>
+
+  <div class="s-section">
+    <div class="s-label">Kohteet</div>
+    <div class="brow" style="margin-bottom:8px">
+      <button class="btn sm" onclick="addObj()">+ Lisää</button>
+      <button class="btn sm primary" id="aiBtn" onclick="runAI()" disabled>
+        <div class="spin" id="aiSpin"></div>✦ Tunnista AI
+      </button>
+    </div>
+    <div class="obj-list" id="objList"><div class="obj-empty">Ei kohteita</div></div>
+    <div id="aiRes"></div>
+  </div>
+
+  <div class="s-section">
+    <div class="s-label" id="editLbl">Muokkaa</div>
+    <div class="edit-panel" id="editPanel">
+      <div class="prop-row">
+        <span class="prop-label">Muoto</span>
+        <select id="eShape" onchange="updObj()"><option value="rect">Suorakulmio</option><option value="rounded">Pyöristetty</option><option value="circle">Ellipsi</option></select>
+      </div>
+      <div class="prop-row" id="eRadRow" style="display:none">
+        <span class="prop-label">Pyöristys <span class="pval" id="eRadVal">0</span></span>
+        <input type="range" id="eRad" min="0" max="300" value="0" oninput="updObj()">
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Spot-värin nimi</span>
+        <input type="text" id="eSpot" value="Die Cut" oninput="updObj()">
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Väri (esikatselu)</span>
+        <input type="color" id="eColor" value="#e11d48" oninput="updObj()">
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Paksuus <span class="pval" id="eWVal">0.5pt</span></span>
+        <input type="range" id="eW" min="0.25" max="5" step="0.25" value="0.5" oninput="updObj()">
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Viivalaji</span>
+        <div class="tgl">
+          <button id="dS" class="on" onclick="setDash('solid')">Yhtenäinen</button>
+          <button id="dD" onclick="setDash('dashed')">Katko</button>
+          <button id="dDt" onclick="setDash('dotted')">Piste</button>
+        </div>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Marginaali <span class="pval" id="eMVal">0pt</span></span>
+        <input type="range" id="eM" min="-40" max="60" step="1" value="0" oninput="updObj()">
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Sijainti</span>
+        <div class="tgl">
+          <button id="pI" onclick="setPos('inside')">Sisällä</button>
+          <button id="pC" class="on" onclick="setPos('center')">Reunalla</button>
+          <button id="pO" onclick="setPos('outside')">Ulkona</button>
+        </div>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Hienosäätö (pt)</span>
+        <div class="nudge-grid">
+          <div class="nudge-cell"><label>X</label><button class="nb" onclick="nudge('x',-1)">−</button><span class="nv" id="nX">0</span><button class="nb" onclick="nudge('x',1)">+</button></div>
+          <div class="nudge-cell"><label>Y</label><button class="nb" onclick="nudge('y',-1)">−</button><span class="nv" id="nY">0</span><button class="nb" onclick="nudge('y',1)">+</button></div>
+          <div class="nudge-cell"><label>W</label><button class="nb" onclick="nudge('w',-1)">−</button><span class="nv" id="nW">0</span><button class="nb" onclick="nudge('w',1)">+</button></div>
+          <div class="nudge-cell"><label>H</label><button class="nb" onclick="nudge('h',-1)">−</button><span class="nv" id="nH">0</span><button class="nb" onclick="nudge('h',1)">+</button></div>
+        </div>
+      </div>
+      <div class="prop-row">
+        <span class="prop-label">Rekisteröintimerkit</span>
+        <div class="tgl"><button id="rOff" class="on" onclick="setReg(false)">Ei</button><button id="rOn" onclick="setReg(true)">Kyllä</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+  <div class="toolbar">
+    <div class="page-nav">
+      <button onclick="chPage(-1)">‹</button>
+      <span id="pageLbl">– / –</span>
+      <button onclick="chPage(1)">›</button>
+    </div>
+    <div class="tsep"></div>
+    <div class="tool-group">
+      <button class="tbtn active" id="toolSelect" onclick="setTool('select')" title="Valitse (V)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3l14 9-7 1-3 7z"/></svg>Valitse
+      </button>
+      <button class="tbtn" id="toolPen" onclick="setTool('pen')" title="Vapaa piirto (P)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><circle cx="11" cy="11" r="2"/></svg>Pen
+      </button>
+      <button class="tbtn" id="toolRect" onclick="setTool('rect')" title="Suorakulmio (R)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Rect
+      </button>
+      <button class="tbtn" id="toolCircle" onclick="setTool('circle')" title="Ellipsi (E)">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Ellipsi
+      </button>
+    </div>
+    <div class="tsep"></div>
+    <select class="export-sel" id="expMode"><option value="combo">Yhdistetty PDF</option><option value="split">Erilliset PDF:t</option><option value="cutonly">Vain leikkaus-PDF</option></select>
+    <button class="btn primary" onclick="exportPDF()" id="expBtn" disabled>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Vie PDF
+    </button>
+    <button class="btn" onclick="expScript('ai')" id="aiScr" disabled>Ai .jsx</button>
+    <button class="btn" onclick="expScript('id')" id="idScr" disabled>Id .jsx</button>
+  </div>
+
+  <div class="canvas-area">
+    <div class="canvas-wrap" id="cWrap">
+      <canvas id="pdfCanvas"></canvas>
+      <canvas id="overlayCanvas"></canvas>
+    </div>
+  </div>
+</div>
+
+</div>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+// State
+let pdfDoc=null,pdfBytes=null,curPage=1,totalPages=0,RS=1.8;
+let pageData={},pageVps={};
+let selId=null,objCtr=0,tool='select';
+let dragSt=null,penPts=[],penPrev=null;
+let renderTask=null;
+
+const pdfCan=document.getElementById('pdfCanvas');
+const ovrCan=document.getElementById('overlayCanvas');
+const pdfCtx=pdfCan.getContext('2d');
+const ovrCtx=ovrCan.getContext('2d');
+
+// Helpers
+function getObjs(){return pageData[curPage]||(pageData[curPage]=[])}
+function getSel(){return selId?getObjs().find(o=>o.id===selId)||null:null}
+function ss(msg,t=''){const e=document.getElementById('sbar');e.textContent=msg;e.className='sbar'+(t?' '+t:'')}
+
+// Upload
+const uz=document.getElementById('uz');
+uz.addEventListener('dragover',e=>{e.preventDefault();uz.classList.add('drag')});
+uz.addEventListener('dragleave',()=>uz.classList.remove('drag'));
+uz.addEventListener('drop',e=>{e.preventDefault();uz.classList.remove('drag');if(e.dataTransfer.files[0])loadPDF(e.dataTransfer.files[0])});
+document.getElementById('pdfIn').addEventListener('change',function(){if(this.files[0])loadPDF(this.files[0])});
+
+async function loadPDF(file){
+  ss('Ladataan...','info');
+  const buf=await file.arrayBuffer();
+  pdfBytes=buf;
+  pdfDoc=await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
+  totalPages=pdfDoc.numPages;curPage=1;pageData={};
+  document.getElementById('fName').textContent=file.name;
+  document.getElementById('fMeta').textContent=totalPages+' sivu'+(totalPages!==1?'a':'');
+  document.getElementById('fileInfo').style.display='block';
+  ['aiBtn','expBtn','aiScr','idScr'].forEach(id=>document.getElementById(id).disabled=false);
+  await buildThumbs();
+  await renderPage(1);
+  ss('Valmis','ok');
+}
+
+async function buildThumbs(){
+  const row=document.getElementById('thumbs');row.innerHTML='';
+  for(let i=1;i<=Math.min(totalPages,16);i++){
+    const pg=await pdfDoc.getPage(i);
+    const vp=pg.getViewport({scale:.1});
+    const tc=document.createElement('canvas');
+    tc.width=vp.width;tc.height=vp.height;
+    await pg.render({canvasContext:tc.getContext('2d'),viewport:vp}).promise;
+    const w=document.createElement('div');
+    w.className='thumb'+(i===1?' active':'');w.dataset.p=i;
+    w.appendChild(tc);
+    w.onclick=()=>{curPage=i;renderPage(i);updThumbs()};
+    row.appendChild(w);
+  }
+}
+function updThumbs(){document.querySelectorAll('.thumb').forEach(t=>t.classList.toggle('active',parseInt(t.dataset.p)===curPage))}
+
+async function renderPage(n){
+  if(!pdfDoc)return;
+  if(renderTask){try{renderTask.cancel()}catch(e){}}
+  curPage=n;
+  document.getElementById('pageLbl').textContent=n+' / '+totalPages;
+  const pg=await pdfDoc.getPage(n);
+  const vp=pg.getViewport({scale:RS});
+  pageVps[n]=vp;
+  pdfCan.width=vp.width;pdfCan.height=vp.height;
+  ovrCan.width=vp.width;ovrCan.height=vp.height;
+  renderTask=pg.render({canvasContext:pdfCtx,viewport:vp});
+  await renderTask.promise;
+  redraw();updObjList();
+}
+function chPage(d){const n=curPage+d;if(n<1||n>totalPages)return;renderPage(n);updThumbs()}
+
+// Objects
+function mkObj(p={}){
+  const vp=pageVps[curPage]||{width:400,height:400};
+  const id=++objCtr;
+  return{id,name:'Kohde '+id,type:p.type||'rect',shape:p.shape||'rect',
+    x:p.x!==undefined?p.x:vp.width*.1,y:p.y!==undefined?p.y:vp.height*.1,
+    w:p.w!==undefined?p.w:vp.width*.8,h:p.h!==undefined?p.h:vp.height*.8,
+    points:p.points||null,closed:p.closed||false,
+    radius:p.radius||0,color:p.color||'#e11d48',lineWidth:p.lineWidth||0.5,
+    spotName:p.spotName||'Die Cut',dash:p.dash||'solid',
+    margin:p.margin||0,pos:p.pos||'center',regMarks:false,
+    nx:0,ny:0,nw:0,nh:0};
+}
+function addObj(p={}){
+  if(!pdfDoc)return;
+  const o=mkObj(p);getObjs().push(o);selObj(o.id);updObjList();redraw();return o;
+}
+function selObj(id){
+  selId=id;
+  const o=getSel();
+  const panel=document.getElementById('editPanel');
+  panel.className='edit-panel'+(o?' vis':'');
+  if(!o){updObjList();return}
+  document.getElementById('editLbl').textContent=o.name;
+  document.getElementById('eShape').value=o.shape;
+  document.getElementById('eRad').value=o.radius;
+  document.getElementById('eRadVal').textContent=o.radius;
+  document.getElementById('eRadRow').style.display=o.shape==='rounded'?'':'none';
+  document.getElementById('eColor').value=o.color;
+  document.getElementById('eW').value=o.lineWidth;
+  document.getElementById('eWVal').textContent=o.lineWidth+'pt';
+  document.getElementById('eM').value=o.margin;
+  document.getElementById('eMVal').textContent=o.margin+'pt';
+  document.getElementById('eSpot').value=o.spotName;
+  setDash(o.dash,false);setPos(o.pos,false);setReg(o.regMarks,false);
+  ['x','y','w','h'].forEach(k=>document.getElementById('n'+k.toUpperCase()).textContent=Math.round(o['n'+k]||0));
+  updObjList();
+}
+function updObj(){
+  const o=getSel();if(!o)return;
+  o.shape=document.getElementById('eShape').value;
+  o.radius=parseInt(document.getElementById('eRad').value);
+  document.getElementById('eRadVal').textContent=o.radius;
+  document.getElementById('eRadRow').style.display=o.shape==='rounded'?'':'none';
+  o.color=document.getElementById('eColor').value;
+  o.lineWidth=parseFloat(document.getElementById('eW').value);
+  document.getElementById('eWVal').textContent=o.lineWidth+'pt';
+  o.margin=parseInt(document.getElementById('eM').value);
+  document.getElementById('eMVal').textContent=o.margin+'pt';
+  o.spotName=document.getElementById('eSpot').value;
+  redraw();
+}
+function setDash(m,upd=true){
+  ['S','D','Dt'].forEach(d=>document.getElementById('d'+d).classList.remove('on'));
+  const map={'solid':'S','dashed':'D','dotted':'Dt'};
+  document.getElementById('d'+map[m])?.classList.add('on');
+  if(upd){const o=getSel();if(o){o.dash=m;redraw();}}
+}
+function setPos(m,upd=true){
+  ['I','C','O'].forEach(d=>document.getElementById('p'+d).classList.remove('on'));
+  const map={'inside':'I','center':'C','outside':'O'};
+  document.getElementById('p'+map[m])?.classList.add('on');
+  if(upd){const o=getSel();if(o){o.pos=m;redraw();}}
+}
+function setReg(v,upd=true){
+  document.getElementById('rOff').classList.toggle('on',!v);
+  document.getElementById('rOn').classList.toggle('on',v);
+  if(upd){const o=getSel();if(o){o.regMarks=v;redraw();}}
+}
+function nudge(ax,val){
+  const o=getSel();if(!o)return;
+  o['n'+ax]=(o['n'+ax]||0)+val;
+  document.getElementById('n'+ax.toUpperCase()).textContent=Math.round(o['n'+ax]);
+  redraw();
+}
+function delObj(id){
+  const obs=getObjs();const i=obs.findIndex(o=>o.id===id);
+  if(i>=0)obs.splice(i,1);
+  if(selId===id){selId=null;document.getElementById('editPanel').className='edit-panel';}
+  updObjList();redraw();
+}
+function updObjList(){
+  const list=document.getElementById('objList');
+  const obs=getObjs();
+  if(!obs.length){list.innerHTML='<div class="obj-empty">Ei kohteita</div>';return}
+  list.innerHTML=obs.map(o=>`<div class="obj-row${o.id===selId?' sel':''}" onclick="selObj(${o.id})"><div class="obj-dot" style="color:${o.color}"></div><span class="obj-name">${o.name}</span><span class="obj-shape">${o.points?'pen':o.shape}</span><span class="obj-del" onclick="event.stopPropagation();delObj(${o.id})">×</span></div>`).join('');
+}
+
+// Cut rect
+function getCR(o){
+  const off=o.pos==='inside'?o.margin:o.pos==='outside'?-o.margin:o.margin/2;
+  return{x:o.x+off+(o.nx||0),y:o.y+off+(o.ny||0),w:o.w-off*2+(o.nw||0),h:o.h-off*2+(o.nh||0)};
+}
+
+// Drawing
+function applyDash(ctx,d){
+  if(d==='dashed')ctx.setLineDash([8,5]);
+  else if(d==='dotted')ctx.setLineDash([2,4]);
+  else ctx.setLineDash([]);
+}
+function getHandles(x,y,w,h){
+  const mx=x+w/2,my=y+h/2;
+  return[{x,y,n:'nw'},{x:mx,y,n:'n'},{x:x+w,y,n:'ne'},{x:x+w,y:my,n:'e'},
+    {x:x+w,y:y+h,n:'se'},{x:mx,y:y+h,n:'s'},{x,y:y+h,n:'sw'},{x,y:my,n:'w'}];
+}
+function drawObj(ctx,o,sel){
+  if(o.points&&o.points.length>1){
+    ctx.strokeStyle=o.color;ctx.lineWidth=o.lineWidth*RS;applyDash(ctx,o.dash);
+    ctx.beginPath();ctx.moveTo(o.points[0].x,o.points[0].y);
+    for(let i=1;i<o.points.length;i++)ctx.lineTo(o.points[i].x,o.points[i].y);
+    if(o.closed)ctx.closePath();ctx.stroke();
+    if(sel){
+      ctx.setLineDash([]);
+      o.points.forEach((p,i)=>{
+        ctx.fillStyle=i===0?o.color:'#fff';ctx.strokeStyle=o.color;ctx.lineWidth=1.5;
+        ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();ctx.stroke();
+      });
+    }
+    return;
+  }
+  const{x,y,w,h}=getCR(o);
+  if(sel){
+    ctx.strokeStyle='rgba(37,99,235,.3)';ctx.lineWidth=1;ctx.setLineDash([4,3]);
+    ctx.strokeRect(x-6,y-6,w+12,h+12);ctx.setLineDash([]);
+    getHandles(x,y,w,h).forEach(hh=>{
+      ctx.fillStyle='#fff';ctx.strokeStyle=o.color;ctx.lineWidth=1.5;ctx.setLineDash([]);
+      ctx.beginPath();ctx.rect(hh.x-4,hh.y-4,8,8);ctx.fill();ctx.stroke();
+    });
+  }
+  ctx.strokeStyle=o.color;ctx.lineWidth=o.lineWidth*RS;applyDash(ctx,o.dash);
+  ctx.beginPath();
+  if(o.shape==='circle'){ctx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);}
+  else if(o.shape==='rounded'){
+    const r=Math.min(o.radius,w/2,h/2);
+    ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);
+    ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);
+    ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);
+    ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();
+  } else {ctx.rect(x,y,w,h);}
+  ctx.stroke();
+  if(o.regMarks){
+    ctx.setLineDash([]);const s=10*RS;
+    [[x,y],[x+w,y],[x+w,y+h],[x,y+h]].forEach(([cx,cy])=>{
+      ctx.beginPath();ctx.moveTo(cx-s,cy);ctx.lineTo(cx+s,cy);
+      ctx.moveTo(cx,cy-s);ctx.lineTo(cx,cy+s);
+      ctx.arc(cx,cy,s*.4,0,Math.PI*2);ctx.stroke();
+    });
+  }
+}
+function redraw(){
+  ovrCtx.clearRect(0,0,ovrCan.width,ovrCan.height);
+  getObjs().forEach(o=>drawObj(ovrCtx,o,o.id===selId));
+  if(penPts.length>0){
+    ovrCtx.strokeStyle='#e11d48';ovrCtx.lineWidth=1.5;ovrCtx.setLineDash([4,3]);
+    ovrCtx.beginPath();ovrCtx.moveTo(penPts[0].x,penPts[0].y);
+    for(let i=1;i<penPts.length;i++)ovrCtx.lineTo(penPts[i].x,penPts[i].y);
+    if(penPrev)ovrCtx.lineTo(penPrev.x,penPrev.y);
+    ovrCtx.stroke();ovrCtx.setLineDash([]);
+    penPts.forEach((p,i)=>{
+      ovrCtx.fillStyle=i===0?'#e11d48':'#fff';ovrCtx.strokeStyle='#e11d48';ovrCtx.lineWidth=1.5;
+      ovrCtx.beginPath();ovrCtx.arc(p.x,p.y,4,0,Math.PI*2);ovrCtx.fill();ovrCtx.stroke();
+    });
+  }
+  if(dragSt&&(dragSt.type==='dRect'||dragSt.type==='dCirc')){
+    const{sx,sy,cx,cy}=dragSt;
+    const x=Math.min(sx,cx),y=Math.min(sy,cy),w=Math.abs(cx-sx),h=Math.abs(cy-sy);
+    ovrCtx.strokeStyle='#e11d48';ovrCtx.lineWidth=1.5;ovrCtx.setLineDash([4,3]);
+    ovrCtx.beginPath();
+    if(dragSt.type==='dCirc')ovrCtx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);
+    else ovrCtx.rect(x,y,w,h);
+    ovrCtx.stroke();ovrCtx.setLineDash([]);
+  }
+}
+
+// Tool
+function setTool(t){
+  tool=t;penPts=[];penPrev=null;
+  ['Select','Pen','Rect','Circle'].forEach(n=>document.getElementById('tool'+n).classList.toggle('active',n.toLowerCase()===t));
+  ovrCan.style.cursor=t==='select'?'default':'crosshair';
+  redraw();
+}
+
+// Keyboard
+document.addEventListener('keydown',e=>{
+  const tag=e.target.tagName;
+  if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA')return;
+  if(e.key==='v'||e.key==='V')setTool('select');
+  if(e.key==='p'||e.key==='P')setTool('pen');
+  if(e.key==='r'||e.key==='R')setTool('rect');
+  if(e.key==='e'||e.key==='E')setTool('circle');
+  if(e.key==='Escape'){penPts=[];penPrev=null;redraw();}
+  if((e.key==='Delete'||e.key==='Backspace')&&selId)delObj(selId);
+});
+
+// Mouse
+function cXY(e){
+  const r=ovrCan.getBoundingClientRect();
+  return{x:(e.clientX-r.left)*(ovrCan.width/r.width),y:(e.clientY-r.top)*(ovrCan.height/r.height)};
+}
+function hitHandle(o,mx,my){
+  const{x,y,w,h}=getCR(o);
+  for(const hh of getHandles(x,y,w,h)){if(Math.abs(mx-hh.x)<7&&Math.abs(my-hh.y)<7)return hh.n;}
+  return null;
+}
+function hitObj(mx,my){
+  const obs=getObjs();
+  for(let i=obs.length-1;i>=0;i--){
+    const o=obs[i];
+    if(o.points){
+      for(let j=1;j<o.points.length;j++){
+        const p1=o.points[j-1],p2=o.points[j];
+        if(distSeg(mx,my,p1.x,p1.y,p2.x,p2.y)<8)return o;
+      }
+      continue;
+    }
+    const{x,y,w,h}=getCR(o);
+    if(mx>=x-4&&mx<=x+w+4&&my>=y-4&&my<=y+h+4)return o;
+  }
+  return null;
+}
+function distSeg(px,py,ax,ay,bx,by){
+  const dx=bx-ax,dy=by-ay;
+  if(!dx&&!dy)return Math.hypot(px-ax,py-ay);
+  const t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/(dx*dx+dy*dy)));
+  return Math.hypot(px-(ax+t*dx),py-(ay+t*dy));
+}
+function cursorForHandle(n){
+  if(n==='n'||n==='s')return 'n-resize';
+  if(n==='e'||n==='w')return 'e-resize';
+  if(n==='nw'||n==='se')return 'nw-resize';
+  return 'ne-resize';
+}
+
+ovrCan.addEventListener('mousemove',e=>{
+  const{x,y}=cXY(e);
+  if(tool==='pen'&&penPts.length>0){penPrev={x,y};redraw();return;}
+  if(dragSt){
+    const ds=dragSt;
+    if(ds.type==='move'){
+      const o=getObjs().find(o=>o.id===ds.id);
+      if(o){o.x=ds.ox+(x-ds.sx);o.y=ds.oy+(y-ds.sy);}
+      redraw();
+    } else if(ds.type==='resize'){
+      const o=getObjs().find(o=>o.id===ds.id);if(!o)return;
+      const dx=x-ds.sx,dy=y-ds.sy;
+      let nx=ds.ox,ny=ds.oy,nw=ds.ow,nh=ds.oh;
+      if(ds.h.includes('e'))nw=Math.max(10,ds.ow+dx);
+      if(ds.h.includes('s'))nh=Math.max(10,ds.oh+dy);
+      if(ds.h.includes('w')){nx=ds.ox+dx;nw=Math.max(10,ds.ow-dx);}
+      if(ds.h.includes('n')){ny=ds.oy+dy;nh=Math.max(10,ds.oh-dy);}
+      o.x=nx;o.y=ny;o.w=nw;o.h=nh;redraw();
+    } else if(ds.type==='dRect'||ds.type==='dCirc'){
+      ds.cx=x;ds.cy=y;redraw();
+    }
+    return;
+  }
+  if(tool==='select'){
+    const o=getSel();
+    if(o&&!o.points){const hh=hitHandle(o,x,y);if(hh){ovrCan.style.cursor=cursorForHandle(hh);return;}}
+    ovrCan.style.cursor=hitObj(x,y)?'move':'default';
+  }
+});
+
+ovrCan.addEventListener('mousedown',e=>{
+  const{x,y}=cXY(e);
+  if(tool==='pen'){
+    if(penPts.length>2&&Math.hypot(x-penPts[0].x,y-penPts[0].y)<10){
+      addObj({type:'pen',shape:'pen',points:[...penPts],closed:true,x:0,y:0,w:0,h:0});
+      penPts=[];penPrev=null;redraw();return;
+    }
+    penPts.push({x,y});redraw();return;
+  }
+  if(tool==='rect'||tool==='circle'){dragSt={type:tool==='rect'?'dRect':'dCirc',sx:x,sy:y,cx:x,cy:y};return;}
+  const o=getSel();
+  if(o&&!o.points){
+    const hh=hitHandle(o,x,y);
+    if(hh){dragSt={type:'resize',id:o.id,h:hh,sx:x,sy:y,ox:o.x,oy:o.y,ow:o.w,oh:o.h};return;}
+  }
+  const hit=hitObj(x,y);
+  if(hit){selObj(hit.id);if(!hit.points)dragSt={type:'move',id:hit.id,sx:x,sy:y,ox:hit.x,oy:hit.y};}
+  else{selId=null;document.getElementById('editPanel').className='edit-panel';updObjList();redraw();}
+});
+
+ovrCan.addEventListener('mouseup',e=>{
+  const{x,y}=cXY(e);
+  if(dragSt&&(dragSt.type==='dRect'||dragSt.type==='dCirc')){
+    const{sx,sy}=dragSt;
+    const rx=Math.min(sx,x),ry=Math.min(sy,y),rw=Math.abs(x-sx),rh=Math.abs(y-sy);
+    if(rw>5&&rh>5)addObj({shape:dragSt.type==='dCirc'?'circle':'rect',x:rx,y:ry,w:rw,h:rh});
+    dragSt=null;redraw();return;
+  }
+  dragSt=null;
+});
+
+ovrCan.addEventListener('dblclick',e=>{
+  if(tool==='pen'&&penPts.length>=2){
+    addObj({type:'pen',shape:'pen',points:[...penPts],closed:false,x:0,y:0,w:0,h:0});
+    penPts=[];penPrev=null;redraw();
+  }
+});
+
+// AI
+async function runAI(){
+  if(!pdfDoc)return;
+  const btn=document.getElementById('aiBtn'),spin=document.getElementById('aiSpin');
+  btn.disabled=true;spin.style.display='inline-block';
+  ss('AI analysoi...','info');
+  const pg=await pdfDoc.getPage(curPage);
+  const vp=pg.getViewport({scale:2.5});
+  const tc=document.createElement('canvas');tc.width=vp.width;tc.height=vp.height;
+  await pg.render({canvasContext:tc.getContext('2d'),viewport:vp}).promise;
+  const b64=tc.toDataURL('image/jpeg',.92).split(',')[1];
+  const W=vp.width,H=vp.height;
+  const prompt=`Olet painotuotannon asiantuntija. Analysoi tämä painoaineisto leikkausrajojen lisäämistä varten. Kuvan koko: ${W}x${H}px.
+
+1. Tunnista layout: "grid" (useita samanlaisia), "single" (yksi kohde) tai "freeform"
+2. Jos grid: laske rivit ja sarakkeet tarkasti
+3. Mittaa koko sisältöalueen reunat pikseleinä
+4. Tunnista muoto: "rect", "rounded" tai "circle"
+5. Onko olemassaoleva leikkausraja?
+
+Vastaa VAIN JSON:
+{"layoutType":"grid","grid":{"rows":2,"cols":4},"contentArea":{"xPx":30,"yPx":30,"wPx":${W-60},"hPx":${H-60}},"gutter":{"x":0,"y":0},"shape":"rect","radius":0,"hasExistingCutLine":false,"existingLineColor":null,"spotName":"Die Cut","confidence":"high","summary":"kuvaus suomeksi"}`;
+  try{
+    const resp=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,
+        messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},{type:'text',text:prompt}]}]})});
+    const data=await resp.json();
+    console.log('API raw:', JSON.stringify(data).slice(0,300));
+    const cnt = data.content || [];
+    let txt = Array.isArray(cnt) ? cnt.filter(b=>b.type==='text').map(b=>b.text).join('') : '';
+    if(!txt && data.error) throw new Error('API virhe: '+JSON.stringify(data.error));
+    if(!txt) throw new Error('Tyhjä vastaus — tarkista API-avain Cloudflare-asetuksista (Settings > Variables and Secrets)');
+    const p=JSON.parse(txt.replace(/```json|```/g,'').trim());
+    const dvp=pageVps[curPage];const sr=dvp?dvp.width/W:1;
+    let added=[];
+    if(p.layoutType==='grid'&&p.grid&&p.contentArea){
+      const{rows,cols}=p.grid;const{xPx,yPx,wPx,hPx}=p.contentArea;
+      const gx=p.gutter?.x||0,gy=p.gutter?.y||0;
+      const cw=(wPx-gx*(cols-1))/cols,ch=(hPx-gy*(rows-1))/rows;
+      for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)
+        added.push(addObj({name:`Tarra ${r+1}-${c+1}`,shape:p.shape||'rect',
+          x:(xPx+c*(cw+gx))*sr,y:(yPx+r*(ch+gy))*sr,w:cw*sr,h:ch*sr,
+          radius:p.radius||0,spotName:p.spotName||'Die Cut'}));
+    } else if(p.contentArea){
+      const{xPx,yPx,wPx,hPx}=p.contentArea;
+      added.push(addObj({name:'Kohde 1',shape:p.shape||'rect',x:xPx*sr,y:yPx*sr,w:wPx*sr,h:hPx*sr,radius:p.radius||0,spotName:p.spotName||'Die Cut'}));
+    }
+    const cc=p.confidence==='high'?'hi':p.confidence==='medium'?'med':'lo';
+    const cl=p.confidence==='high'?'Korkea':p.confidence==='medium'?'Kohtalainen':'Matala';
+    const gl=p.layoutType==='grid'&&p.grid?` — ${p.grid.rows}×${p.grid.cols} grid`:'';
+    document.getElementById('aiRes').innerHTML=`<div class="ai-box">${added.length} kohde${added.length!==1?'tta':''}${gl} <span class="conf ${cc}">${cl}</span><br>${p.summary}${p.hasExistingCutLine?`<br><em>Olemassaoleva: ${p.existingLineColor}</em>`:''}</div>`;
+    ss(`Tunnistettu ${added.length} kohdetta`+(p.layoutType==='grid'&&p.grid?` (${p.grid.rows}×${p.grid.cols})`:''),'ok');
+  }catch(e){console.error(e);ss('Tunnistus epäonnistui: '+e.message,'err');}
+  btn.disabled=false;spin.style.display='none';
+}
+
+// PDF Export
+function buildOps(o,pW,pH,vp){
+  const sx=pW/(vp.width/RS),sy=pH/(vp.height/RS);
+  if(o.points&&o.points.length>1){
+    const pts=o.points.map(p=>({x:(p.x/RS)*sx,y:pH-(p.y/RS)*sy*(pH/(vp.height/RS))}));
+    let d=`${pts[0].x} ${pts[0].y} m`;
+    for(let i=1;i<pts.length;i++)d+=` ${pts[i].x} ${pts[i].y} l`;
+    if(o.closed)d+=' h';
+    const dash=o.dash==='dashed'?'[6 4] 0 d ':o.dash==='dotted'?'[2 3] 0 d ':'';
+    return `q 1 0 1 RG [] 0 d ${o.lineWidth} w ${dash}${d} S Q`;
+  }
+  const{x,y,w,h}=getCR(o);
+  const rx=(x/RS)*sx,ry2=(y/RS)*sy,rw=(w/RS)*sx,rh=(h/RS)*sy;
+  const pdfY=pH-ry2-rh;
+  let path='';
+  if(o.shape==='circle'){
+    const cx=rx+rw/2,cy=pdfY+rh/2,a=rw/2,b=rh/2,k=.5523;
+    path=`${cx} ${cy+b} m ${cx+a*k} ${cy+b} ${cx+a} ${cy+b*k} ${cx+a} ${cy} c ${cx+a} ${cy-b*k} ${cx+a*k} ${cy-b} ${cx} ${cy-b} c ${cx-a*k} ${cy-b} ${cx-a} ${cy-b*k} ${cx-a} ${cy} c ${cx-a} ${cy+b*k} ${cx-a*k} ${cy+b} ${cx} ${cy+b} c`;
+  } else if(o.shape==='rounded'){
+    const r=Math.min(o.radius*sx,rw/2,rh/2);
+    const x0=rx,y0=pdfY,x1=rx+rw,y1=pdfY+rh;
+    path=`${x0+r} ${y0} m ${x1-r} ${y0} l ${x1} ${y0} ${x1} ${y0+r} v ${x1} ${y1-r} l ${x1} ${y1} ${x1-r} ${y1} v ${x0+r} ${y1} l ${x0} ${y1} ${x0} ${y1-r} v ${x0} ${y0+r} l ${x0} ${y0} ${x0+r} ${y0} v`;
+  } else {
+    path=`${rx} ${pdfY} m ${rx+rw} ${pdfY} l ${rx+rw} ${pdfY+rh} l ${rx} ${pdfY+rh} l h`;
+  }
+  const dash=o.dash==='dashed'?'[6 4] 0 d ':o.dash==='dotted'?'[2 3] 0 d ':'';
+  return `q 1 0 1 RG [] 0 d ${o.lineWidth} w ${dash}${path} S Q`;
+}
+function drawCutsOn(page,obs,vp){
+  const{width:pW,height:pH}=page.getSize();
+  page.drawRectangle({x:0,y:0,width:0,height:0,opacity:0});
+  obs.forEach(o=>page.pushOperators({toString:()=>'\n'+buildOps(o,pW,pH,vp)}));
+}
+async function exportPDF(){
+  if(!pdfDoc){alert('Lataa PDF ensin.');return;}
+  if(!Object.values(pageData).some(a=>a.length>0)){alert('Lisää leikkausrajoja ensin.');return;}
+  ss('Generoidaan...','info');
+  const mode=document.getElementById('expMode').value;
+  try{
+    if(mode==='combo'){
+      const doc=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));
+      const pgs=doc.getPages();
+      Object.entries(pageData).forEach(([pg,obs])=>{
+        const idx=parseInt(pg)-1;if(idx>=pgs.length||!obs.length)return;
+        const vp=pageVps[parseInt(pg)]||{width:pgs[idx].getSize().width*RS,height:pgs[idx].getSize().height*RS};
+        drawCutsOn(pgs[idx],obs,vp);
+      });
+      dlPDF(await doc.save(),'leikkausraja_yhdistetty.pdf');
+      ss('Yhdistetty PDF ladattu','ok');
+    } else if(mode==='split'){
+      const docP=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));
+      const docC=await PDFLib.PDFDocument.create();
+      const srcPgs=docP.getPages();
+      for(let i=0;i<srcPgs.length;i++){
+        const pgN=i+1,blank=docC.addPage([srcPgs[i].getSize().width,srcPgs[i].getSize().height]);
+        const obs=pageData[pgN]||[];
+        if(obs.length){const vp=pageVps[pgN]||{width:srcPgs[i].getSize().width*RS,height:srcPgs[i].getSize().height*RS};drawCutsOn(blank,obs,vp);}
+      }
+      dlPDF(await docP.save(),'tulostusaineisto.pdf');
+      await new Promise(r=>setTimeout(r,400));
+      dlPDF(await docC.save(),'leikkausrajat.pdf');
+      ss('Kaksi PDF:ää ladattu','ok');
+    } else {
+      const src=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));
+      const docC=await PDFLib.PDFDocument.create();
+      const srcPgs=src.getPages();
+      for(let i=0;i<srcPgs.length;i++){
+        const pgN=i+1,blank=docC.addPage([srcPgs[i].getSize().width,srcPgs[i].getSize().height]);
+        const obs=pageData[pgN]||[];
+        if(obs.length){const vp=pageVps[pgN]||{width:srcPgs[i].getSize().width*RS,height:srcPgs[i].getSize().height*RS};drawCutsOn(blank,obs,vp);}
+      }
+      dlPDF(await docC.save(),'leikkausrajat_only.pdf');
+      ss('Leikkaus-PDF ladattu','ok');
+    }
+  }catch(e){console.error(e);ss('Vienti epäonnistui: '+e.message,'err');}
+}
+function dlPDF(bytes,name){const a=document.createElement('a');a.download=name;a.href=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));a.click();}
+
+// Script export
+function expScript(type){
+  const all=[];
+  Object.entries(pageData).forEach(([pg,obs])=>obs.forEach(o=>all.push({page:parseInt(pg),obj:o})));
+  if(!all.length){alert('Lisää leikkausrajoja ensin.');return;}
+  const sn=all[0].obj.spotName||'Die Cut';
+  const L=[];
+  if(type==='ai'){
+    L.push('// Leikkausraja — Illustrator-skripti\n// File > Scripts > Other Script');
+    L.push(`var doc=app.activeDocument;var layer;try{layer=doc.layers.getByName("${sn}");}catch(e){layer=doc.layers.add();layer.name="${sn}";}var spot;try{spot=doc.spots.getByName("${sn}");}catch(e){spot=doc.spots.add();spot.name="${sn}";var c=new CMYKColor();c.cyan=0;c.magenta=100;c.yellow=100;c.black=0;spot.color=c;spot.colorType=ColorModel.SPOT;}var sc=new SpotColor();sc.spot=spot;`);
+    all.forEach(({obj:o},i)=>{
+      const vp=pageVps[curPage]||{width:595*RS,height:842*RS};const pH=vp.height/RS;
+      if(o.points&&o.points.length>1){
+        const pts=o.points.map(p=>({x:p.x/RS,y:pH-p.y/RS}));
+        L.push(`var p${i}=doc.pathItems.add();p${i}.setEntirePath([${pts.map(p=>`[${p.x.toFixed(2)},${p.y.toFixed(2)}]`).join(',')}]);${o.closed?`p${i}.closed=true;`:''}p${i}.filled=false;p${i}.stroked=true;p${i}.strokeColor=sc;p${i}.strokeWidth=${o.lineWidth};layer.pathItems.move(p${i},ElementPlacement.PLACEATEND);`);
+      } else {
+        const{x,y,w,h}=getCR(o);const rx=x/RS,ry=pH-(y/RS+h/RS),rw=w/RS,rh=h/RS;
+        if(o.shape==='circle')L.push(`var e${i}=doc.pathItems.ellipse(${ry.toFixed(2)},${rx.toFixed(2)},${rw.toFixed(2)},${rh.toFixed(2)});`);
+        else if(o.shape==='rounded'){const r=Math.min(o.radius,rw/2,rh/2);L.push(`var e${i}=doc.pathItems.roundedRectangle(${ry.toFixed(2)},${rx.toFixed(2)},${rw.toFixed(2)},${rh.toFixed(2)},${r.toFixed(1)},${r.toFixed(1)});`);}
+        else L.push(`var e${i}=doc.pathItems.rectangle(${ry.toFixed(2)},${rx.toFixed(2)},${rw.toFixed(2)},${rh.toFixed(2)});`);
+        L.push(`e${i}.filled=false;e${i}.stroked=true;e${i}.strokeColor=sc;e${i}.strokeWidth=${o.lineWidth};layer.pathItems.move(e${i},ElementPlacement.PLACEATEND);`);
+      }
+    });
+    L.push(`alert("Leikkausrajat lisätty: ${sn}");`);
+  } else {
+    L.push(`// Leikkausraja — InDesign-skripti\nvar doc=app.activeDocument;var layer;try{layer=doc.layers.item("${sn}");if(!layer.isValid)throw 0;}catch(e){layer=doc.layers.add({name:"${sn}"});}var sw;try{sw=doc.swatches.item("${sn}");if(!sw.isValid)throw 0;}catch(e){sw=doc.colors.add();sw.name="${sn}";sw.model=ColorModel.SPOT;sw.colorValue=[0,100,100,0];sw.space=ColorSpace.CMYK;}`);
+    all.forEach(({obj:o,page},i)=>{
+      const{x,y,w,h}=getCR(o);const rx=x/RS,ry=y/RS,rw=w/RS,rh=h/RS;
+      if(o.shape==='circle')L.push(`var e${i}=doc.pages[${page-1}].ovals.add(layer,{geometricBounds:[${ry.toFixed(2)},${rx.toFixed(2)},${(ry+rh).toFixed(2)},${(rx+rw).toFixed(2)}]});`);
+      else{L.push(`var e${i}=doc.pages[${page-1}].rectangles.add(layer,{geometricBounds:[${ry.toFixed(2)},${rx.toFixed(2)},${(ry+rh).toFixed(2)},${(rx+rw).toFixed(2)}]});`);if(o.shape==='rounded')L.push(`e${i}.cornerRadius=${Math.min(o.radius,rw/2,rh/2).toFixed(1)};`);}
+      L.push(`e${i}.fillColor=doc.swatches.item("None");e${i}.strokeColor=sw;e${i}.strokeWeight=${o.lineWidth};`);
+    });
+    L.push(`alert("Leikkausrajat lisätty: ${sn}");`);
+  }
+  const a=document.createElement('a');
+  a.download=`leikkausraja_${type==='ai'?'illustrator':'indesign'}.jsx`;
+  a.href=URL.createObjectURL(new Blob([L.join('\n')],{type:'text/plain'}));a.click();
+  ss((type==='ai'?'Illustrator':'InDesign')+'-skripti ladattu','ok');
+}
+</script>
+</body>
+</html>
