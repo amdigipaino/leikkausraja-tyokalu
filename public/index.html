@@ -209,7 +209,7 @@ input[type=color]{width:100%;height:28px;border:1px solid var(--paper3);border-r
         </div>
         <div style="margin-bottom:8px">
           <label class="lbl">Väri (esikatselu)</label>
-          <input type="color" id="eColor" value="#e11d48" oninput="updObj()">
+          <input type="color" id="eColor" value="#FF0099" oninput="updObj()">
         </div>
         <div style="margin-bottom:8px">
           <label class="lbl">Paksuus <span class="pval" id="eWVal">0.5pt</span></label>
@@ -332,7 +332,7 @@ input[type=color]{width:100%;height:28px;border:1px solid var(--paper3);border-r
       </div>
       <div>
         <label class="lbl">Väri (esikatselu)</label>
-        <input type="color" id="impColor" value="#e11d48">
+        <input type="color" id="impColor" value="#FF0099">
       </div>
     </div>
   </div>
@@ -802,8 +802,9 @@ async function runAI(){
   const btn=document.getElementById('aiBtn'),spin=document.getElementById('aiSpin');
   btn.disabled=true;spin.style.display='inline-block';
   ss('AI analysoi leikkausrajaa...','info');
+  const aiScale=2.5;
   const pg=await pdfDoc.getPage(curPage);
-  const vp=pg.getViewport({scale:2.5});
+  const vp=pg.getViewport({scale:aiScale});
   const tc=document.createElement('canvas');tc.width=vp.width;tc.height=vp.height;
   await pg.render({canvasContext:tc.getContext('2d'),viewport:vp}).promise;
   const b64=tc.toDataURL('image/jpeg',.92).split(',')[1];
@@ -850,20 +851,26 @@ Vastaa VAIN JSON:
     if(!txt&&data.error)throw new Error('API virhe: '+JSON.stringify(data.error));
     if(!txt)throw new Error('Tyhjä vastaus API:lta');
     const p=JSON.parse(txt.replace(/```json|```/g,'').trim());
-    const dvp=pageVps[curPage];const sr=dvp?dvp.width/W:1;
+    // AI rendered at aiScale, canvas at RS => scale factor = RS/aiScale
+    const sr=RS/aiScale;
 
     let added=[];
-    const gx=p.gutter?.x||0,gy=p.gutter?.y||0;
+    const gx=(p.gutter?.x||0)*sr,gy=(p.gutter?.y||0)*sr;
 
     if(p.layoutType==='grid'&&p.grid&&p.firstCell){
       const{rows,cols}=p.grid;const{xPx,yPx,wPx,hPx}=p.firstCell;
       for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)
         added.push(addObj({name:`Tarra ${r+1}-${c+1}`,shape:p.shape||'rect',
-          x:(xPx+c*(wPx+gx))*sr,y:(yPx+r*(hPx+gy))*sr,w:wPx*sr,h:hPx*sr,
-          radius:p.radius||0,spotName:p.spotName||'Die Cut'}));
+          x:xPx*sr+c*(wPx*sr+gx),y:yPx*sr+r*(hPx*sr+gy),
+          w:wPx*sr,h:hPx*sr,
+          radius:p.radius||0,spotName:p.spotName||'Die Cut',
+          color:document.getElementById('eColor').value}));
     } else if(p.firstCell){
       const{xPx,yPx,wPx,hPx}=p.firstCell;
-      added.push(addObj({name:'Kohde 1',shape:p.shape||'rect',x:xPx*sr,y:yPx*sr,w:wPx*sr,h:hPx*sr,radius:p.radius||0,spotName:p.spotName||'Die Cut'}));
+      added.push(addObj({name:'Kohde 1',shape:p.shape||'rect',
+        x:xPx*sr,y:yPx*sr,w:wPx*sr,h:hPx*sr,
+        radius:p.radius||0,spotName:p.spotName||'Die Cut',
+        color:document.getElementById('eColor').value}));
     }
 
     const cc=p.confidence==='high'?'hi':p.confidence==='medium'?'med':'lo';
@@ -882,8 +889,9 @@ async function runAI2(){
   const btn=document.getElementById('ai2Btn'),spin=document.getElementById('ai2Spin');
   btn.disabled=true;spin.style.display='inline-block';
   ss('AI tunnistaa tarran mittoja...','info');
+  const aiScale2=2.5;
   const pg=await pdfDoc.getPage(curPage);
-  const vp=pg.getViewport({scale:2.5});
+  const vp=pg.getViewport({scale:aiScale2});
   const tc=document.createElement('canvas');tc.width=vp.width;tc.height=vp.height;
   await pg.render({canvasContext:tc.getContext('2d'),viewport:vp}).promise;
   const b64=tc.toDataURL('image/jpeg',.92).split(',')[1];
