@@ -186,6 +186,7 @@ input[type=color]{width:100%;height:28px;border:1px solid var(--paper3);border-r
       </div>
       <div class="obj-list" id="objList"><div class="obj-empty">Ei kohteita</div></div>
       <div id="aiRes"></div>
+    <div id="debugBox" style="display:none;margin-top:8px;padding:8px;background:#1c1917;color:#a8e6cf;border-radius:6px;font-size:10px;font-family:monospace;line-height:1.6;word-break:break-all"></div>
     </div>
 
     <div class="s-sec" id="editSec">
@@ -851,6 +852,16 @@ Vastaa VAIN JSON:
     if(!txt&&data.error)throw new Error('API virhe: '+JSON.stringify(data.error));
     if(!txt)throw new Error('Tyhjä vastaus API:lta');
     const p=JSON.parse(txt.replace(/```json|```/g,'').trim());
+    const sr_calc=RS/aiScale;
+    const dbg=document.getElementById('debugBox');
+    dbg.style.display='block';
+    dbg.innerHTML='<b>AI vastaus:</b><br>'
+      +'layout: '+p.layoutType+' | grid: '+(p.grid?p.grid.rows+'×'+p.grid.cols:'–')+'<br>'
+      +'firstCell: '+(p.firstCell?JSON.stringify(p.firstCell):'–')+'<br>'
+      +'gutter: '+(p.gutter?JSON.stringify(p.gutter):'–')+'<br>'
+      +'shape: '+p.shape+'<br>'
+      +'<b>Skaalaus:</b> aiScale='+aiScale+' RS='+RS+' sr='+sr_calc.toFixed(4)+'<br>'
+      +'kuva: '+W+'×'+H+'px';
     // AI rendered at aiScale, canvas at RS => scale factor = RS/aiScale
     const sr=RS/aiScale;
 
