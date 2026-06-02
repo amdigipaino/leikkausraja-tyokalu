@@ -570,6 +570,11 @@ function delObj(id){
   if(selId===id){selId=null;document.getElementById('editPanel').className='edit-panel';}
   updObjList();redraw();
 }
+function moveAll(dx,dy){
+  getObjs().forEach(o=>{if(!o.points){o.x+=dx;o.y+=dy;}else{o.points=o.points.map(p=>({x:p.x+dx,y:p.y+dy}));}});
+  redraw();
+}
+
 function updObjList(){
   const list=document.getElementById('objList');const obs=getObjs();
   if(!obs.length){list.innerHTML='<div class="obj-empty">Ei kohteita</div>';return}
@@ -862,25 +867,34 @@ Vastaa VAIN JSON:
       +'shape: '+p.shape+'<br>'
       +'<b>Skaalaus:</b> aiScale='+aiScale+' RS='+RS+' sr='+sr_calc.toFixed(4)+'<br>'
       +'kuva: '+W+'×'+H+'px';
-    // AI rendered at aiScale, canvas at RS => scale factor = RS/aiScale
-    const sr=RS/aiScale;
+    // AI rendered at aiScale from PDF page, canvas at RS
+    // Correct mapping: AI image px -> PDF pt -> canvas px
+    // PDF pt width = pageVps[curPage].width / RS
+    // AI image px per PDF pt = aiScale
+    // Canvas px per PDF pt = RS
+    // So: canvasPx = aiPx * (RS / aiScale)
+    const dvp = pageVps[curPage];
+    // Use actual viewport ratio for most accurate mapping
+    const sr = dvp ? (dvp.width / W) : (RS / aiScale);
 
     let added=[];
     const gx=(p.gutter?.x||0)*sr,gy=(p.gutter?.y||0)*sr;
 
     if(p.layoutType==='grid'&&p.grid&&p.firstCell){
       const{rows,cols}=p.grid;const{xPx,yPx,wPx,hPx}=p.firstCell;
+      const cellW=wPx*sr, cellH=hPx*sr;
+      const stepX=cellW+gx, stepY=cellH+gy;
       for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)
         added.push(addObj({name:`Tarra ${r+1}-${c+1}`,shape:p.shape||'rect',
-          x:xPx*sr+c*(wPx*sr+gx),y:yPx*sr+r*(hPx*sr+gy),
-          w:wPx*sr,h:hPx*sr,
-          radius:p.radius||0,spotName:p.spotName||'Die Cut',
+          x:xPx*sr+c*stepX, y:yPx*sr+r*stepY,
+          w:cellW, h:cellH,
+          radius:p.radius||0, spotName:p.spotName||'Die Cut',
           color:document.getElementById('eColor').value}));
     } else if(p.firstCell){
       const{xPx,yPx,wPx,hPx}=p.firstCell;
       added.push(addObj({name:'Kohde 1',shape:p.shape||'rect',
-        x:xPx*sr,y:yPx*sr,w:wPx*sr,h:hPx*sr,
-        radius:p.radius||0,spotName:p.spotName||'Die Cut',
+        x:xPx*sr, y:yPx*sr, w:wPx*sr, h:hPx*sr,
+        radius:p.radius||0, spotName:p.spotName||'Die Cut',
         color:document.getElementById('eColor').value}));
     }
 
@@ -888,7 +902,18 @@ Vastaa VAIN JSON:
     const cl=p.confidence==='high'?'Korkea':p.confidence==='medium'?'Kohtalainen':'Matala';
     const gl=p.layoutType==='grid'&&p.grid?` — ${p.grid.rows}×${p.grid.cols} grid`:'';
     const clNote=p.hasExistingCutLine?`<br><strong>Leikkausraja löydetty:</strong> ${p.existingLineColor} — muunnettu spot-väriksi`:'<br><em>Ei olemassaolevaa rajaa — lisätty automaattisesti</em>';
-    document.getElementById('aiRes').innerHTML=`<div class="ai-box">${added.length} kohde${added.length!==1?'tta':''}${gl} <span class="conf ${cc}">${cl}</span><br>${p.summary}${clNote}</div>`;
+    document.getElementById('aiRes').innerHTML=`<div class="ai-box">${added.length} kohde${added.length!==1?'tta':''}${gl} <span class="conf ${cc}">${cl}</span><br>${p.summary}${clNote}
+    <br><br><strong>Siirrä kaikki rajat kerralla:</strong><br>
+    <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap">
+      <button onclick="moveAll(-5,0)" style="padding:3px 8px;font-size:11px;border:1px solid #bfdbfe;border-radius:4px;cursor:pointer;background:#fff">← 5px</button>
+      <button onclick="moveAll(5,0)" style="padding:3px 8px;font-size:11px;border:1px solid #bfdbfe;border-radius:4px;cursor:pointer;background:#fff">→ 5px</button>
+      <button onclick="moveAll(0,-5)" style="padding:3px 8px;font-size:11px;border:1px solid #bfdbfe;border-radius:4px;cursor:pointer;background:#fff">↑ 5px</button>
+      <button onclick="moveAll(0,5)" style="padding:3px 8px;font-size:11px;border:1px solid #bfdbfe;border-radius:4px;cursor:pointer;background:#fff">↓ 5px</button>
+      <button onclick="moveAll(-20,0)" style="padding:3px 8px;font-size:11px;border:1px solid #bfdbfe;border-radius:4px;cursor:pointer;background:#fff">← 20px</button>
+      <button onclick="moveAll(20,0)" style="padding:3px 8px;font-size:11px;border:1px solid #bfdbfe;border-radius:4px;cursor:pointer;background:#fff">→ 20px</button>
+      <button onclick="moveAll(0,-20)" style="padding:3px 8px;font-size:11px;border:1px solid #bfdbfe;border-radius:4px;cursor:pointer;background:#fff">↑ 20px</button>
+      <button onclick="moveAll(0,20)" style="padding:3px 8px;font-size:11px;border:1px solid #bfdbfe;border-radius:4px;cursor:pointer;background:#fff">↓ 20px</button>
+    </div></div>`;
     ss(`Tunnistettu ${added.length} kohdetta`,'ok');
   }catch(e){console.error(e);ss('Tunnistus epäonnistui: '+e.message,'err');}
   btn.disabled=false;spin.style.display='none';
