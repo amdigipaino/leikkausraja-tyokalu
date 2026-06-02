@@ -12,45 +12,61 @@
 :root{
   --ink:#1c1917;--ink2:#57534e;--ink3:#a8a29e;
   --paper:#fafaf9;--paper2:#f5f5f4;--paper3:#e7e5e4;
-  --cut:#e11d48;--cut-bg:#fff1f2;
-  --blue:#2563eb;--blue-bg:#eff6ff;
-  --green:#16a34a;--green-bg:#f0fdf4;
-  --amber:#d97706;--amber-bg:#fffbeb;
+  --cut:#FF0099;--cut-bg:#fff0f9;
+  --blue:#2563eb;--blue-bg:#eff6ff;--blue-border:#bfdbfe;
+  --green:#16a34a;--green-bg:#f0fdf4;--green-border:#bbf7d0;
+  --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fcd34d;
+  --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;
   --r:6px;--r-lg:10px;
+  --shadow:0 1px 3px rgba(0,0,0,.08);
+  --shadow-lg:0 4px 20px rgba(0,0,0,.12);
 }
 html,body{height:100%;overflow:hidden}
-body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);font-size:14px}
-.app{display:grid;grid-template-columns:300px 1fr;grid-template-rows:48px 1fr;height:100vh}
-.topbar{grid-column:1/-1;background:var(--ink);display:flex;align-items:center;padding:0 16px;gap:12px}
-.topbar-logo{font-family:'DM Mono',monospace;font-size:13px;color:#fff;letter-spacing:.08em}
-.topbar-sep{width:1px;height:20px;background:#44403c}
+body{font-family:'DM Sans',sans-serif;background:var(--paper2);color:var(--ink);font-size:14px}
+
+/* Layout */
+.app{display:grid;grid-template-rows:48px 1fr;height:100vh}
+.topbar{background:var(--ink);display:flex;align-items:center;padding:0 16px;gap:12px}
+.topbar-logo{font-family:'DM Mono',monospace;font-size:13px;color:#fff;letter-spacing:.08em;white-space:nowrap}
+.topbar-sep{width:1px;height:20px;background:#44403c;flex-shrink:0}
 .topbar-title{font-size:13px;color:#a8a29e}
 .topbar-right{margin-left:auto;display:flex;gap:8px;align-items:center}
-.sidebar{background:var(--paper);border-right:1px solid var(--paper3);overflow-y:auto;display:flex;flex-direction:column;gap:0}
-.main{overflow:hidden;display:flex;flex-direction:column;background:var(--paper2)}
-.s-sec{padding:12px 14px;border-bottom:1px solid var(--paper3)}
-.s-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+.workspace{display:grid;grid-template-columns:300px 1fr;height:100%;overflow:hidden}
 
-/* Workflow tabs */
-.wf-tabs{display:flex;border-bottom:1px solid var(--paper3)}
-.wf-tab{flex:1;padding:10px 8px;font-size:12px;font-weight:600;text-align:center;cursor:pointer;border:none;background:transparent;color:var(--ink3);border-bottom:2px solid transparent;transition:all .15s;font-family:'DM Sans',sans-serif}
-.wf-tab.active{color:var(--blue);border-bottom-color:var(--blue);background:var(--blue-bg)}
+/* Sidebar */
+.sidebar{background:var(--paper);border-right:1px solid var(--paper3);display:flex;flex-direction:column;overflow:hidden}
+.tab-bar{display:flex;border-bottom:2px solid var(--paper3);flex-shrink:0}
+.tab{flex:1;padding:10px 4px;font-size:11px;font-weight:600;text-align:center;cursor:pointer;border:none;background:transparent;color:var(--ink3);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;font-family:'DM Sans',sans-serif;line-height:1.3}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue);background:var(--blue-bg)}
+.tab-content{flex:1;overflow-y:auto;display:none;flex-direction:column}
+.tab-content.active{display:flex}
+.sec{padding:12px 14px;border-bottom:1px solid var(--paper3)}
+.sec:last-child{border-bottom:none}
+.sec-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
 
-/* Upload */
-.upload-zone{border:1.5px dashed var(--paper3);border-radius:var(--r-lg);padding:16px 12px;text-align:center;cursor:pointer;transition:all .2s;color:var(--ink2)}
+/* Upload zone */
+.upload-zone{border:1.5px dashed var(--paper3);border-radius:var(--r-lg);padding:16px;text-align:center;cursor:pointer;transition:all .2s;color:var(--ink2)}
 .upload-zone:hover,.upload-zone.drag{border-color:var(--blue);background:var(--blue-bg);color:var(--blue)}
-.upload-zone svg{margin:0 auto 6px;display:block}
+.upload-zone svg{margin:0 auto 6px;display:block;opacity:.6}
 .uz-t{font-weight:500;font-size:13px;margin-bottom:2px}
 .uz-s{font-size:11px;color:var(--ink3)}
-.file-info{margin-top:8px;padding:7px 9px;background:var(--paper2);border-radius:var(--r);font-size:12px}
-.fname{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fmeta{color:var(--ink3);margin-top:2px;font-size:11px}
+.file-badge{margin-top:8px;padding:7px 10px;background:var(--paper2);border-radius:var(--r);font-size:12px;display:flex;align-items:center;gap:8px}
+.file-badge svg{flex-shrink:0;color:var(--ink3)}
+.file-badge-info{min-width:0}
+.file-badge-name{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-badge-meta{color:var(--ink3);font-size:11px;margin-top:1px}
 .thumbs{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
 .thumb{border:2px solid transparent;border-radius:4px;overflow:hidden;cursor:pointer;transition:border-color .15s}
 .thumb.active{border-color:var(--blue)}
 .thumb canvas{display:block}
 
-/* Form elements */
+/* Resolution badge */
+.res-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:var(--r);font-size:11px;font-weight:500;font-family:'DM Mono',monospace;margin-top:6px}
+.res-badge.ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.res-badge.warn{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
+.res-badge.err{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+
+/* Form */
 label.lbl{display:block;font-size:11px;color:var(--ink2);font-weight:500;margin-bottom:4px;margin-top:10px}
 label.lbl:first-child{margin-top:0}
 select,input[type=text],input[type=number]{width:100%;padding:5px 8px;border:1px solid var(--paper3);border-radius:var(--r);font-size:12px;font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);outline:none}
@@ -58,7 +74,7 @@ select:focus,input:focus{border-color:var(--blue)}
 input[type=range]{width:100%;accent-color:var(--cut);height:3px}
 input[type=color]{width:100%;height:28px;border:1px solid var(--paper3);border-radius:var(--r);padding:2px;cursor:pointer}
 .row2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.pval{font-family:'DM Mono',monospace;font-size:11px;color:var(--ink3);float:right}
+.pval{font-family:'DM Mono',monospace;font-size:11px;color:var(--ink3)}
 .tgl{display:flex;border:1px solid var(--paper3);border-radius:var(--r);overflow:hidden}
 .tgl button{flex:1;padding:5px 4px;font-size:11px;border:none;background:transparent;cursor:pointer;color:var(--ink2);font-family:'DM Sans',sans-serif;transition:background .15s;font-weight:500}
 .tgl button.on{background:var(--ink);color:#fff}
@@ -73,42 +89,27 @@ input[type=color]{width:100%;height:28px;border:1px solid var(--paper3);border-r
 .btn.blue:hover{opacity:.85}
 .btn.green{background:var(--green);color:#fff;border-color:var(--green)}
 .btn.green:hover{opacity:.85}
+.btn.pink{background:var(--cut);color:#fff;border-color:var(--cut)}
+.btn.pink:hover{opacity:.85}
 .btn.sm{padding:4px 8px;font-size:11px}
-.brow{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.btn.xs{padding:3px 6px;font-size:10px}
+.brow{display:flex;gap:5px;flex-wrap:wrap}
 
-/* Toolbar */
-.toolbar{padding:8px 12px;background:var(--paper);border-bottom:1px solid var(--paper3);display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0}
-.tool-group{display:flex;gap:2px;border:1px solid var(--paper3);border-radius:var(--r);padding:2px}
-.tbtn{padding:5px 9px;border:none;background:transparent;border-radius:4px;cursor:pointer;color:var(--ink2);font-size:12px;display:flex;align-items:center;gap:5px;white-space:nowrap;transition:all .15s;font-family:'DM Sans',sans-serif;font-weight:500}
-.tbtn:hover{background:var(--paper2);color:var(--ink)}
-.tbtn.active{background:var(--ink);color:#fff}
-.tsep{width:1px;height:20px;background:var(--paper3);flex-shrink:0}
-.page-nav{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ink2);font-family:'DM Mono',monospace}
-.page-nav button{width:24px;height:24px;border:1px solid var(--paper3);border-radius:var(--r);background:var(--paper);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+/* Vector path list (tab 1) */
+.path-group{border:1px solid var(--paper3);border-radius:var(--r);margin-bottom:6px;overflow:hidden}
+.path-group-header{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;background:var(--paper2);transition:background .15s}
+.path-group-header:hover{background:var(--paper3)}
+.color-swatch{width:16px;height:16px;border-radius:3px;flex-shrink:0;border:1px solid rgba(0,0,0,.1)}
+.path-group-info{flex:1;min-width:0}
+.path-group-name{font-size:12px;font-weight:500}
+.path-group-meta{font-size:10px;color:var(--ink3);font-family:'DM Mono',monospace}
+.path-group-check{width:16px;height:16px;flex-shrink:0;accent-color:var(--cut);cursor:pointer}
+.path-group-body{padding:8px 10px;background:var(--paper);border-top:1px solid var(--paper3);display:none}
+.path-group-body.open{display:block}
+.path-item{font-size:11px;color:var(--ink2);font-family:'DM Mono',monospace;padding:2px 0;border-bottom:1px solid var(--paper3)}
+.path-item:last-child{border-bottom:none}
 
-/* Canvas */
-.canvas-area{flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:24px}
-.canvas-wrap{position:relative;box-shadow:0 4px 16px rgba(0,0,0,.10);display:inline-block}
-#pdfCanvas{display:block}
-#overlayCanvas{position:absolute;top:0;left:0;cursor:default}
-
-/* Status */
-.sbar{font-size:11px;font-family:'DM Mono',monospace;padding:3px 8px;border-radius:var(--r);color:var(--ink2);background:var(--paper2)}
-.sbar.ok{background:var(--green-bg);color:var(--green)}
-.sbar.err{background:var(--cut-bg);color:var(--cut)}
-.sbar.info{background:var(--blue-bg);color:var(--blue)}
-.sbar.warn{background:var(--amber-bg);color:var(--amber)}
-
-/* AI box */
-.ai-box{background:var(--blue-bg);border:1px solid #bfdbfe;border-radius:var(--r);padding:8px 10px;font-size:12px;line-height:1.6;margin-top:8px}
-.conf{display:inline-block;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600;margin-left:4px;font-family:'DM Mono',monospace}
-.conf.hi{background:#d1fae5;color:#065f46}.conf.med{background:#fef3c7;color:#92400e}.conf.lo{background:#fee2e2;color:#991b1b}
-
-/* Imposition panel */
-.imp-panel{background:var(--amber-bg);border:1px solid #fcd34d;border-radius:var(--r);padding:10px 12px;font-size:12px;margin-top:8px}
-.imp-panel h4{font-size:11px;font-weight:600;color:var(--amber);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px}
-
-/* Objects list */
+/* Object list (tab 2) */
 .obj-list{display:flex;flex-direction:column;gap:4px}
 .obj-row{display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:var(--r);border:1px solid var(--paper3);cursor:pointer;transition:all .15s;font-size:12px}
 .obj-row:hover{border-color:var(--ink3)}
@@ -119,7 +120,7 @@ input[type=color]{width:100%;height:28px;border:1px solid var(--paper3);border-r
 .obj-del{opacity:0;font-size:16px;line-height:1;color:var(--ink3);cursor:pointer;padding:0 2px}
 .obj-row:hover .obj-del{opacity:1}
 .obj-del:hover{color:var(--cut)}
-.obj-empty{font-size:12px;color:var(--ink3);text-align:center;padding:12px 0}
+.obj-empty{font-size:12px;color:var(--ink3);text-align:center;padding:16px 0}
 
 /* Edit panel */
 .edit-panel{display:none}
@@ -131,16 +132,63 @@ input[type=color]{width:100%;height:28px;border:1px solid var(--paper3);border-r
 .nb:hover{background:var(--paper2)}
 .nv{font-size:10px;font-family:'DM Mono',monospace;min-width:24px;text-align:center}
 
+/* Imposition */
+.imp-result{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:var(--r);padding:10px;font-size:12px;line-height:1.7;margin-top:8px;display:none}
+.imp-result.visible{display:block}
+
+/* Main area */
+.main{display:flex;flex-direction:column;overflow:hidden}
+.toolbar{padding:8px 12px;background:var(--paper);border-bottom:1px solid var(--paper3);display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0}
+.tool-group{display:flex;gap:2px;border:1px solid var(--paper3);border-radius:var(--r);padding:2px}
+.tbtn{padding:5px 9px;border:none;background:transparent;border-radius:4px;cursor:pointer;color:var(--ink2);font-size:12px;display:flex;align-items:center;gap:5px;white-space:nowrap;transition:all .15s;font-family:'DM Sans',sans-serif;font-weight:500}
+.tbtn:hover{background:var(--paper2);color:var(--ink)}
+.tbtn.active{background:var(--ink);color:#fff}
+.tsep{width:1px;height:20px;background:var(--paper3);flex-shrink:0}
+.page-nav{display:flex;align-items:center;gap:5px;font-family:'DM Mono',monospace;font-size:12px}
+.page-nav button{width:24px;height:24px;border:1px solid var(--paper3);border-radius:var(--r);background:var(--paper);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.zoom-ctrl{display:flex;align-items:center;gap:4px}
+.zoom-ctrl button{width:26px;height:26px;border:1px solid var(--paper3);border-radius:var(--r);background:var(--paper);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.zoom-lbl{font-family:'DM Mono',monospace;font-size:11px;min-width:38px;text-align:center}
+.zoom-fit{padding:4px 7px;font-size:11px;border:1px solid var(--paper3);border-radius:var(--r);background:var(--paper);cursor:pointer;font-family:'DM Sans',sans-serif}
+
+/* Canvas */
+.canvas-area{flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:24px;background:var(--paper2)}
+.canvas-outer{display:inline-block;transform-origin:top center}
+.canvas-wrap{position:relative;box-shadow:var(--shadow-lg);display:inline-block}
+#pdfCanvas{display:block}
+#overlayCanvas{position:absolute;top:0;left:0;cursor:default}
+
+/* Status */
+.sbar{font-size:11px;font-family:'DM Mono',monospace;padding:3px 8px;border-radius:var(--r);color:var(--ink2);background:var(--paper2)}
+.sbar.ok{background:var(--green-bg);color:var(--green)}
+.sbar.err{background:var(--red-bg);color:var(--red)}
+.sbar.info{background:var(--blue-bg);color:var(--blue)}
+.sbar.warn{background:var(--amber-bg);color:var(--amber)}
+
+/* Info box */
+.info-box{border-radius:var(--r);padding:9px 11px;font-size:12px;line-height:1.6;margin-top:8px}
+.info-box.blue{background:var(--blue-bg);border:1px solid var(--blue-border)}
+.info-box.green{background:var(--green-bg);border:1px solid var(--green-border)}
+.info-box.amber{background:var(--amber-bg);border:1px solid var(--amber-border)}
+.conf{display:inline-block;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600;margin-left:4px;font-family:'DM Mono',monospace}
+.conf.hi{background:#d1fae5;color:#065f46}
+.conf.med{background:#fef3c7;color:#92400e}
+.conf.lo{background:#fee2e2;color:#991b1b}
+
 /* Spinner */
-.spin{width:12px;height:12px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:none}
+.spin{width:12px;height:12px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:none;flex-shrink:0}
+.spin.dark{border-color:rgba(0,0,0,.15);border-top-color:var(--ink2)}
 @keyframes spin{to{transform:rotate(360deg)}}
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--paper3);border-radius:2px}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--paper3);border-radius:2px}
 .hidden{display:none!important}
 </style>
 </head>
 <body>
 <div class="app">
 
+<!-- Topbar -->
 <div class="topbar">
   <span class="topbar-logo">AM DIGIPAINO</span>
   <div class="topbar-sep"></div>
@@ -150,47 +198,97 @@ input[type=color]{width:100%;height:28px;border:1px solid var(--paper3);border-r
   </div>
 </div>
 
+<div class="workspace">
+
 <!-- SIDEBAR -->
 <div class="sidebar">
-
-  <!-- Workflow tabs -->
-  <div class="wf-tabs">
-    <button class="wf-tab active" id="tab1" onclick="setWF(1)">1 · Valmis arkki</button>
-    <button class="wf-tab" id="tab2" onclick="setWF(2)">2 · Monista arkille</button>
+  <div class="tab-bar">
+    <button class="tab active" id="tab1" onclick="switchTab(1)">1 · Tunnista</button>
+    <button class="tab" id="tab2" onclick="switchTab(2)">2 · Piirrä</button>
+    <button class="tab" id="tab3" onclick="switchTab(3)">3 · Monista</button>
   </div>
 
-  <!-- Upload -->
-  <div class="s-sec">
-    <div class="s-lbl">Aineisto</div>
-    <div class="upload-zone" id="uz" onclick="document.getElementById('pdfIn').click()">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
-      <div class="uz-t">Lataa PDF</div>
-      <div class="uz-s">Raahaa tai klikkaa</div>
+  <!-- TAB 1: Tunnista viivat -->
+  <div class="tab-content active" id="tc1">
+    <div class="sec">
+      <div class="sec-lbl">Aineisto</div>
+      <div class="upload-zone" id="uz" onclick="document.getElementById('pdfIn').click()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+        <div class="uz-t">Lataa PDF</div>
+        <div class="uz-s">Raahaa tai klikkaa</div>
+      </div>
+      <input type="file" id="pdfIn" accept=".pdf" style="display:none">
+      <div id="fileBadge" class="hidden">
+        <div class="file-badge">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <div class="file-badge-info">
+            <div class="file-badge-name" id="fName"></div>
+            <div class="file-badge-meta" id="fMeta"></div>
+          </div>
+        </div>
+        <div id="resBadge"></div>
+        <div class="thumbs" id="thumbs"></div>
+      </div>
     </div>
-    <input type="file" id="pdfIn" accept=".pdf" style="display:none">
-    <div id="fileInfo" class="hidden">
-      <div class="file-info"><div class="fname" id="fName"></div><div class="fmeta" id="fMeta"></div></div>
-      <div class="thumbs" id="thumbs"></div>
+
+    <div class="sec">
+      <div class="sec-lbl">Löydetyt viivat</div>
+      <p style="font-size:12px;color:var(--ink2);margin-bottom:10px">Valitse mitkä viivat ovat leikkausrajoja ja muunna ne spot-väriksi.</p>
+      <div id="pathGroups"><div class="obj-empty">Lataa PDF nähdäksesi viivat</div></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-lbl">Spot-värin asetukset</div>
+      <div style="margin-bottom:8px">
+        <label class="lbl">Spot-värin nimi</label>
+        <input type="text" id="t1SpotName" value="Die Cut">
+      </div>
+      <div style="margin-bottom:8px">
+        <label class="lbl">Väri (esikatselu)</label>
+        <input type="color" id="t1Color" value="#FF0099">
+      </div>
+      <div style="margin-bottom:8px">
+        <label class="lbl">Viivan paksuus (pt)</label>
+        <input type="number" id="t1LineWidth" value="0.5" min="0.1" max="5" step="0.1">
+      </div>
+      <button class="btn pink" style="width:100%;justify-content:center;margin-top:4px" onclick="convertToSpot()">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+        Muunna spot-väriksi
+      </button>
     </div>
   </div>
 
-  <!-- WF1: Valmis arkki -->
-  <div id="wf1panel">
-    <div class="s-sec">
-      <div class="s-lbl">Leikkausrajat</div>
-      <div class="brow">
-        <button class="btn sm blue" id="aiBtn" onclick="runAI()" disabled>
-          <div class="spin" id="aiSpin"></div>✦ Tunnista AI
-        </button>
-        <button class="btn sm" onclick="addObj()">+ Lisää käsin</button>
+  <!-- TAB 2: Piirrä -->
+  <div class="tab-content" id="tc2">
+    <div class="sec">
+      <div class="sec-lbl">Aineisto</div>
+      <div id="fileBadge2" class="hidden">
+        <div class="file-badge">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <div class="file-badge-info">
+            <div class="file-badge-name" id="fName2"></div>
+          </div>
+        </div>
+      </div>
+      <div id="noFile2" style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Lataa PDF välilehdeltä 1</div>
+      <button class="btn blue" style="width:100%;justify-content:center;margin-top:8px" id="aiSuggestBtn" onclick="runAISuggest()" disabled>
+        <div class="spin" id="aiSpin"></div>
+        ✦ AI ehdottaa muotoa
+      </button>
+      <div id="aiSuggestRes"></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-lbl">Leikkausrajat</div>
+      <div class="brow" style="margin-bottom:8px">
+        <button class="btn sm" onclick="addObj()">+ Lisää</button>
+        <button class="btn sm" onclick="deleteAllObjs()" style="color:var(--red)">✕ Tyhjennä</button>
       </div>
       <div class="obj-list" id="objList"><div class="obj-empty">Ei kohteita</div></div>
-      <div id="aiRes"></div>
-    <div id="debugBox" style="display:none;margin-top:8px;padding:8px;background:#1c1917;color:#a8e6cf;border-radius:6px;font-size:10px;font-family:monospace;line-height:1.6;word-break:break-all"></div>
     </div>
 
-    <div class="s-sec" id="editSec">
-      <div class="s-lbl" id="editLbl">Muokkaa</div>
+    <div class="sec" id="editSec">
+      <div class="sec-lbl" id="editLbl">Muokkaa kohdetta</div>
       <div class="edit-panel" id="editPanel">
         <div style="margin-bottom:8px">
           <label class="lbl">Muoto</label>
@@ -253,52 +351,42 @@ input[type=color]{width:100%;height:28px;border:1px solid var(--paper3);border-r
     </div>
   </div>
 
-  <!-- WF2: Monista arkille -->
-  <div id="wf2panel" class="hidden">
-    <div class="s-sec">
-      <div class="s-lbl">Tarran tiedot</div>
-      <button class="btn sm blue" id="ai2Btn" onclick="runAI2()" disabled style="margin-bottom:10px;width:100%;justify-content:center">
-        <div class="spin" id="ai2Spin"></div>✦ Tunnista tarra automaattisesti
+  <!-- TAB 3: Monista -->
+  <div class="tab-content" id="tc3">
+    <div class="sec">
+      <div class="sec-lbl">Tarran tiedot</div>
+      <button class="btn blue" style="width:100%;justify-content:center;margin-bottom:10px" id="aiMeasBtn" onclick="runAIMeasure()" disabled>
+        <div class="spin dark" id="aiMeasSpin"></div>
+        ✦ Tunnista mitat automaattisesti
       </button>
-      <div id="ai2Res"></div>
+      <div id="aiMeasRes"></div>
       <div style="margin-bottom:8px">
-        <label class="lbl">Tarran leveys (mm)</label>
-        <input type="number" id="stickerW" value="50" min="1" max="500" oninput="calcImposition()">
+        <label class="lbl">Leveys (mm)</label>
+        <input type="number" id="sW" value="50" min="1" oninput="calcImp()">
       </div>
       <div style="margin-bottom:8px">
-        <label class="lbl">Tarran korkeus (mm)</label>
-        <input type="number" id="stickerH" value="50" min="1" max="500" oninput="calcImposition()">
+        <label class="lbl">Korkeus (mm)</label>
+        <input type="number" id="sH" value="50" min="1" oninput="calcImp()">
       </div>
       <div style="margin-bottom:8px">
         <label class="lbl">Muoto</label>
-        <select id="stickerShape" onchange="calcImposition()">
+        <select id="sShape" onchange="onSShapeChange()">
           <option value="rect">Suorakulmio</option>
           <option value="rounded">Pyöristetty</option>
           <option value="circle">Ellipsi / ympyrä</option>
         </select>
       </div>
-      <div id="stickerRadRow" class="hidden" style="margin-bottom:8px">
-        <label class="lbl">Pyöristyssäde (mm) <span class="pval" id="stickerRadVal">5</span></label>
-        <input type="range" id="stickerRad" min="0" max="50" value="5" oninput="calcImposition()">
-      </div>
-      <div style="margin-bottom:8px">
-        <label class="lbl">Onko leikkausraja aineistossa?</label>
-        <div class="tgl">
-          <button id="hasClNo" class="on" onclick="setHasCL(false)">Ei — piirretään</button>
-          <button id="hasClYes" onclick="setHasCL(true)">Kyllä</button>
-        </div>
-      </div>
-      <div id="clColorRow" class="hidden" style="margin-bottom:8px">
-        <label class="lbl">Leikkausrajan väri aineistossa</label>
-        <input type="text" id="clColor" value="sininen" placeholder="esim. sininen, punainen">
+      <div id="sRadRow" class="hidden" style="margin-bottom:8px">
+        <label class="lbl">Pyöristyssäde (mm) <span class="pval" id="sRadVal">5</span></label>
+        <input type="range" id="sRad" min="0" max="50" value="5" oninput="document.getElementById('sRadVal').textContent=this.value;calcImp()">
       </div>
     </div>
 
-    <div class="s-sec">
-      <div class="s-lbl">Arkkiasemointi</div>
+    <div class="sec">
+      <div class="sec-lbl">Arkkiasemointi</div>
       <div style="margin-bottom:8px">
         <label class="lbl">Arkkikoko</label>
-        <select id="sheetSize" onchange="calcImposition()">
+        <select id="sheetSz" onchange="onSheetChange()">
           <option value="210x297">A4 (210×297mm)</option>
           <option value="297x420">A3 (297×420mm)</option>
           <option value="320x450">SRA3 (320×450mm)</option>
@@ -306,34 +394,34 @@ input[type=color]{width:100%;height:28px;border:1px solid var(--paper3);border-r
           <option value="custom">Mukautettu</option>
         </select>
       </div>
-      <div id="customSheetRow" class="hidden row2" style="margin-bottom:8px">
-        <div><label class="lbl">Leveys (mm)</label><input type="number" id="sheetW" value="210" min="50" oninput="calcImposition()"></div>
-        <div><label class="lbl">Korkeus (mm)</label><input type="number" id="sheetH" value="297" min="50" oninput="calcImposition()"></div>
+      <div id="customSheet" class="row2 hidden" style="margin-bottom:8px">
+        <div><label class="lbl">Leveys (mm)</label><input type="number" id="shW" value="210" min="50" oninput="calcImp()"></div>
+        <div><label class="lbl">Korkeus (mm)</label><input type="number" id="shH" value="297" min="50" oninput="calcImp()"></div>
       </div>
       <div style="margin-bottom:8px">
         <label class="lbl">Arkkireunus (mm)</label>
-        <input type="number" id="sheetMargin" value="5" min="0" max="30" oninput="calcImposition()">
+        <input type="number" id="shMargin" value="5" min="0" max="30" oninput="calcImp()">
       </div>
       <div style="margin-bottom:8px">
-        <label class="lbl">Tarrojen väli — bleed (mm)</label>
-        <input type="number" id="bleedGap" value="3" min="0" max="20" oninput="calcImposition()">
+        <label class="lbl">Bleed tarrojen välillä (mm)</label>
+        <input type="number" id="bleed" value="3" min="0" max="20" oninput="calcImp()">
       </div>
       <div class="row2" style="margin-bottom:8px">
-        <div><label class="lbl">Rivejä</label><input type="number" id="impRows" value="4" min="1" max="50" oninput="updateImposition()"></div>
-        <div><label class="lbl">Sarakkeita</label><input type="number" id="impCols" value="4" min="1" max="50" oninput="updateImposition()"></div>
+        <div><label class="lbl">Rivejä</label><input type="number" id="impR" value="4" min="1" max="50" oninput="drawImp()"></div>
+        <div><label class="lbl">Sarakkeita</label><input type="number" id="impC" value="4" min="1" max="50" oninput="drawImp()"></div>
       </div>
-      <div id="impResult" class="imp-panel hidden"></div>
+      <div class="imp-result" id="impResult"></div>
     </div>
 
-    <div class="s-sec">
-      <div class="s-lbl">Spot-väri</div>
+    <div class="sec">
+      <div class="sec-lbl">Spot-väri</div>
       <div style="margin-bottom:8px">
         <label class="lbl">Spot-värin nimi</label>
         <input type="text" id="impSpot" value="Die Cut">
       </div>
       <div>
         <label class="lbl">Väri (esikatselu)</label>
-        <input type="color" id="impColor" value="#FF0099">
+        <input type="color" id="impColor" value="#FF0099" oninput="drawImp()">
       </div>
     </div>
   </div>
@@ -345,18 +433,18 @@ input[type=color]{width:100%;height:28px;border:1px solid var(--paper3);border-r
   <div class="toolbar">
     <div class="page-nav">
       <button onclick="chPage(-1)">‹</button>
-      <span id="pageLbl" style="font-family:'DM Mono',monospace;font-size:12px">– / –</span>
+      <span id="pageLbl" style="font-size:12px">– / –</span>
       <button onclick="chPage(1)">›</button>
     </div>
     <div class="tsep"></div>
-    <div style="display:flex;align-items:center;gap:4px">
-      <button onclick="zoom(-0.25)" style="width:26px;height:26px;border:1px solid var(--paper3);border-radius:var(--r);background:var(--paper);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">−</button>
-      <span id="zoomLbl" style="font-family:'DM Mono',monospace;font-size:11px;min-width:36px;text-align:center">100%</span>
-      <button onclick="zoom(0.25)" style="width:26px;height:26px;border:1px solid var(--paper3);border-radius:var(--r);background:var(--paper);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center">+</button>
-      <button onclick="zoom(0)" style="padding:4px 7px;border:1px solid var(--paper3);border-radius:var(--r);background:var(--paper);cursor:pointer;font-size:11px">Sovita</button>
+    <div class="zoom-ctrl">
+      <button onclick="doZoom(-0.25)">−</button>
+      <span class="zoom-lbl" id="zoomLbl">100%</span>
+      <button onclick="doZoom(0.25)">+</button>
+      <button class="zoom-fit" onclick="doZoom(0)">Sovita</button>
     </div>
     <div class="tsep"></div>
-    <div class="tool-group" id="drawTools">
+    <div class="tool-group" id="drawToolGroup">
       <button class="tbtn active" id="toolSelect" onclick="setTool('select')" title="Valitse (V)">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3l14 9-7 1-3 7z"/></svg>Valitse
       </button>
@@ -383,70 +471,55 @@ input[type=color]{width:100%;height:28px;border:1px solid var(--paper3);border-r
     <button class="btn sm" onclick="expScript('id')" id="idScr" disabled>Id .jsx</button>
   </div>
 
-  <div class="canvas-area">
-    <div class="canvas-wrap" id="cWrap">
-      <canvas id="pdfCanvas"></canvas>
-      <canvas id="overlayCanvas"></canvas>
+  <div class="canvas-area" id="canvasArea">
+    <div class="canvas-outer" id="canvasOuter">
+      <div class="canvas-wrap">
+        <canvas id="pdfCanvas"></canvas>
+        <canvas id="overlayCanvas"></canvas>
+      </div>
     </div>
   </div>
+</div>
+
 </div>
 </div>
 
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-// ─── State ────────────────────────────────────────────────────────────────────
-let pdfDoc=null,pdfBytes=null,curPage=1,totalPages=0,RS=1.8,zoomLevel=1.0;
-let pageData={},pageVps={};
-let selId=null,objCtr=0,tool='select',wf=1;
-let dragSt=null,penPts=[],penPrev=null,renderTask=null;
-let impData=null; // imposition layout for WF2
+// ─── State ─────────────────────────────────────────────────────────────────
+let pdfDoc=null, pdfBytes=null, curPage=1, totalPages=0, RS=1.8;
+let pageData={}, pageVps={};
+let selId=null, objCtr=0, tool='select', activeTab=1;
+let dragSt=null, penPts=[], penPrev=null, renderTask=null;
+let zoomLevel=1.0;
+let impData=null;
+let detectedPaths=[]; // tab1: vector paths grouped by color
 
 const pdfCan=document.getElementById('pdfCanvas');
 const ovrCan=document.getElementById('overlayCanvas');
 const pdfCtx=pdfCan.getContext('2d');
 const ovrCtx=ovrCan.getContext('2d');
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Helpers ───────────────────────────────────────────────────────────────
 function getObjs(){return pageData[curPage]||(pageData[curPage]=[])}
 function getSel(){return selId?getObjs().find(o=>o.id===selId)||null:null}
 function ss(msg,t=''){const e=document.getElementById('sbar');e.textContent=msg;e.className='sbar'+(t?' '+t:'')}
 function mmToPt(mm){return mm*2.8346}
 function ptToMm(pt){return pt/2.8346}
 
-function zoom(delta){
-  if(!pdfDoc)return;
-  if(delta===0){
-    // fit to window
-    const area=document.getElementById('cWrap').parentElement;
-    const vp=pageVps[curPage];if(!vp)return;
-    const fitScale=Math.min((area.clientWidth-48)/vp.width,(area.clientHeight-48)/vp.height,1);
-    zoomLevel=fitScale;
-  } else {
-    zoomLevel=Math.max(0.25,Math.min(4,zoomLevel+delta));
-  }
-  document.getElementById('zoomLbl').textContent=Math.round(zoomLevel*100)+'%';
-  applyZoom();
-}
-
-function applyZoom(){
-  const wrap=document.getElementById('cWrap');
-  wrap.style.transform=`scale(${zoomLevel})`;
-  wrap.style.transformOrigin='top center';
-}
-
-// ─── Workflow tabs ─────────────────────────────────────────────────────────────
-function setWF(n){
-  wf=n;
-  document.getElementById('tab1').classList.toggle('active',n===1);
-  document.getElementById('tab2').classList.toggle('active',n===2);
-  document.getElementById('wf1panel').classList.toggle('hidden',n!==1);
-  document.getElementById('wf2panel').classList.toggle('hidden',n!==2);
-  document.getElementById('drawTools').classList.toggle('hidden',n===2);
+// ─── Tab switching ─────────────────────────────────────────────────────────
+function switchTab(n){
+  activeTab=n;
+  [1,2,3].forEach(i=>{
+    document.getElementById('tab'+i).classList.toggle('active',i===n);
+    document.getElementById('tc'+i).classList.toggle('active',i===n);
+  });
+  document.getElementById('drawToolGroup').classList.toggle('hidden',n!==2);
   redraw();
 }
 
-// ─── Upload ───────────────────────────────────────────────────────────────────
+// ─── Upload ────────────────────────────────────────────────────────────────
 const uz=document.getElementById('uz');
 uz.addEventListener('dragover',e=>{e.preventDefault();uz.classList.add('drag')});
 uz.addEventListener('dragleave',()=>uz.classList.remove('drag'));
@@ -458,25 +531,326 @@ async function loadPDF(file){
   const buf=await file.arrayBuffer();
   pdfBytes=buf;
   pdfDoc=await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
-  totalPages=pdfDoc.numPages;curPage=1;pageData={};
-  document.getElementById('fName').textContent=file.name;
+  totalPages=pdfDoc.numPages; curPage=1; pageData={};
+
+  // File info
+  const fname=file.name;
+  document.getElementById('fName').textContent=fname;
+  document.getElementById('fName2').textContent=fname;
   document.getElementById('fMeta').textContent=totalPages+' sivu'+(totalPages!==1?'a':'');
-  document.getElementById('fileInfo').classList.remove('hidden');
-  ['aiBtn','ai2Btn','expBtn','aiScr','idScr'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=false});
+  document.getElementById('fileBadge').classList.remove('hidden');
+  document.getElementById('fileBadge2').classList.remove('hidden');
+  document.getElementById('noFile2').classList.add('hidden');
+
+  ['expBtn','aiScr','idScr','aiSuggestBtn','aiMeasBtn'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.disabled=false;
+  });
+
   await buildThumbs();
   await renderPage(1);
-  if(wf===2) calcImposition();
+  analyzeVectorPaths();
+  checkResolution();
+  calcImp();
   ss('Valmis','ok');
 }
 
+// ─── Resolution check ──────────────────────────────────────────────────────
+async function checkResolution(){
+  if(!pdfDoc) return;
+  const pg=await pdfDoc.getPage(curPage);
+  const vp=pg.getViewport({scale:1});
+  // PDF pt to mm: 1pt = 0.352mm
+  const wMM=ptToMm(vp.width), hMM=ptToMm(vp.height);
+  // Render at high res and check image sharpness as proxy
+  // Actual DPI = content resolution. For vector PDFs this is infinite.
+  // For raster images embedded: check via operators
+  // Simple approach: render at 300dpi equivalent and compare
+  const dpi300scale = 300/72; // 300dpi vs 72dpi base
+  const testVp=pg.getViewport({scale:1});
+  // PDF pt * (1inch/72pt) * DPI = pixels
+  // At scale=1, 1pt = 1px in pdfjs (72dpi equivalent)
+  // So page at 300dpi would be scale=300/72=4.167
+  
+  const wIn=vp.width/72, hIn=vp.height/72; // inches
+  const badge=document.getElementById('resBadge');
+  
+  // Check if PDF has embedded raster images by rendering at 2x and checking
+  const tc=document.createElement('canvas');
+  const checkScale=2;
+  const cvp=pg.getViewport({scale:checkScale});
+  tc.width=cvp.width; tc.height=cvp.height;
+  await pg.render({canvasContext:tc.getContext('2d'),viewport:cvp}).promise;
+  
+  // Estimate effective DPI: if PDF is purely vector, it's infinite
+  // We check by looking at how many image operators are in the page
+  const ops=await pg.getOperatorList();
+  const hasRasterImages=ops.fnArray.some(fn=>fn===pdfjsLib.OPS.paintImageXObject||fn===pdfjsLib.OPS.paintInlineImageXObject);
+  
+  const pageSizeMM=`${wMM.toFixed(1)}×${hMM.toFixed(1)}mm`;
+  
+  if(!hasRasterImages){
+    badge.innerHTML=`<span class="res-badge ok">✓ Vektori — ${pageSizeMM}</span>`;
+  } else {
+    // Estimate raster DPI
+    badge.innerHTML=`<span class="res-badge warn">⚠ Sisältää rastereita — tarkista DPI — ${pageSizeMM}</span>`;
+  }
+}
+
+// ─── Vector path analysis ──────────────────────────────────────────────────
+async function analyzeVectorPaths(){
+  if(!pdfDoc) return;
+  document.getElementById('pathGroups').innerHTML='<div class="obj-empty"><div class="spin dark" style="display:inline-block;margin-right:6px"></div>Analysoidaan...</div>';
+  
+  const pg=await pdfDoc.getPage(curPage);
+  const ops=await pg.getOperatorList();
+  const vp=pg.getViewport({scale:1});
+  const pH=vp.height;
+  
+  // Parse operator list to extract paths with colors
+  const fnArray=ops.fnArray;
+  const argsArray=ops.argsArray;
+  
+  let currentStrokeColor=[0,0,0]; // RGB
+  let currentFillColor=[0,0,0];
+  let currentLineWidth=1;
+  let groups={};
+  let pathCount=0;
+  
+  // Current path points
+  let currentPath=[];
+  let pathBbox={x0:Infinity,y0:Infinity,x1:-Infinity,y1:-Infinity};
+  
+  const OPS=pdfjsLib.OPS;
+  
+  function colorKey(rgb){
+    return rgb.map(v=>Math.round(v*255)).join(',');
+  }
+  function colorToHex(rgb){
+    if(rgb.length===1) return '#000000'; // grayscale 0=black
+    if(rgb.length===3){
+      const r=Math.round(rgb[0]*255);
+      const g=Math.round(rgb[1]*255);
+      const b=Math.round(rgb[2]*255);
+      return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+    }
+    if(rgb.length===4){ // CMYK
+      const c=rgb[0],m=rgb[1],y=rgb[2],k=rgb[3];
+      const r=Math.round(255*(1-c)*(1-k));
+      const g=Math.round(255*(1-m)*(1-k));
+      const b=Math.round(255*(1-y)*(1-k));
+      return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+    }
+    return '#000000';
+  }
+  function isBlackOrWhite(rgb){
+    const hex=colorToHex(rgb);
+    return hex==='#000000'||hex==='#ffffff'||hex==='#fefefe'||hex==='#010101';
+  }
+  
+  function recordPath(stroke){
+    if(currentPath.length<2) return;
+    const color=stroke?currentStrokeColor:currentFillColor;
+    const key=colorKey(color);
+    const hex=colorToHex(color);
+    if(!groups[key]){
+      groups[key]={hex,paths:[],color,selected:false};
+    }
+    // Compute bbox from path points
+    let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+    currentPath.forEach(([x,y])=>{
+      x0=Math.min(x0,x); y0=Math.min(y0,y);
+      x1=Math.max(x1,x); y1=Math.max(y1,y);
+    });
+    groups[key].paths.push({
+      points:[...currentPath], x0,y0,x1,y1,
+      w:x1-x0, h:y1-y0,
+      lineWidth:currentLineWidth,
+      stroke
+    });
+    pathCount++;
+  }
+  
+  for(let i=0;i<fnArray.length;i++){
+    const fn=fnArray[i];
+    const args=argsArray[i];
+    
+    // Color setting operators
+    if(fn===OPS.setStrokeRGBColor) currentStrokeColor=[...args];
+    else if(fn===OPS.setFillRGBColor) currentFillColor=[...args];
+    else if(fn===OPS.setStrokeGray) currentStrokeColor=[args[0]];
+    else if(fn===OPS.setFillGray) currentFillColor=[args[0]];
+    else if(fn===OPS.setStrokeCMYKColor) currentStrokeColor=[...args];
+    else if(fn===OPS.setFillCMYKColor) currentFillColor=[...args];
+    else if(fn===OPS.setLineWidth) currentLineWidth=args[0];
+    
+    // Path construction
+    else if(fn===OPS.moveTo){
+      currentPath=[[args[0], pH-args[1]]];
+    }
+    else if(fn===OPS.lineTo){
+      currentPath.push([args[0], pH-args[1]]);
+    }
+    else if(fn===OPS.curveTo||fn===OPS.curveTo2||fn===OPS.curveTo3){
+      // Add endpoint of bezier
+      const pts=args;
+      currentPath.push([pts[pts.length-2], pH-pts[pts.length-1]]);
+    }
+    else if(fn===OPS.rectangle){
+      const[x,y,w,h]=args;
+      const py=pH-y;
+      currentPath=[[x,py],[x+w,py],[x+w,py-h],[x,py-h],[x,py]];
+    }
+    else if(fn===OPS.stroke){
+      recordPath(true);
+      currentPath=[];
+    }
+    else if(fn===OPS.fill||fn===OPS.eoFill){
+      currentPath=[];
+    }
+    else if(fn===OPS.fillStroke||fn===OPS.eoFillStroke){
+      recordPath(true);
+      currentPath=[];
+    }
+    else if(fn===OPS.endPath||fn===OPS.closePath){
+      currentPath=[];
+    }
+  }
+  
+  detectedPaths=groups;
+  renderPathGroups(groups, vp);
+}
+
+function renderPathGroups(groups, vp){
+  const container=document.getElementById('pathGroups');
+  const entries=Object.entries(groups);
+  
+  if(!entries.length){
+    container.innerHTML='<div class="obj-empty">Ei vektoripolkuja löydetty</div>';
+    return;
+  }
+  
+  // Sort: colored first, then black/white
+  entries.sort(([,a],[,b])=>{
+    const aBlack=isBlackOrWhiteHex(a.hex);
+    const bBlack=isBlackOrWhiteHex(b.hex);
+    if(aBlack&&!bBlack) return 1;
+    if(!aBlack&&bBlack) return -1;
+    return b.paths.length-a.paths.length;
+  });
+  
+  container.innerHTML='';
+  
+  entries.forEach(([key,group])=>{
+    const isBlack=isBlackOrWhiteHex(group.hex);
+    const totalPaths=group.paths.length;
+    // Estimate: rectangles/lines that could be cut lines
+    const rectLike=group.paths.filter(p=>p.w>5&&p.h>5).length;
+    
+    const div=document.createElement('div');
+    div.className='path-group';
+    div.innerHTML=`
+      <div class="path-group-header" onclick="toggleGroup('${key}')">
+        <div class="color-swatch" style="background:${group.hex}"></div>
+        <div class="path-group-info">
+          <div class="path-group-name">${colorName(group.hex)} ${isBlack?'':'★'}</div>
+          <div class="path-group-meta">${totalPaths} polkua · lw≈${avgLW(group.paths).toFixed(2)}pt</div>
+        </div>
+        <input type="checkbox" class="path-group-check" id="chk_${key}" ${!isBlack?'checked':''} onclick="event.stopPropagation();toggleGroupSel('${key}',this.checked);redraw()">
+      </div>
+      <div class="path-group-body" id="body_${key}">
+        ${group.paths.slice(0,8).map((p,i)=>`<div class="path-item">${i+1}. ${p.w.toFixed(1)}×${p.h.toFixed(1)}pt @ (${p.x0.toFixed(1)},${p.y0.toFixed(1)})</div>`).join('')}
+        ${group.paths.length>8?`<div class="path-item">... ja ${group.paths.length-8} lisää</div>`:''}
+      </div>`;
+    container.appendChild(div);
+    group.selected=!isBlack;
+  });
+  
+  redraw();
+}
+
+function isBlackOrWhiteHex(hex){
+  const h=hex.toLowerCase();
+  return h==='#000000'||h==='#010101'||h==='#ffffff'||h==='#fefefe'||h==='#1c1917';
+}
+function colorName(hex){
+  const h=hex.toLowerCase();
+  if(h==='#ff0000'||h==='#fe0000') return 'Punainen';
+  if(h.startsWith('#ff')&&h.endsWith('00')) return 'Keltainen';
+  if(h==='#0000ff') return 'Sininen';
+  if(h==='#00ff00') return 'Vihreä';
+  if(h==='#ff00ff') return 'Magenta';
+  if(h==='#00ffff') return 'Syaani';
+  if(isBlackOrWhiteHex(h)) return 'Musta/valkoinen';
+  return hex;
+}
+function avgLW(paths){
+  if(!paths.length) return 0;
+  return paths.reduce((s,p)=>s+p.lineWidth,0)/paths.length;
+}
+function toggleGroup(key){
+  const body=document.getElementById('body_'+key);
+  if(body) body.classList.toggle('open');
+}
+function toggleGroupSel(key,val){
+  if(detectedPaths[key]) detectedPaths[key].selected=val;
+}
+
+function isBlackOrWhite(rgb){return isBlackOrWhiteHex(colorToHex2(rgb));}
+function colorToHex2(rgb){
+  if(!rgb||!rgb.length) return '#000000';
+  if(rgb.length===1){const v=Math.round(rgb[0]*255);return '#'+[v,v,v].map(x=>x.toString(16).padStart(2,'0')).join('');}
+  if(rgb.length===3){return '#'+rgb.map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('');}
+  if(rgb.length===4){const[c,m,y,k]=rgb;const r=Math.round(255*(1-c)*(1-k));const g=Math.round(255*(1-m)*(1-k));const b=Math.round(255*(1-y)*(1-k));return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');}
+  return '#000000';
+}
+
+// ─── Convert to spot color ────────────────────────────────────────────────
+function convertToSpot(){
+  const selectedGroups=Object.values(detectedPaths).filter(g=>g.selected);
+  if(!selectedGroups.length){ss('Valitse ensin viivat checkbox-merkinnällä','warn');return;}
+  
+  const spotColor=document.getElementById('t1Color').value;
+  const spotName=document.getElementById('t1SpotName').value;
+  const lineWidth=parseFloat(document.getElementById('t1LineWidth').value)||0.5;
+  const vp=pageVps[curPage];
+  if(!vp){ss('Lataa PDF ensin','warn');return;}
+  
+  // Convert selected paths to cut objects
+  selectedGroups.forEach(group=>{
+    group.paths.forEach((path,i)=>{
+      if(path.w<2&&path.h<2) return; // skip tiny
+      // Scale from PDF pt (at scale=1) to canvas coords (at RS)
+      const x=path.x0*RS;
+      const y=path.y0*RS;
+      const w=path.w*RS;
+      const h=path.h*RS;
+      addObjDirect({
+        name:'Leikkausraja '+(++objCtr),
+        shape:'rect', x, y, w, h,
+        color:spotColor, lineWidth, spotName, dash:'solid',
+        margin:0, pos:'center', regMarks:false
+      });
+    });
+  });
+  
+  ss('Muunnettu spot-väriksi: '+selectedGroups.reduce((s,g)=>s+g.paths.length,0)+' polkua','ok');
+  switchTab(2);
+  redraw();
+}
+
+// ─── Thumbnails & render ──────────────────────────────────────────────────
 async function buildThumbs(){
   const row=document.getElementById('thumbs');row.innerHTML='';
   for(let i=1;i<=Math.min(totalPages,12);i++){
-    const pg=await pdfDoc.getPage(i);const vp=pg.getViewport({scale:.1});
+    const pg=await pdfDoc.getPage(i);
+    const vp=pg.getViewport({scale:.1});
     const tc=document.createElement('canvas');tc.width=vp.width;tc.height=vp.height;
     await pg.render({canvasContext:tc.getContext('2d'),viewport:vp}).promise;
-    const w=document.createElement('div');w.className='thumb'+(i===1?' active':'');w.dataset.p=i;
-    w.appendChild(tc);w.onclick=()=>{curPage=i;renderPage(i);updThumbs()};row.appendChild(w);
+    const w=document.createElement('div');
+    w.className='thumb'+(i===1?' active':'');w.dataset.p=i;
+    w.appendChild(tc);
+    w.onclick=()=>{curPage=i;renderPage(i);updThumbs();analyzeVectorPaths();checkResolution();};
+    row.appendChild(w);
   }
 }
 function updThumbs(){document.querySelectorAll('.thumb').forEach(t=>t.classList.toggle('active',parseInt(t.dataset.p)===curPage))}
@@ -495,24 +869,44 @@ async function renderPage(n){
   await renderTask.promise;
   redraw();updObjList();
 }
-function chPage(d){const n=curPage+d;if(n<1||n>totalPages)return;renderPage(n);updThumbs()}
+function chPage(d){const n=curPage+d;if(n<1||n>totalPages)return;renderPage(n);updThumbs();analyzeVectorPaths();checkResolution();}
 
-// ─── Objects ──────────────────────────────────────────────────────────────────
-function mkObj(p={}){
-  const vp=pageVps[curPage]||{width:400,height:400};const id=++objCtr;
-  return{id,name:p.name||('Kohde '+id),type:p.type||'rect',shape:p.shape||'rect',
-    x:p.x!==undefined?p.x:vp.width*.1,y:p.y!==undefined?p.y:vp.height*.1,
-    w:p.w!==undefined?p.w:vp.width*.8,h:p.h!==undefined?p.h:vp.height*.8,
-    points:p.points||null,closed:p.closed||false,
-    radius:p.radius||0,color:p.color||'#e11d48',lineWidth:p.lineWidth||0.5,
-    spotName:p.spotName||'Die Cut',dash:p.dash||'solid',
-    margin:p.margin||0,pos:p.pos||'center',regMarks:false,nx:0,ny:0,nw:0,nh:0};
+// ─── Zoom ─────────────────────────────────────────────────────────────────
+function doZoom(delta){
+  if(delta===0){
+    const area=document.getElementById('canvasArea');
+    const vp=pageVps[curPage];if(!vp)return;
+    const fit=Math.min((area.clientWidth-48)/vp.width,(area.clientHeight-48)/vp.height,1.5);
+    zoomLevel=Math.round(fit*4)/4;
+  } else {
+    zoomLevel=Math.max(0.25,Math.min(4,zoomLevel+delta));
+  }
+  document.getElementById('zoomLbl').textContent=Math.round(zoomLevel*100)+'%';
+  document.getElementById('canvasOuter').style.transform=`scale(${zoomLevel})`;
+  document.getElementById('canvasOuter').style.transformOrigin='top center';
 }
-function addObj(p={}){if(!pdfDoc)return;const o=mkObj(p);getObjs().push(o);selObj(o.id);updObjList();redraw();return o}
+
+// ─── Objects ──────────────────────────────────────────────────────────────
+function mkObj(p={}){
+  const vp=pageVps[curPage]||{width:400,height:400};
+  const id=++objCtr;
+  return{id,name:p.name||('Kohde '+id),shape:p.shape||'rect',
+    x:p.x!==undefined?p.x:vp.width*.1, y:p.y!==undefined?p.y:vp.height*.1,
+    w:p.w!==undefined?p.w:vp.width*.8, h:p.h!==undefined?p.h:vp.height*.8,
+    points:p.points||null, closed:p.closed||false,
+    radius:p.radius||0, color:p.color||'#FF0099',
+    lineWidth:p.lineWidth||0.5, spotName:p.spotName||'Die Cut',
+    dash:p.dash||'solid', margin:p.margin||0, pos:p.pos||'center',
+    regMarks:false, nx:0,ny:0,nw:0,nh:0};
+}
+function addObj(p={}){if(!pdfDoc){ss('Lataa PDF ensin','warn');return;}const o=mkObj(p);getObjs().push(o);selObj(o.id);updObjList();redraw();return o;}
+function addObjDirect(p){const o=Object.assign(mkObj({}),p,{id:++objCtr});getObjs().push(o);updObjList();redraw();return o;}
+function deleteAllObjs(){pageData[curPage]=[];selId=null;document.getElementById('editPanel').className='edit-panel';updObjList();redraw();}
+
 function selObj(id){
   selId=id;const o=getSel();
   document.getElementById('editPanel').className='edit-panel'+(o?' vis':'');
-  if(!o){updObjList();return}
+  if(!o){updObjList();return;}
   document.getElementById('editLbl').textContent=o.name;
   document.getElementById('eShape').value=o.shape;
   document.getElementById('eRad').value=o.radius;
@@ -570,24 +964,19 @@ function delObj(id){
   if(selId===id){selId=null;document.getElementById('editPanel').className='edit-panel';}
   updObjList();redraw();
 }
-function moveAll(dx,dy){
-  getObjs().forEach(o=>{if(!o.points){o.x+=dx;o.y+=dy;}else{o.points=o.points.map(p=>({x:p.x+dx,y:p.y+dy}));}});
-  redraw();
-}
-
 function updObjList(){
   const list=document.getElementById('objList');const obs=getObjs();
-  if(!obs.length){list.innerHTML='<div class="obj-empty">Ei kohteita</div>';return}
+  if(!obs.length){list.innerHTML='<div class="obj-empty">Ei kohteita</div>';return;}
   list.innerHTML=obs.map(o=>`<div class="obj-row${o.id===selId?' sel':''}" onclick="selObj(${o.id})"><div class="obj-dot" style="color:${o.color}"></div><span class="obj-name">${o.name}</span><span class="obj-shape">${o.points?'pen':o.shape}</span><span class="obj-del" onclick="event.stopPropagation();delObj(${o.id})">×</span></div>`).join('');
 }
 
-// ─── Cut rect ─────────────────────────────────────────────────────────────────
+// ─── Cut rect calc ────────────────────────────────────────────────────────
 function getCR(o){
   const off=o.pos==='inside'?o.margin:o.pos==='outside'?-o.margin:o.margin/2;
   return{x:o.x+off+(o.nx||0),y:o.y+off+(o.ny||0),w:o.w-off*2+(o.nw||0),h:o.h-off*2+(o.nh||0)};
 }
 
-// ─── Drawing ──────────────────────────────────────────────────────────────────
+// ─── Drawing ──────────────────────────────────────────────────────────────
 function applyDash(ctx,d){
   if(d==='dashed')ctx.setLineDash([8,5]);
   else if(d==='dotted')ctx.setLineDash([2,4]);
@@ -621,17 +1010,36 @@ function drawObj(ctx,o,sel){
   if(o.regMarks){ctx.setLineDash([]);const s=10*RS;[[x,y],[x+w,y],[x+w,y+h],[x,y+h]].forEach(([cx,cy])=>{ctx.beginPath();ctx.moveTo(cx-s,cy);ctx.lineTo(cx+s,cy);ctx.moveTo(cx,cy-s);ctx.lineTo(cx,cy+s);ctx.arc(cx,cy,s*.4,0,Math.PI*2);ctx.stroke();});}
 }
 
-function drawImposition(ctx){
-  if(!impData||wf!==2)return;
-  const{cols,rows,cellWpx,cellHpx,offXpx,offYpx,gapXpx,gapYpx,shape,radiusPx,color}=impData;
+function drawTab1Overlay(ctx){
+  // Draw detected paths with their actual colors, highlight selected
+  Object.values(detectedPaths).forEach(group=>{
+    if(!group.selected) return;
+    const spotColor=document.getElementById('t1Color').value;
+    ctx.strokeStyle=spotColor;
+    ctx.lineWidth=1.5;
+    ctx.setLineDash([4,3]);
+    group.paths.forEach(path=>{
+      if(path.w<2&&path.h<2) return;
+      // path coords are in PDF pt (scale=1), convert to canvas (scale=RS)
+      const x=path.x0*RS, y=path.y0*RS;
+      const w=path.w*RS, h=path.h*RS;
+      ctx.beginPath();ctx.rect(x,y,w,h);ctx.stroke();
+    });
+    ctx.setLineDash([]);
+  });
+}
+
+function drawImpOverlay(ctx){
+  if(!impData) return;
+  const{rows,cols,cellW,cellH,offX,offY,gapX,gapY,shape,radPx,color}=impData;
   ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.setLineDash([]);
   for(let r=0;r<rows;r++){
     for(let c=0;c<cols;c++){
-      const x=offXpx+c*(cellWpx+gapXpx);const y=offYpx+r*(cellHpx+gapYpx);
+      const x=offX+c*(cellW+gapX);const y=offY+r*(cellH+gapY);
       ctx.beginPath();
-      if(shape==='circle'){ctx.ellipse(x+cellWpx/2,y+cellHpx/2,cellWpx/2,cellHpx/2,0,0,Math.PI*2);}
-      else if(shape==='rounded'){const rv=Math.min(radiusPx,cellWpx/2,cellHpx/2);ctx.moveTo(x+rv,y);ctx.lineTo(x+cellWpx-rv,y);ctx.arcTo(x+cellWpx,y,x+cellWpx,y+rv,rv);ctx.lineTo(x+cellWpx,y+cellHpx-rv);ctx.arcTo(x+cellWpx,y+cellHpx,x+cellWpx-rv,y+cellHpx,rv);ctx.lineTo(x+rv,y+cellHpx);ctx.arcTo(x,y+cellHpx,x,y+cellHpx-rv,rv);ctx.lineTo(x,y+rv);ctx.arcTo(x,y,x+rv,y,rv);ctx.closePath();}
-      else{ctx.rect(x,y,cellWpx,cellHpx);}
+      if(shape==='circle'){ctx.ellipse(x+cellW/2,y+cellH/2,cellW/2,cellH/2,0,0,Math.PI*2);}
+      else if(shape==='rounded'){const rv=Math.min(radPx,cellW/2,cellH/2);ctx.moveTo(x+rv,y);ctx.lineTo(x+cellW-rv,y);ctx.arcTo(x+cellW,y,x+cellW,y+rv,rv);ctx.lineTo(x+cellW,y+cellH-rv);ctx.arcTo(x+cellW,y+cellH,x+cellW-rv,y+cellH,rv);ctx.lineTo(x+rv,y+cellH);ctx.arcTo(x,y+cellH,x,y+cellH-rv,rv);ctx.lineTo(x,y+rv);ctx.arcTo(x,y,x+rv,y,rv);ctx.closePath();}
+      else{ctx.rect(x,y,cellW,cellH);}
       ctx.stroke();
     }
   }
@@ -639,43 +1047,54 @@ function drawImposition(ctx){
 
 function redraw(){
   ovrCtx.clearRect(0,0,ovrCan.width,ovrCan.height);
-  if(wf===1){
+  if(activeTab===1){
+    drawTab1Overlay(ovrCtx);
+  } else if(activeTab===2){
     getObjs().forEach(o=>drawObj(ovrCtx,o,o.id===selId));
-    if(penPts.length>0){ovrCtx.strokeStyle='#e11d48';ovrCtx.lineWidth=1.5;ovrCtx.setLineDash([4,3]);ovrCtx.beginPath();ovrCtx.moveTo(penPts[0].x,penPts[0].y);for(let i=1;i<penPts.length;i++)ovrCtx.lineTo(penPts[i].x,penPts[i].y);if(penPrev)ovrCtx.lineTo(penPrev.x,penPrev.y);ovrCtx.stroke();ovrCtx.setLineDash([]);penPts.forEach((p,i)=>{ovrCtx.fillStyle=i===0?'#e11d48':'#fff';ovrCtx.strokeStyle='#e11d48';ovrCtx.lineWidth=1.5;ovrCtx.beginPath();ovrCtx.arc(p.x,p.y,4,0,Math.PI*2);ovrCtx.fill();ovrCtx.stroke();});}
-    if(dragSt&&(dragSt.type==='dRect'||dragSt.type==='dCirc')){const{sx,sy,cx,cy}=dragSt;const x=Math.min(sx,cx),y=Math.min(sy,cy),w=Math.abs(cx-sx),h=Math.abs(cy-sy);ovrCtx.strokeStyle='#e11d48';ovrCtx.lineWidth=1.5;ovrCtx.setLineDash([4,3]);ovrCtx.beginPath();if(dragSt.type==='dCirc')ovrCtx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);else ovrCtx.rect(x,y,w,h);ovrCtx.stroke();ovrCtx.setLineDash([]);}
-  } else {
-    drawImposition(ovrCtx);
+    if(penPts.length>0){
+      ovrCtx.strokeStyle='#FF0099';ovrCtx.lineWidth=1.5;ovrCtx.setLineDash([4,3]);
+      ovrCtx.beginPath();ovrCtx.moveTo(penPts[0].x,penPts[0].y);
+      for(let i=1;i<penPts.length;i++)ovrCtx.lineTo(penPts[i].x,penPts[i].y);
+      if(penPrev)ovrCtx.lineTo(penPrev.x,penPrev.y);
+      ovrCtx.stroke();ovrCtx.setLineDash([]);
+      penPts.forEach((p,i)=>{ovrCtx.fillStyle=i===0?'#FF0099':'#fff';ovrCtx.strokeStyle='#FF0099';ovrCtx.lineWidth=1.5;ovrCtx.beginPath();ovrCtx.arc(p.x,p.y,4,0,Math.PI*2);ovrCtx.fill();ovrCtx.stroke();});
+    }
+    if(dragSt&&(dragSt.type==='dRect'||dragSt.type==='dCirc')){
+      const{sx,sy,cx,cy}=dragSt;const x=Math.min(sx,cx),y=Math.min(sy,cy),w=Math.abs(cx-sx),h=Math.abs(cy-sy);
+      ovrCtx.strokeStyle='#FF0099';ovrCtx.lineWidth=1.5;ovrCtx.setLineDash([4,3]);
+      ovrCtx.beginPath();if(dragSt.type==='dCirc')ovrCtx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);else ovrCtx.rect(x,y,w,h);
+      ovrCtx.stroke();ovrCtx.setLineDash([]);
+    }
+  } else if(activeTab===3){
+    drawImpOverlay(ovrCtx);
   }
 }
 
-// ─── Tool ─────────────────────────────────────────────────────────────────────
+// ─── Tool ─────────────────────────────────────────────────────────────────
 function setTool(t){
   tool=t;penPts=[];penPrev=null;
   ['Select','Pen','Rect','Circle'].forEach(n=>document.getElementById('tool'+n).classList.toggle('active',n.toLowerCase()===t));
   ovrCan.style.cursor=t==='select'?'default':'crosshair';
   redraw();
 }
-
 document.addEventListener('keydown',e=>{
-  const tag=e.target.tagName;if(tag==='INPUT'||tag==='SELECT'||tag==='TEXTAREA')return;
-  if(wf!==1)return;
-  if(e.key==='v'||e.key==='V')setTool('select');
-  if(e.key==='p'||e.key==='P')setTool('pen');
-  if(e.key==='r'||e.key==='R')setTool('rect');
-  if(e.key==='e'||e.key==='E')setTool('circle');
+  if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;
+  if(activeTab!==2)return;
+  if(e.key==='v')setTool('select');if(e.key==='p')setTool('pen');
+  if(e.key==='r')setTool('rect');if(e.key==='e')setTool('circle');
   if(e.key==='Escape'){penPts=[];penPrev=null;redraw();}
   if((e.key==='Delete'||e.key==='Backspace')&&selId)delObj(selId);
 });
 
-// ─── Mouse ────────────────────────────────────────────────────────────────────
-function cXY(e){const r=ovrCan.getBoundingClientRect();return{x:(e.clientX-r.left)*(ovrCan.width/r.width),y:(e.clientY-r.top)*(ovrCan.height/r.height)};}
+// ─── Mouse ────────────────────────────────────────────────────────────────
+function cXY(e){const r=ovrCan.getBoundingClientRect();return{x:(e.clientX-r.left)*(ovrCan.width/r.width)/zoomLevel,y:(e.clientY-r.top)*(ovrCan.height/r.height)/zoomLevel};}
 function hitHandle(o,mx,my){const{x,y,w,h}=getCR(o);for(const hh of getHandles(x,y,w,h)){if(Math.abs(mx-hh.x)<7&&Math.abs(my-hh.y)<7)return hh.n;}return null;}
 function hitObj(mx,my){const obs=getObjs();for(let i=obs.length-1;i>=0;i--){const o=obs[i];if(o.points){for(let j=1;j<o.points.length;j++){const p1=o.points[j-1],p2=o.points[j];if(distSeg(mx,my,p1.x,p1.y,p2.x,p2.y)<8)return o;}continue;}const{x,y,w,h}=getCR(o);if(mx>=x-4&&mx<=x+w+4&&my>=y-4&&my<=y+h+4)return o;}return null;}
 function distSeg(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay;if(!dx&&!dy)return Math.hypot(px-ax,py-ay);const t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/(dx*dx+dy*dy)));return Math.hypot(px-(ax+t*dx),py-(ay+t*dy));}
 function cursorForHandle(n){if(n==='n'||n==='s')return 'n-resize';if(n==='e'||n==='w')return 'e-resize';if(n==='nw'||n==='se')return 'nw-resize';return 'ne-resize';}
 
 ovrCan.addEventListener('mousemove',e=>{
-  if(wf!==1)return;
+  if(activeTab!==2)return;
   const{x,y}=cXY(e);
   if(tool==='pen'&&penPts.length>0){penPrev={x,y};redraw();return;}
   if(dragSt){
@@ -687,311 +1106,151 @@ ovrCan.addEventListener('mousemove',e=>{
   }
   if(tool==='select'){const o=getSel();if(o&&!o.points){const hh=hitHandle(o,x,y);if(hh){ovrCan.style.cursor=cursorForHandle(hh);return;}}ovrCan.style.cursor=hitObj(x,y)?'move':'default';}
 });
-
 ovrCan.addEventListener('mousedown',e=>{
-  if(wf!==1)return;
+  if(activeTab!==2)return;
   const{x,y}=cXY(e);
-  if(tool==='pen'){
-    if(penPts.length>2&&Math.hypot(x-penPts[0].x,y-penPts[0].y)<10){addObj({type:'pen',shape:'pen',points:[...penPts],closed:true,x:0,y:0,w:0,h:0});penPts=[];penPrev=null;redraw();return;}
-    penPts.push({x,y});redraw();return;
-  }
+  if(tool==='pen'){if(penPts.length>2&&Math.hypot(x-penPts[0].x,y-penPts[0].y)<10){addObj({type:'pen',shape:'pen',points:[...penPts],closed:true,x:0,y:0,w:0,h:0});penPts=[];penPrev=null;redraw();return;}penPts.push({x,y});redraw();return;}
   if(tool==='rect'||tool==='circle'){dragSt={type:tool==='rect'?'dRect':'dCirc',sx:x,sy:y,cx:x,cy:y};return;}
-  const o=getSel();
-  if(o&&!o.points){const hh=hitHandle(o,x,y);if(hh){dragSt={type:'resize',id:o.id,h:hh,sx:x,sy:y,ox:o.x,oy:o.y,ow:o.w,oh:o.h};return;}}
+  const o=getSel();if(o&&!o.points){const hh=hitHandle(o,x,y);if(hh){dragSt={type:'resize',id:o.id,h:hh,sx:x,sy:y,ox:o.x,oy:o.y,ow:o.w,oh:o.h};return;}}
   const hit=hitObj(x,y);
   if(hit){selObj(hit.id);if(!hit.points)dragSt={type:'move',id:hit.id,sx:x,sy:y,ox:hit.x,oy:hit.y};}
   else{selId=null;document.getElementById('editPanel').className='edit-panel';updObjList();redraw();}
 });
-
 ovrCan.addEventListener('mouseup',e=>{
-  if(wf!==1)return;
+  if(activeTab!==2)return;
   const{x,y}=cXY(e);
   if(dragSt&&(dragSt.type==='dRect'||dragSt.type==='dCirc')){const{sx,sy}=dragSt;const rx=Math.min(sx,x),ry=Math.min(sy,y),rw=Math.abs(x-sx),rh=Math.abs(y-sy);if(rw>5&&rh>5)addObj({shape:dragSt.type==='dCirc'?'circle':'rect',x:rx,y:ry,w:rw,h:rh});dragSt=null;redraw();return;}
   dragSt=null;
 });
-
 ovrCan.addEventListener('dblclick',e=>{
-  if(wf!==1)return;
+  if(activeTab!==2)return;
   if(tool==='pen'&&penPts.length>=2){addObj({type:'pen',shape:'pen',points:[...penPts],closed:false,x:0,y:0,w:0,h:0});penPts=[];penPrev=null;redraw();}
 });
 
-// ─── WF2: Imposition ──────────────────────────────────────────────────────────
-function setHasCL(v){
-  document.getElementById('hasClNo').classList.toggle('on',!v);
-  document.getElementById('hasClYes').classList.toggle('on',v);
-  document.getElementById('clColorRow').classList.toggle('hidden',!v);
+// ─── AI Suggest (tab2) ────────────────────────────────────────────────────
+async function runAISuggest(){
+  if(!pdfDoc)return;
+  const btn=document.getElementById('aiSuggestBtn');
+  const spin=document.getElementById('aiSpin');
+  btn.disabled=true;spin.style.display='inline-block';
+  ss('AI analysoi muotoa...','info');
+  const pg=await pdfDoc.getPage(curPage);
+  const vp=pg.getViewport({scale:1.5});
+  const tc=document.createElement('canvas');tc.width=vp.width;tc.height=vp.height;
+  await pg.render({canvasContext:tc.getContext('2d'),viewport:vp}).promise;
+  const b64=tc.toDataURL('image/jpeg',.85).split(',')[1];
+  try{
+    const resp=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:300,
+        messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
+        {type:'text',text:'Analysoi tämä tarra-aineisto. Kerro vain: 1) onko tarran muoto pyöreä, suorakulmainen vai vapaamuotoinen, 2) montako tarraa näkyy, 3) suositteletko rect, circle vai rounded. Vastaa VAIN JSON: {"shape":"rect","count":1,"note":"lyhyt selitys suomeksi"}'}]}]})});
+    const data=await resp.json();
+    const txt=data.content?.filter(b=>b.type==='text').map(b=>b.text).join('');
+    if(txt){
+      const p=JSON.parse(txt.replace(/```json|```/g,'').trim());
+      document.getElementById('aiSuggestRes').innerHTML=`<div class="info-box blue" style="margin-top:8px"><strong>Muotosuositus: ${p.shape}</strong><br>${p.note}<br><em>Piirrä itse yllä olevilla työkaluilla.</em></div>`;
+      ss('AI ehdottaa: '+p.shape,'ok');
+    }
+  }catch(e){ss('AI ei vastannut','warn');}
+  btn.disabled=false;spin.style.display='none';
 }
 
-document.getElementById('stickerShape').addEventListener('change',function(){
-  document.getElementById('stickerRadRow').classList.toggle('hidden',this.value!=='rounded');
-  calcImposition();
-});
-document.getElementById('sheetSize').addEventListener('change',function(){
-  document.getElementById('customSheetRow').classList.toggle('hidden',this.value!=='custom');
-  calcImposition();
-});
-document.getElementById('stickerRad').addEventListener('input',function(){
-  document.getElementById('stickerRadVal').textContent=this.value;
-  calcImposition();
-});
+// ─── AI Measure (tab3) ───────────────────────────────────────────────────
+async function runAIMeasure(){
+  if(!pdfDoc)return;
+  const btn=document.getElementById('aiMeasBtn');
+  const spin=document.getElementById('aiMeasSpin');
+  btn.disabled=true;spin.style.display='inline-block';
+  ss('AI mittaa tarraa...','info');
+  const pg=await pdfDoc.getPage(curPage);
+  const vp1=pg.getViewport({scale:1});
+  const wMM=ptToMm(vp1.width),hMM=ptToMm(vp1.height);
+  const vp=pg.getViewport({scale:1.5});
+  const tc=document.createElement('canvas');tc.width=vp.width;tc.height=vp.height;
+  await pg.render({canvasContext:tc.getContext('2d'),viewport:vp}).promise;
+  const b64=tc.toDataURL('image/jpeg',.85).split(',')[1];
+  try{
+    const resp=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:200,
+        messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
+        {type:'text',text:`Tämä on yksittäinen tarra. Sivu on ${wMM.toFixed(1)}x${hMM.toFixed(1)}mm. Mittaa tarran koko ja muoto. Vastaa VAIN JSON: {"widthMM":50,"heightMM":50,"shape":"circle","radiusMM":0}`}]}]})});
+    const data=await resp.json();
+    const txt=data.content?.filter(b=>b.type==='text').map(b=>b.text).join('');
+    if(txt){
+      const p=JSON.parse(txt.replace(/```json|```/g,'').trim());
+      document.getElementById('sW').value=p.widthMM.toFixed(1);
+      document.getElementById('sH').value=p.heightMM.toFixed(1);
+      document.getElementById('sShape').value=p.shape||'rect';
+      document.getElementById('sRadRow').classList.toggle('hidden',p.shape!=='rounded');
+      document.getElementById('aiMeasRes').innerHTML=`<div class="info-box blue" style="margin-bottom:8px">${p.widthMM.toFixed(1)}×${p.heightMM.toFixed(1)}mm · ${p.shape}</div>`;
+      calcImp();ss('Mitat tunnistettu','ok');
+    }
+  }catch(e){ss('Mittaus epäonnistui','warn');}
+  btn.disabled=false;spin.style.display='none';
+}
 
+// ─── Imposition ───────────────────────────────────────────────────────────
+function onSShapeChange(){
+  document.getElementById('sRadRow').classList.toggle('hidden',document.getElementById('sShape').value!=='rounded');
+  calcImp();
+}
+function onSheetChange(){
+  document.getElementById('customSheet').classList.toggle('hidden',document.getElementById('sheetSz').value!=='custom');
+  calcImp();
+}
 function getSheetMM(){
-  const v=document.getElementById('sheetSize').value;
-  if(v==='custom')return{w:parseFloat(document.getElementById('sheetW').value)||210,h:parseFloat(document.getElementById('sheetH').value)||297};
+  const v=document.getElementById('sheetSz').value;
+  if(v==='custom')return{w:parseFloat(document.getElementById('shW').value)||210,h:parseFloat(document.getElementById('shH').value)||297};
   const[sw,sh]=v.split('x').map(Number);return{w:sw,h:sh};
 }
-
-function calcImposition(){
+function calcImp(){
   if(!pdfDoc)return;
-  const sw=parseFloat(document.getElementById('stickerW').value)||50;
-  const sh=parseFloat(document.getElementById('stickerH').value)||50;
-  const bleed=parseFloat(document.getElementById('bleedGap').value)||3;
-  const margin=parseFloat(document.getElementById('sheetMargin').value)||5;
+  const sw=parseFloat(document.getElementById('sW').value)||50;
+  const sh=parseFloat(document.getElementById('sH').value)||50;
+  const bleed=parseFloat(document.getElementById('bleed').value)||3;
+  const margin=parseFloat(document.getElementById('shMargin').value)||5;
   const sheet=getSheetMM();
-  const usableW=sheet.w-margin*2;
-  const usableH=sheet.h-margin*2;
-  const cols=Math.max(1,Math.floor((usableW+bleed)/(sw+bleed)));
-  const rows=Math.max(1,Math.floor((usableH+bleed)/(sh+bleed)));
-  document.getElementById('impRows').value=rows;
-  document.getElementById('impCols').value=cols;
-  updateImposition();
+  const cols=Math.max(1,Math.floor((sheet.w-margin*2+bleed)/(sw+bleed)));
+  const rows=Math.max(1,Math.floor((sheet.h-margin*2+bleed)/(sh+bleed)));
+  document.getElementById('impR').value=rows;
+  document.getElementById('impC').value=cols;
+  drawImp();
 }
-
-function updateImposition(){
+function drawImp(){
   if(!pdfDoc)return;
-  const sw=parseFloat(document.getElementById('stickerW').value)||50;
-  const sh=parseFloat(document.getElementById('stickerH').value)||50;
-  const bleed=parseFloat(document.getElementById('bleedGap').value)||3;
-  const margin=parseFloat(document.getElementById('sheetMargin').value)||5;
-  const rows=parseInt(document.getElementById('impRows').value)||1;
-  const cols=parseInt(document.getElementById('impCols').value)||1;
+  const sw=parseFloat(document.getElementById('sW').value)||50;
+  const sh=parseFloat(document.getElementById('sH').value)||50;
+  const bleed=parseFloat(document.getElementById('bleed').value)||3;
+  const margin=parseFloat(document.getElementById('shMargin').value)||5;
+  const rows=parseInt(document.getElementById('impR').value)||1;
+  const cols=parseInt(document.getElementById('impC').value)||1;
   const sheet=getSheetMM();
-  const shape=document.getElementById('stickerShape').value;
-  const radiusMM=parseFloat(document.getElementById('stickerRad').value)||0;
+  const shape=document.getElementById('sShape').value;
+  const radMM=parseFloat(document.getElementById('sRad').value)||0;
   const color=document.getElementById('impColor').value;
-  const total=rows*cols;
+  const vp=pageVps[curPage];if(!vp)return;
+  const scale=vp.width/sheet.w; // canvas px per mm
   const totalW=cols*sw+(cols-1)*bleed+margin*2;
   const totalH=rows*sh+(rows-1)*bleed+margin*2;
-
-  const vp=pageVps[curPage];
-  if(!vp)return;
-  const pdfPg=pdfDoc?null:null;
-  const mmToPx=(mm)=>mm*(vp.width/(sheet.w)); // scale mm to canvas px based on page width
-  // Use page viewport to map: assume PDF page = sheet size
-  const scaleMM=vp.width/sheet.w;
-
-  impData={
-    rows,cols,shape,color,
-    cellWpx:sw*scaleMM,cellHpx:sh*scaleMM,
-    offXpx:margin*scaleMM,offYpx:margin*scaleMM,
-    gapXpx:bleed*scaleMM,gapYpx:bleed*scaleMM,
-    radiusPx:radiusMM*scaleMM,
-    // for PDF export (in mm)
-    swMM:sw,shMM:sh,bleedMM:bleed,marginMM:margin,
-    radiusMM,sheetW:sheet.w,sheetH:sheet.h,spotName:document.getElementById('impSpot').value
-  };
-
-  const res=document.getElementById('impResult');
-  res.classList.remove('hidden');
   const fits=totalW<=sheet.w&&totalH<=sheet.h;
-  res.innerHTML=`<strong>${total} tarraa</strong> (${rows}×${cols})<br>
-    Tarrat: ${(cols*sw+(cols-1)*bleed).toFixed(1)}×${(rows*sh+(rows-1)*bleed).toFixed(1)}mm<br>
-    Arkki käytetty: ${totalW.toFixed(1)}×${totalH.toFixed(1)}mm / ${sheet.w}×${sheet.h}mm<br>
-    ${fits?'✓ Mahtuu arkille':'⚠️ Ei mahdu — pienennä tai muuta asetuksia'}`;
-  res.style.borderColor=fits?'#fcd34d':'#f87171';
-  redraw();
+  impData={rows,cols,shape,color,
+    cellW:sw*scale,cellH:sh*scale,
+    offX:margin*scale,offY:margin*scale,
+    gapX:bleed*scale,gapY:bleed*scale,
+    radPx:radMM*scale,
+    swMM:sw,shMM:sh,bleedMM:bleed,marginMM:margin,
+    radiusMM:radMM,sheetW:sheet.w,sheetH:sheet.h,
+    spotName:document.getElementById('impSpot').value};
+  const res=document.getElementById('impResult');
+  res.classList.add('visible');
+  res.innerHTML=`<strong>${rows*cols} tarraa</strong> (${rows}×${cols})<br>
+    Käytetty: ${totalW.toFixed(1)}×${totalH.toFixed(1)}mm / ${sheet.w}×${sheet.h}mm<br>
+    ${fits?'✓ Mahtuu arkille':'⚠️ Ylittää arkin — säädä asetuksia'}`;
+  res.style.borderColor=fits?'#fcd34d':'#fecaca';
+  if(activeTab===3)redraw();
 }
 
-// ─── AI WF1: Tunnista leikkausraja ───────────────────────────────────────────
-async function runAI(){
-  if(!pdfDoc)return;
-  const btn=document.getElementById('aiBtn'),spin=document.getElementById('aiSpin');
-  btn.disabled=true;spin.style.display='inline-block';
-  ss('AI analysoi leikkausrajaa...','info');
-  const aiScale=2.5;
-  const pg=await pdfDoc.getPage(curPage);
-  const vp=pg.getViewport({scale:aiScale});
-  const tc=document.createElement('canvas');tc.width=vp.width;tc.height=vp.height;
-  await pg.render({canvasContext:tc.getContext('2d'),viewport:vp}).promise;
-  const b64=tc.toDataURL('image/jpeg',.92).split(',')[1];
-  const W=vp.width,H=vp.height;
-
-  const prompt=`Olet painotuotannon asiantuntija. Tehtäväsi on tunnistaa leikkausrajat tässä painoaineistossa.
-
-Kuvan koko: ${W}x${H}px
-
-Analysoi seuraavasti:
-1. ONKO leikkausraja jo piirrettynä? Etsi viivoja jotka kulkevat tarran/tuotteen reunaa pitkin eri värillä kuin sisältö (usein sininen, punainen, magenta, musta katkoviiva tai ohut kehysviiva).
-2. MONTAKO erillistä leikattavaa kohdetta on? (yksi tarra, vai useita arkilla)
-3. MIKÄ ON MUOTO? Ympyrä/ellipsi, suorakulmio, pyöristetty kulma, vai vapaamuotoinen?
-4. Jos useita kohteita: laske RIVIT ja SARAKKEET tarkasti. Mittaa YHDEN kohteen leikkausrajan sijainti ja koko pikseleinä.
-
-TÄRKEÄÄ:
-- Jos näet selkeän kehysviivan tarran reunalla — MITTAA SE tarkasti. Se on leikkausraja.
-- Älä sekoita tarran sisältöä (kuva, teksti) leikkausrajaan.
-- Ympyrämuotoiselle tarralle: ellipse, ei rect.
-- Älä yliarvioi grid-kokoa.
-
-Vastaa VAIN JSON:
-{
-  "hasExistingCutLine": true,
-  "existingLineColor": "sininen",
-  "layoutType": "grid",
-  "grid": {"rows": 2, "cols": 4},
-  "firstCell": {"xPx": 40, "yPx": 40, "wPx": 200, "hPx": 200},
-  "gutter": {"x": 10, "y": 10},
-  "shape": "circle",
-  "radius": 0,
-  "spotName": "Die Cut",
-  "confidence": "high",
-  "summary": "Lyhyt suomenkielinen kuvaus"
-}`;
-
-  try{
-    const resp=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:1000,
-        messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},{type:'text',text:prompt}]}]})});
-    const data=await resp.json();
-    const cnt=data.content||[];
-    let txt=Array.isArray(cnt)?cnt.filter(b=>b.type==='text').map(b=>b.text).join(''):'';
-    if(!txt&&data.error)throw new Error('API virhe: '+JSON.stringify(data.error));
-    if(!txt)throw new Error('Tyhjä vastaus API:lta');
-    const p=JSON.parse(txt.replace(/```json|```/g,'').trim());
-    const sr_calc=RS/aiScale;
-    const dbg=document.getElementById('debugBox');
-    dbg.style.display='block';
-    dbg.innerHTML='<b>AI vastaus:</b><br>'
-      +'layout: '+p.layoutType+' | grid: '+(p.grid?p.grid.rows+'×'+p.grid.cols:'–')+'<br>'
-      +'firstCell: '+(p.firstCell?JSON.stringify(p.firstCell):'–')+'<br>'
-      +'gutter: '+(p.gutter?JSON.stringify(p.gutter):'–')+'<br>'
-      +'shape: '+p.shape+'<br>'
-      +'<b>Skaalaus:</b> aiScale='+aiScale+' RS='+RS+' sr='+sr_calc.toFixed(4)+'<br>'
-      +'kuva: '+W+'×'+H+'px';
-    // AI rendered at aiScale from PDF page, canvas at RS
-    // Correct mapping: AI image px -> PDF pt -> canvas px
-    // PDF pt width = pageVps[curPage].width / RS
-    // AI image px per PDF pt = aiScale
-    // Canvas px per PDF pt = RS
-    // So: canvasPx = aiPx * (RS / aiScale)
-    const dvp = pageVps[curPage];
-    // Use actual viewport ratio for most accurate mapping
-    const sr = dvp ? (dvp.width / W) : (RS / aiScale);
-
-    let added=[];
-    const gx=(p.gutter?.x||0)*sr,gy=(p.gutter?.y||0)*sr;
-
-    if(p.layoutType==='grid'&&p.grid&&p.firstCell){
-      const{rows,cols}=p.grid;const{xPx,yPx,wPx,hPx}=p.firstCell;
-      const cellW=wPx*sr, cellH=hPx*sr;
-      const stepX=cellW+gx, stepY=cellH+gy;
-      for(let r=0;r<rows;r++)for(let c=0;c<cols;c++)
-        added.push(addObj({name:`Tarra ${r+1}-${c+1}`,shape:p.shape||'rect',
-          x:xPx*sr+c*stepX, y:yPx*sr+r*stepY,
-          w:cellW, h:cellH,
-          radius:p.radius||0, spotName:p.spotName||'Die Cut',
-          color:document.getElementById('eColor').value}));
-    } else if(p.firstCell){
-      const{xPx,yPx,wPx,hPx}=p.firstCell;
-      added.push(addObj({name:'Kohde 1',shape:p.shape||'rect',
-        x:xPx*sr, y:yPx*sr, w:wPx*sr, h:hPx*sr,
-        radius:p.radius||0, spotName:p.spotName||'Die Cut',
-        color:document.getElementById('eColor').value}));
-    }
-
-    const cc=p.confidence==='high'?'hi':p.confidence==='medium'?'med':'lo';
-    const cl=p.confidence==='high'?'Korkea':p.confidence==='medium'?'Kohtalainen':'Matala';
-    const gl=p.layoutType==='grid'&&p.grid?` — ${p.grid.rows}×${p.grid.cols} grid`:'';
-    const clNote=p.hasExistingCutLine?`<br><strong>Leikkausraja löydetty:</strong> ${p.existingLineColor} — muunnettu spot-väriksi`:'<br><em>Ei olemassaolevaa rajaa — lisätty automaattisesti</em>';
-    document.getElementById('aiRes').innerHTML=`<div class="ai-box">${added.length} kohde${added.length!==1?'tta':''}${gl} <span class="conf ${cc}">${cl}</span><br>${p.summary}${clNote}
-    <br><br><strong>Siirrä kaikki rajat kerralla:</strong><br>
-    <div style="display:flex;gap:4px;margin-top:4px;flex-wrap:wrap">
-      <button onclick="moveAll(-5,0)" style="padding:3px 8px;font-size:11px;border:1px solid #bfdbfe;border-radius:4px;cursor:pointer;background:#fff">← 5px</button>
-      <button onclick="moveAll(5,0)" style="padding:3px 8px;font-size:11px;border:1px solid #bfdbfe;border-radius:4px;cursor:pointer;background:#fff">→ 5px</button>
-      <button onclick="moveAll(0,-5)" style="padding:3px 8px;font-size:11px;border:1px solid #bfdbfe;border-radius:4px;cursor:pointer;background:#fff">↑ 5px</button>
-      <button onclick="moveAll(0,5)" style="padding:3px 8px;font-size:11px;border:1px solid #bfdbfe;border-radius:4px;cursor:pointer;background:#fff">↓ 5px</button>
-      <button onclick="moveAll(-20,0)" style="padding:3px 8px;font-size:11px;border:1px solid #bfdbfe;border-radius:4px;cursor:pointer;background:#fff">← 20px</button>
-      <button onclick="moveAll(20,0)" style="padding:3px 8px;font-size:11px;border:1px solid #bfdbfe;border-radius:4px;cursor:pointer;background:#fff">→ 20px</button>
-      <button onclick="moveAll(0,-20)" style="padding:3px 8px;font-size:11px;border:1px solid #bfdbfe;border-radius:4px;cursor:pointer;background:#fff">↑ 20px</button>
-      <button onclick="moveAll(0,20)" style="padding:3px 8px;font-size:11px;border:1px solid #bfdbfe;border-radius:4px;cursor:pointer;background:#fff">↓ 20px</button>
-    </div></div>`;
-    ss(`Tunnistettu ${added.length} kohdetta`,'ok');
-  }catch(e){console.error(e);ss('Tunnistus epäonnistui: '+e.message,'err');}
-  btn.disabled=false;spin.style.display='none';
-}
-
-// ─── AI WF2: Tunnista tarra ───────────────────────────────────────────────────
-async function runAI2(){
-  if(!pdfDoc)return;
-  const btn=document.getElementById('ai2Btn'),spin=document.getElementById('ai2Spin');
-  btn.disabled=true;spin.style.display='inline-block';
-  ss('AI tunnistaa tarran mittoja...','info');
-  const aiScale2=2.5;
-  const pg=await pdfDoc.getPage(curPage);
-  const vp=pg.getViewport({scale:aiScale2});
-  const tc=document.createElement('canvas');tc.width=vp.width;tc.height=vp.height;
-  await pg.render({canvasContext:tc.getContext('2d'),viewport:vp}).promise;
-  const b64=tc.toDataURL('image/jpeg',.92).split(',')[1];
-  const W=vp.width,H=vp.height;
-
-  // Get page size in mm from PDF
-  const pdfPg=await pdfDoc.getPage(curPage);
-  const pdfVp=pdfPg.getViewport({scale:1});
-  const pageWmm=ptToMm(pdfVp.width);const pageHmm=ptToMm(pdfVp.height);
-
-  const prompt=`Olet painotuotannon asiantuntija. Mittaa tämän yksittäisen tarran koko millimetreissä.
-
-PDF-sivun koko: ${pageWmm.toFixed(1)}×${pageHmm.toFixed(1)}mm (kuvan koko: ${W}×${H}px)
-
-Tehtäväsi:
-1. Tunnista tarran ulkoreunan muoto ja koko. Etsi tarkan leikkausrajan viiva jos sellainen on.
-2. Mittaa tarran LEVEYS ja KORKEUS millimetreissä suhteessa sivun kokoon.
-3. Tunnista muoto: "circle", "rect" tai "rounded"
-4. Jos pyöristetty: arvioi pyöristyssäde millimetreissä.
-5. Onko leikkausraja jo piirrettynä (viiva tarran reunalla)?
-
-Vastaa VAIN JSON:
-{
-  "widthMM": 50.0,
-  "heightMM": 50.0,
-  "shape": "circle",
-  "radiusMM": 0,
-  "hasExistingCutLine": false,
-  "existingLineColor": null,
-  "confidence": "high",
-  "summary": "kuvaus suomeksi"
-}`;
-
-  try{
-    const resp=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:500,
-        messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},{type:'text',text:prompt}]}]})});
-    const data=await resp.json();
-    const cnt=data.content||[];
-    let txt=Array.isArray(cnt)?cnt.filter(b=>b.type==='text').map(b=>b.text).join(''):'';
-    if(!txt&&data.error)throw new Error('API virhe: '+JSON.stringify(data.error));
-    if(!txt)throw new Error('Tyhjä vastaus');
-    const p=JSON.parse(txt.replace(/```json|```/g,'').trim());
-    document.getElementById('stickerW').value=p.widthMM.toFixed(1);
-    document.getElementById('stickerH').value=p.heightMM.toFixed(1);
-    document.getElementById('stickerShape').value=p.shape||'rect';
-    document.getElementById('stickerRadRow').classList.toggle('hidden',p.shape!=='rounded');
-    if(p.radiusMM){document.getElementById('stickerRad').value=p.radiusMM;document.getElementById('stickerRadVal').textContent=p.radiusMM;}
-    if(p.hasExistingCutLine){setHasCL(true);document.getElementById('clColor').value=p.existingLineColor||'';}
-    const cc=p.confidence==='high'?'hi':p.confidence==='medium'?'med':'lo';
-    document.getElementById('ai2Res').innerHTML=`<div class="ai-box">${p.widthMM.toFixed(1)}×${p.heightMM.toFixed(1)}mm, ${p.shape} <span class="conf ${cc}">${p.confidence==='high'?'Korkea':'Kohtalainen'}</span><br>${p.summary}</div>`;
-    calcImposition();
-    ss('Tarran mitat tunnistettu','ok');
-  }catch(e){console.error(e);ss('Tunnistus epäonnistui: '+e.message,'err');}
-  btn.disabled=false;spin.style.display='none';
-}
-
-// ─── Export ───────────────────────────────────────────────────────────────────
-function getCRpt(o,sx,sy){
-  const off=o.pos==='inside'?o.margin:o.pos==='outside'?-o.margin:o.margin/2;
-  return{x:(o.x+off+(o.nx||0))/RS*sx,y:(o.y+off+(o.ny||0))/RS*sy,
-    w:(o.w-off*2+(o.nw||0))/RS*sx,h:(o.h-off*2+(o.nh||0))/RS*sy};
-}
-
+// ─── Export ───────────────────────────────────────────────────────────────
 function buildOps(o,pW,pH,vp){
   const sx=pW/(vp.width/RS),sy=pH/(vp.height/RS);
   if(o.points&&o.points.length>1){
@@ -1010,26 +1269,54 @@ function buildOps(o,pW,pH,vp){
   return `q 1 0 1 RG [] 0 d ${o.lineWidth} w ${dash}${path} S Q`;
 }
 
-function buildImpOps(impD,pW,pH){
-  const{rows,cols,swMM,shMM,bleedMM,marginMM,shape,radiusMM,sheetW,sheetH}=impD;
-  const scaleX=pW/mmToPt(sheetW),scaleY=pH/mmToPt(sheetH);
-  const swPt=mmToPt(swMM)*scaleX,shPt=mmToPt(shMM)*scaleY;
-  const bleedXPt=mmToPt(bleedMM)*scaleX,bleedYPt=mmToPt(bleedMM)*scaleY;
-  const offXPt=mmToPt(marginMM)*scaleX,offYPt=mmToPt(marginMM)*scaleY;
-  const radPt=mmToPt(radiusMM)*Math.min(scaleX,scaleY);
-  let ops='';
+// Tab1: build ops from detected paths directly (100% accurate)
+function buildTab1Ops(pW,pH,pageVp){
+  const spotColor=document.getElementById('t1Color').value;
+  const lw=parseFloat(document.getElementById('t1LineWidth').value)||0.5;
+  const r=parseInt(spotColor.slice(1,3),16)/255;
+  const g=parseInt(spotColor.slice(3,5),16)/255;
+  const b=parseInt(spotColor.slice(5,7),16)/255;
+  let ops=`q ${r.toFixed(3)} ${g.toFixed(3)} ${b.toFixed(3)} RG [] 0 d ${lw} w\n`;
+  Object.values(detectedPaths).filter(gr=>gr.selected).forEach(group=>{
+    group.paths.forEach(path=>{
+      if(path.w<2&&path.h<2) return;
+      // path coords are in PDF pt (pdfjs scale=1, y flipped)
+      // pdfY = pageVp.height/RS - path.y0... actually path.y0 is already canvas-y (top-down)
+      // We stored y as pH-args[1] where pH=pageVp.height/1 (scale=1)
+      // So to get PDF y (bottom-up): pdfY = (pageVp.height/RS) - (path.y0/RS) ... wait
+      // path.y0 = canvas top-down y in scale=1 units
+      // PDF uses bottom-up: pdf_y = page_height_pt - canvas_y_pt
+      const pageHpt=pageVp.height/RS; // page height in pt
+      const x=path.x0, y=pageHpt-path.y0-path.h; // PDF bottom-up y
+      const w=path.w, h=path.h;
+      ops+=`${x.toFixed(3)} ${y.toFixed(3)} ${w.toFixed(3)} ${h.toFixed(3)} re S\n`;
+    });
+  });
+  ops+='Q';
+  return ops;
+}
+
+function buildImpOps(d,pW,pH){
+  const{rows,cols,swMM,shMM,bleedMM,marginMM,shape,radiusMM,sheetW,sheetH}=d;
+  const scX=pW/mmToPt(sheetW),scY=pH/mmToPt(sheetH);
+  const swPt=mmToPt(swMM)*scX,shPt=mmToPt(shMM)*scY;
+  const blX=mmToPt(bleedMM)*scX,blY=mmToPt(bleedMM)*scY;
+  const offX=mmToPt(marginMM)*scX,offY=mmToPt(marginMM)*scY;
+  const radPt=mmToPt(radiusMM)*Math.min(scX,scY);
+  let ops='q 1 0 1 RG [] 0 d 0.5 w\n';
   for(let r=0;r<rows;r++){
     for(let c=0;c<cols;c++){
-      const x=offXPt+c*(swPt+bleedXPt);
-      const y2=offYPt+r*(shPt+bleedYPt);
+      const x=offX+c*(swPt+blX);
+      const y2=offY+r*(shPt+blY);
       const pdfY=pH-y2-shPt;
       let path='';
       if(shape==='circle'){const cx=x+swPt/2,cy=pdfY+shPt/2,a=swPt/2,b=shPt/2,k=.5523;path=`${cx} ${cy+b} m ${cx+a*k} ${cy+b} ${cx+a} ${cy+b*k} ${cx+a} ${cy} c ${cx+a} ${cy-b*k} ${cx+a*k} ${cy-b} ${cx} ${cy-b} c ${cx-a*k} ${cy-b} ${cx-a} ${cy-b*k} ${cx-a} ${cy} c ${cx-a} ${cy+b*k} ${cx-a*k} ${cy+b} ${cx} ${cy+b} c`;}
       else if(shape==='rounded'){const rv=Math.min(radPt,swPt/2,shPt/2);const x0=x,y0=pdfY,x1=x+swPt,y1=pdfY+shPt;path=`${x0+rv} ${y0} m ${x1-rv} ${y0} l ${x1} ${y0} ${x1} ${y0+rv} v ${x1} ${y1-rv} l ${x1} ${y1} ${x1-rv} ${y1} v ${x0+rv} ${y1} l ${x0} ${y1} ${x0} ${y1-rv} v ${x0} ${y0+rv} l ${x0} ${y0} ${x0+rv} ${y0} v`;}
       else{path=`${x} ${pdfY} m ${x+swPt} ${pdfY} l ${x+swPt} ${pdfY+shPt} l ${x} ${pdfY+shPt} l h`;}
-      ops+=`\nq 1 0 1 RG [] 0 d 0.5 w ${path} S Q`;
+      ops+=path+' S\n';
     }
   }
+  ops+='Q';
   return ops;
 }
 
@@ -1041,111 +1328,77 @@ function drawCutsOn(page,obs,vp){
 
 async function doExport(){
   if(!pdfDoc){alert('Lataa PDF ensin.');return;}
-  if(wf===1){
-    if(!Object.values(pageData).some(a=>a.length>0)){alert('Lisää leikkausrajoja ensin.');return;}
-    await exportWF1();
-  } else {
-    if(!impData){alert('Aseta ensin tarran tiedot.');return;}
-    await exportWF2();
-  }
-}
-
-async function exportWF1(){
   ss('Generoidaan...','info');
   const mode=document.getElementById('expMode').value;
   try{
-    if(mode==='combo'){
+    if(activeTab===1){
+      // Export with detected paths as spot color
+      const selected=Object.values(detectedPaths).filter(g=>g.selected);
+      if(!selected.length){ss('Valitse viivat ensin','warn');return;}
       const doc=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));
-      const pgs=doc.getPages();
-      Object.entries(pageData).forEach(([pg,obs])=>{const idx=parseInt(pg)-1;if(idx>=pgs.length||!obs.length)return;const vp=pageVps[parseInt(pg)]||{width:pgs[idx].getSize().width*RS,height:pgs[idx].getSize().height*RS};drawCutsOn(pgs[idx],obs,vp);});
-      dlPDF(await doc.save(),'leikkausraja_yhdistetty.pdf');ss('Yhdistetty PDF ladattu','ok');
-    } else if(mode==='split'){
-      const docP=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));
-      const docC=await PDFLib.PDFDocument.create();
-      const srcPgs=docP.getPages();
-      for(let i=0;i<srcPgs.length;i++){const pgN=i+1,blank=docC.addPage([srcPgs[i].getSize().width,srcPgs[i].getSize().height]);const obs=pageData[pgN]||[];if(obs.length){const vp=pageVps[pgN]||{width:srcPgs[i].getSize().width*RS,height:srcPgs[i].getSize().height*RS};drawCutsOn(blank,obs,vp);}}
-      dlPDF(await docP.save(),'tulostusaineisto.pdf');await new Promise(r=>setTimeout(r,400));dlPDF(await docC.save(),'leikkausrajat.pdf');ss('Kaksi PDF:ää ladattu','ok');
-    } else {
-      const src=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));
-      const docC=await PDFLib.PDFDocument.create();
-      const srcPgs=src.getPages();
-      for(let i=0;i<srcPgs.length;i++){const pgN=i+1,blank=docC.addPage([srcPgs[i].getSize().width,srcPgs[i].getSize().height]);const obs=pageData[pgN]||[];if(obs.length){const vp=pageVps[pgN]||{width:srcPgs[i].getSize().width*RS,height:srcPgs[i].getSize().height*RS};drawCutsOn(blank,obs,vp);}}
-      dlPDF(await docC.save(),'leikkausrajat_only.pdf');ss('Leikkaus-PDF ladattu','ok');
-    }
-  }catch(e){console.error(e);ss('Vienti epäonnistui: '+e.message,'err');}
-}
-
-async function exportWF2(){
-  ss('Generoidaan arkkiasemointi...','info');
-  try{
-    const{sheetW,sheetH,spotName}=impData;
-    const mode=document.getElementById('expMode').value;
-    const sheetWpt=mmToPt(sheetW),sheetHpt=mmToPt(sheetH);
-
-    if(mode==='combo'||mode==='cutonly'){
-      // Create sheet with original sticker content + cut lines
-      const docOut=await PDFLib.PDFDocument.create();
-      const page=docOut.addPage([sheetWpt,sheetHpt]);
-      // If original PDF has content, embed it tiled
-      if(mode==='combo'&&pdfBytes){
-        const srcDoc=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));
-        const[embPg]=await docOut.embedPages([srcDoc.getPages()[curPage-1]]);
-        const{rows,cols,swMM,shMM,bleedMM,marginMM}=impData;
-        const offXpt=mmToPt(marginMM),offYpt=mmToPt(marginMM);
-        const swPt=mmToPt(swMM),shPt=mmToPt(shMM),bleedPt=mmToPt(bleedMM);
-        for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
-          const x=offXpt+c*(swPt+bleedPt);
-          const y=sheetHpt-offYpt-shPt-r*(shPt+bleedPt);
-          page.drawPage(embPg,{x,y,width:swPt,height:shPt});
-        }
-      }
-      // Draw cut lines
+      const pages=doc.getPages();
+      const page=pages[curPage-1];
+      const{width:pW,height:pH}=page.getSize();
+      const vp=pageVps[curPage];
+      const ops=buildTab1Ops(pW,pH,vp);
       page.drawRectangle({x:0,y:0,width:0,height:0,opacity:0});
-      page.pushOperators({toString:()=>buildImpOps(impData,sheetWpt,sheetHpt)});
-      dlPDF(await docOut.save(),mode==='combo'?'arkki_leikkausraja.pdf':'arkki_leikkausraja_only.pdf');
-      ss('Arkkipohja ladattu','ok');
-    } else {
-      // Split: content sheet + cut sheet
-      const docContent=await PDFLib.PDFDocument.create();
-      const docCut=await PDFLib.PDFDocument.create();
-      const pgC=docContent.addPage([sheetWpt,sheetHpt]);
-      const pgK=docCut.addPage([sheetWpt,sheetHpt]);
-      if(pdfBytes){
-        const srcDoc=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));
-        const[embPg]=await docContent.embedPages([srcDoc.getPages()[curPage-1]]);
-        const{rows,cols,swMM,shMM,bleedMM,marginMM}=impData;
-        const offXpt=mmToPt(marginMM),swPt=mmToPt(swMM),shPt=mmToPt(shMM),bleedPt=mmToPt(bleedMM);
-        for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
-          const x=offXpt+c*(swPt+bleedPt);
-          const y=sheetHpt-mmToPt(marginMM)-shPt-r*(shPt+bleedPt);
-          pgC.drawPage(embPg,{x,y,width:swPt,height:shPt});
-        }
+      page.pushOperators({toString:()=>'\n'+ops});
+      dlPDF(await doc.save(),'leikkausraja_spotcolor.pdf');
+      ss('PDF viety spot-väreillä','ok');
+    } else if(activeTab===2){
+      const obs=Object.values(pageData).flat();
+      if(!obs.length){ss('Lisää leikkausrajoja ensin','warn');return;}
+      if(mode==='combo'){
+        const doc=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));
+        const pgs=doc.getPages();
+        Object.entries(pageData).forEach(([pg,obs])=>{const idx=parseInt(pg)-1;if(idx>=pgs.length||!obs.length)return;const vp=pageVps[parseInt(pg)]||{width:pgs[idx].getSize().width*RS,height:pgs[idx].getSize().height*RS};drawCutsOn(pgs[idx],obs,vp);});
+        dlPDF(await doc.save(),'leikkausraja_yhdistetty.pdf');ss('Yhdistetty PDF ladattu','ok');
+      } else if(mode==='split'){
+        const docP=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));
+        const docC=await PDFLib.PDFDocument.create();
+        const srcPgs=docP.getPages();
+        for(let i=0;i<srcPgs.length;i++){const pgN=i+1,blank=docC.addPage([srcPgs[i].getSize().width,srcPgs[i].getSize().height]);const obs=pageData[pgN]||[];if(obs.length){const vp=pageVps[pgN]||{width:srcPgs[i].getSize().width*RS,height:srcPgs[i].getSize().height*RS};drawCutsOn(blank,obs,vp);}}
+        dlPDF(await docP.save(),'tulostusaineisto.pdf');await new Promise(r=>setTimeout(r,400));dlPDF(await docC.save(),'leikkausrajat.pdf');ss('Kaksi PDF:ää ladattu','ok');
+      } else {
+        const src=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));
+        const docC=await PDFLib.PDFDocument.create();
+        const srcPgs=src.getPages();
+        for(let i=0;i<srcPgs.length;i++){const pgN=i+1,blank=docC.addPage([srcPgs[i].getSize().width,srcPgs[i].getSize().height]);const obs=pageData[pgN]||[];if(obs.length){const vp=pageVps[pgN]||{width:srcPgs[i].getSize().width*RS,height:srcPgs[i].getSize().height*RS};drawCutsOn(blank,obs,vp);}}
+        dlPDF(await docC.save(),'leikkausrajat_only.pdf');ss('Leikkaus-PDF ladattu','ok');
       }
-      pgK.drawRectangle({x:0,y:0,width:0,height:0,opacity:0});
-      pgK.pushOperators({toString:()=>buildImpOps(impData,sheetWpt,sheetHpt)});
-      dlPDF(await docContent.save(),'arkki_tulostus.pdf');
-      await new Promise(r=>setTimeout(r,400));
-      dlPDF(await docCut.save(),'arkki_leikkausrajat.pdf');
-      ss('Kaksi arkkitiedostoa ladattu','ok');
+    } else {
+      if(!impData){ss('Aseta tarran tiedot ensin','warn');return;}
+      const{sheetW,sheetH}=impData;
+      const pW=mmToPt(sheetW),pH=mmToPt(sheetH);
+      if(mode==='combo'){
+        const docOut=await PDFLib.PDFDocument.create();
+        const page=docOut.addPage([pW,pH]);
+        if(pdfBytes){const srcDoc=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));const[emb]=await docOut.embedPages([srcDoc.getPages()[curPage-1]]);const{rows,cols,swMM,shMM,bleedMM,marginMM}=impData;const offX=mmToPt(marginMM),offY=mmToPt(marginMM),swPt=mmToPt(swMM),shPt=mmToPt(shMM),blPt=mmToPt(bleedMM);for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=offX+c*(swPt+blPt);const y=pH-offY-shPt-r*(shPt+blPt);page.drawPage(emb,{x,y,width:swPt,height:shPt});}}
+        page.drawRectangle({x:0,y:0,width:0,height:0,opacity:0});
+        page.pushOperators({toString:()=>buildImpOps(impData,pW,pH)});
+        dlPDF(await docOut.save(),'arkki_leikkausraja.pdf');ss('Arkki ladattu','ok');
+      } else {
+        const docC=await PDFLib.PDFDocument.create();const docK=await PDFLib.PDFDocument.create();
+        const pgC=docC.addPage([pW,pH]);const pgK=docK.addPage([pW,pH]);
+        if(pdfBytes){const srcDoc=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));const[emb]=await docC.embedPages([srcDoc.getPages()[curPage-1]]);const{rows,cols,swMM,shMM,bleedMM,marginMM}=impData;const offX=mmToPt(marginMM),swPt=mmToPt(swMM),shPt=mmToPt(shMM),blPt=mmToPt(bleedMM);for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=offX+c*(swPt+blPt);const y=pH-mmToPt(marginMM)-shPt-r*(shPt+blPt);pgC.drawPage(emb,{x,y,width:swPt,height:shPt});}}
+        pgK.drawRectangle({x:0,y:0,width:0,height:0,opacity:0});pgK.pushOperators({toString:()=>buildImpOps(impData,pW,pH)});
+        dlPDF(await docC.save(),'arkki_tulostus.pdf');await new Promise(r=>setTimeout(r,400));dlPDF(await docK.save(),'arkki_leikkaus.pdf');ss('Kaksi arkkitiedostoa ladattu','ok');
+      }
     }
   }catch(e){console.error(e);ss('Vienti epäonnistui: '+e.message,'err');}
 }
 
 function dlPDF(bytes,name){const a=document.createElement('a');a.download=name;a.href=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));a.click();}
 
-// ─── Script export ────────────────────────────────────────────────────────────
+// ─── Script export ────────────────────────────────────────────────────────
 function expScript(type){
   const all=[];Object.entries(pageData).forEach(([pg,obs])=>obs.forEach(o=>all.push({page:parseInt(pg),obj:o})));
-  if(!all.length){alert('Lisää leikkausrajoja ensin.');return;}
+  if(!all.length){alert('Lisää leikkausrajoja ensin (välilehti 2).');return;}
   const sn=all[0].obj.spotName||'Die Cut';const L=[];
   if(type==='ai'){
     L.push('// Leikkausraja — Illustrator\n// File > Scripts > Other Script');
     L.push(`var doc=app.activeDocument;var layer;try{layer=doc.layers.getByName("${sn}");}catch(e){layer=doc.layers.add();layer.name="${sn}";}var spot;try{spot=doc.spots.getByName("${sn}");}catch(e){spot=doc.spots.add();spot.name="${sn}";var c=new CMYKColor();c.cyan=0;c.magenta=100;c.yellow=100;c.black=0;spot.color=c;spot.colorType=ColorModel.SPOT;}var sc=new SpotColor();sc.spot=spot;`);
-    all.forEach(({obj:o},i)=>{
-      const vp=pageVps[curPage]||{width:595*RS,height:842*RS};const pH=vp.height/RS;
-      if(o.points&&o.points.length>1){const pts=o.points.map(p=>({x:p.x/RS,y:pH-p.y/RS}));L.push(`var p${i}=doc.pathItems.add();p${i}.setEntirePath([${pts.map(p=>`[${p.x.toFixed(2)},${p.y.toFixed(2)}]`).join(',')}]);${o.closed?`p${i}.closed=true;`:''}p${i}.filled=false;p${i}.stroked=true;p${i}.strokeColor=sc;p${i}.strokeWidth=${o.lineWidth};layer.pathItems.move(p${i},ElementPlacement.PLACEATEND);`);}
-      else{const{x,y,w,h}=getCR(o);const rx=x/RS,ry=pH-(y/RS+h/RS),rw=w/RS,rh=h/RS;if(o.shape==='circle')L.push(`var e${i}=doc.pathItems.ellipse(${ry.toFixed(2)},${rx.toFixed(2)},${rw.toFixed(2)},${rh.toFixed(2)});`);else if(o.shape==='rounded'){const r=Math.min(o.radius,rw/2,rh/2);L.push(`var e${i}=doc.pathItems.roundedRectangle(${ry.toFixed(2)},${rx.toFixed(2)},${rw.toFixed(2)},${rh.toFixed(2)},${r.toFixed(1)},${r.toFixed(1)});`);}else L.push(`var e${i}=doc.pathItems.rectangle(${ry.toFixed(2)},${rx.toFixed(2)},${rw.toFixed(2)},${rh.toFixed(2)});`);L.push(`e${i}.filled=false;e${i}.stroked=true;e${i}.strokeColor=sc;e${i}.strokeWidth=${o.lineWidth};layer.pathItems.move(e${i},ElementPlacement.PLACEATEND);`);}
-    });
+    all.forEach(({obj:o},i)=>{const vp=pageVps[curPage]||{width:595*RS,height:842*RS};const pH=vp.height/RS;if(o.points&&o.points.length>1){const pts=o.points.map(p=>({x:p.x/RS,y:pH-p.y/RS}));L.push(`var p${i}=doc.pathItems.add();p${i}.setEntirePath([${pts.map(p=>`[${p.x.toFixed(2)},${p.y.toFixed(2)}]`).join(',')}]);${o.closed?`p${i}.closed=true;`:''}p${i}.filled=false;p${i}.stroked=true;p${i}.strokeColor=sc;p${i}.strokeWidth=${o.lineWidth};layer.pathItems.move(p${i},ElementPlacement.PLACEATEND);`);}else{const{x,y,w,h}=getCR(o);const rx=x/RS,ry=pH-(y/RS+h/RS),rw=w/RS,rh=h/RS;if(o.shape==='circle')L.push(`var e${i}=doc.pathItems.ellipse(${ry.toFixed(2)},${rx.toFixed(2)},${rw.toFixed(2)},${rh.toFixed(2)});`);else if(o.shape==='rounded'){const r=Math.min(o.radius,rw/2,rh/2);L.push(`var e${i}=doc.pathItems.roundedRectangle(${ry.toFixed(2)},${rx.toFixed(2)},${rw.toFixed(2)},${rh.toFixed(2)},${r.toFixed(1)},${r.toFixed(1)});`);}else L.push(`var e${i}=doc.pathItems.rectangle(${ry.toFixed(2)},${rx.toFixed(2)},${rw.toFixed(2)},${rh.toFixed(2)});`);L.push(`e${i}.filled=false;e${i}.stroked=true;e${i}.strokeColor=sc;e${i}.strokeWidth=${o.lineWidth};layer.pathItems.move(e${i},ElementPlacement.PLACEATEND);`);}});
     L.push(`alert("Leikkausrajat lisätty: ${sn}");`);
   } else {
     L.push(`// Leikkausraja — InDesign\nvar doc=app.activeDocument;var layer;try{layer=doc.layers.item("${sn}");if(!layer.isValid)throw 0;}catch(e){layer=doc.layers.add({name:"${sn}"});}var sw;try{sw=doc.swatches.item("${sn}");if(!sw.isValid)throw 0;}catch(e){sw=doc.colors.add();sw.name="${sn}";sw.model=ColorModel.SPOT;sw.colorValue=[0,100,100,0];sw.space=ColorSpace.CMYK;}`);
