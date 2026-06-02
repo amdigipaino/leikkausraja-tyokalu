@@ -623,15 +623,19 @@ async function analyzeVectorPaths(){
   const OPS=pdfjsLib.OPS;
   
   function colorKey(rgb){
+    if(typeof rgb==='string') return rgb; // spot color hex string
+    if(!Array.isArray(rgb)) return '0,0,0';
     return rgb.map(v=>Math.round(v*255)).join(',');
   }
   function colorToHex(rgb){
-    if(rgb.length===1) return '#000000'; // grayscale 0=black
+    if(typeof rgb==='string') return rgb; // already hex
+    if(!Array.isArray(rgb)||!rgb.length) return '#000000';
+    if(rgb.length===1){
+      const v=Math.round((1-rgb[0])*255);
+      return '#'+[v,v,v].map(x=>x.toString(16).padStart(2,'0')).join('');
+    }
     if(rgb.length===3){
-      const r=Math.round(rgb[0]*255);
-      const g=Math.round(rgb[1]*255);
-      const b=Math.round(rgb[2]*255);
-      return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
+      return '#'+rgb.map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('');
     }
     if(rgb.length===4){ // CMYK
       const c=rgb[0],m=rgb[1],y=rgb[2],k=rgb[3];
@@ -644,12 +648,14 @@ async function analyzeVectorPaths(){
   }
   function isBlackOrWhite(rgb){
     const hex=colorToHex(rgb);
-    return hex==='#000000'||hex==='#ffffff'||hex==='#fefefe'||hex==='#010101';
+    return hex==='#000000'||hex==='#ffffff'||hex==='#fefefe'||hex==='#010101'||hex==='#1a1917';
   }
   
   function recordPath(stroke){
     if(currentPath.length<2) return;
     const color=stroke?currentStrokeColor:currentFillColor;
+    // Skip if no meaningful color info
+    if(!color) return;
     const key=colorKey(color);
     const hex=colorToHex(color);
     if(!groups[key]){
@@ -670,6 +676,26 @@ async function analyzeVectorPaths(){
     pathCount++;
   }
   
+  // Get colorspace names from page resources for spot color identification
+  let csStroke='default', csFill='default';
+  const csNames={}; // CS alias -> name
+  try{
+    const resources=await pg.getOperatorList(); // already have ops
+    // We'll track CS names via dependency loading
+  }catch(e){}
+
+  // Assign distinct colors to spot color slots
+  const spotPalette=['#CC0000','#0055CC','#00AA44','#FF6600','#9900CC','#006666'];
+  let spotColorMap={}; // csName -> hex
+  let spotIdx=0;
+  function getSpotColor(name){
+    if(!spotColorMap[name]){
+      spotColorMap[name]=spotPalette[spotIdx%spotPalette.length];
+      spotIdx++;
+    }
+    return spotColorMap[name];
+  }
+
   for(let i=0;i<fnArray.length;i++){
     const fn=fnArray[i];
     const args=argsArray[i];
@@ -682,6 +708,27 @@ async function analyzeVectorPaths(){
     else if(fn===OPS.setStrokeCMYKColor) currentStrokeColor=[...args];
     else if(fn===OPS.setFillCMYKColor) currentFillColor=[...args];
     else if(fn===OPS.setLineWidth) currentLineWidth=args[0];
+    // Spot colors / SCN operator — setStrokeColorN / setFillColorN
+    else if(fn===OPS.setStrokeColorN){
+      // args is array of values; last may be spot name string
+      const spotName=args[args.length-1];
+      if(typeof spotName==='string'){
+        const hex=getSpotColor(spotName);
+        currentStrokeColor=hex; // store as string
+      } else {
+        // No name, use args as CMYK or grayscale
+        currentStrokeColor=args.length>=4?[args[0],args[1],args[2],args[3]]:[args[0]||0];
+      }
+    }
+    else if(fn===OPS.setFillColorN){
+      const spotName=args[args.length-1];
+      if(typeof spotName==='string'){
+        const hex=getSpotColor(spotName);
+        currentFillColor=hex;
+      } else {
+        currentFillColor=args.length>=4?[args[0],args[1],args[2],args[3]]:[args[0]||0];
+      }
+    }
     
     // Path construction
     else if(fn===OPS.moveTo){
@@ -729,40 +776,44 @@ function renderPathGroups(groups, vp){
     return;
   }
   
-  // Sort: colored first, then black/white
-  entries.sort(([,a],[,b])=>{
-    const aBlack=isBlackOrWhiteHex(a.hex);
-    const bBlack=isBlackOrWhiteHex(b.hex);
-    if(aBlack&&!bBlack) return 1;
-    if(!aBlack&&bBlack) return -1;
-    return b.paths.length-a.paths.length;
-  });
+  // Sort by path count descending, no auto-selection logic
+  entries.sort(([,a],[,b])=>b.paths.length-a.paths.length);
   
-  container.innerHTML='';
+  // Reset all selections
+  entries.forEach(([,g])=>g.selected=false);
+  
+  container.innerHTML='<p style="font-size:11px;color:var(--ink2);margin-bottom:8px">Valitse checkbox-merkinnällä mitkä viivat ovat leikkausrajoja.</p>';
   
   entries.forEach(([key,group])=>{
-    const isBlack=isBlackOrWhiteHex(group.hex);
     const totalPaths=group.paths.length;
-    // Estimate: rectangles/lines that could be cut lines
-    const rectLike=group.paths.filter(p=>p.w>5&&p.h>5).length;
+    const lw=avgLW(group.paths).toFixed(2);
+    const isSpot=typeof group.color==='string'; // spot color
+    const spotLabel=isSpot?' · spot':'';
+    
+    // Size info: min/max bbox
+    const widths=group.paths.map(p=>p.w).filter(w=>w>1);
+    const heights=group.paths.map(p=>p.h).filter(h=>h>1);
+    const sizeInfo=widths.length?
+      ` · ${Math.min(...widths).toFixed(0)}–${Math.max(...widths).toFixed(0)}pt leveys`:'';
     
     const div=document.createElement('div');
     div.className='path-group';
     div.innerHTML=`
       <div class="path-group-header" onclick="toggleGroup('${key}')">
-        <div class="color-swatch" style="background:${group.hex}"></div>
+        <div class="color-swatch" style="background:${group.hex};outline:1px solid rgba(0,0,0,.15)"></div>
         <div class="path-group-info">
-          <div class="path-group-name">${colorName(group.hex)} ${isBlack?'':'★'}</div>
-          <div class="path-group-meta">${totalPaths} polkua · lw≈${avgLW(group.paths).toFixed(2)}pt</div>
+          <div class="path-group-name" style="font-size:11px">${group.hex}${spotLabel}</div>
+          <div class="path-group-meta">${totalPaths} viivaa · lw ${lw}pt${sizeInfo}</div>
         </div>
-        <input type="checkbox" class="path-group-check" id="chk_${key}" ${!isBlack?'checked':''} onclick="event.stopPropagation();toggleGroupSel('${key}',this.checked);redraw()">
+        <input type="checkbox" class="path-group-check" id="chk_${key}"
+          onclick="event.stopPropagation();toggleGroupSel('${key}',this.checked);redraw()">
       </div>
       <div class="path-group-body" id="body_${key}">
-        ${group.paths.slice(0,8).map((p,i)=>`<div class="path-item">${i+1}. ${p.w.toFixed(1)}×${p.h.toFixed(1)}pt @ (${p.x0.toFixed(1)},${p.y0.toFixed(1)})</div>`).join('')}
-        ${group.paths.length>8?`<div class="path-item">... ja ${group.paths.length-8} lisää</div>`:''}
+        ${group.paths.slice(0,10).map((p,i)=>`<div class="path-item">${i+1}. ${p.w.toFixed(1)}×${p.h.toFixed(1)}pt @ (${p.x0.toFixed(1)},${p.y0.toFixed(1)}) lw=${p.lineWidth.toFixed(2)}</div>`).join('')}
+        ${group.paths.length>10?`<div class="path-item" style="color:var(--ink3)">... ja ${group.paths.length-10} lisää</div>`:''}
       </div>`;
     container.appendChild(div);
-    group.selected=!isBlack;
+    group.selected=false;
   });
   
   redraw();
