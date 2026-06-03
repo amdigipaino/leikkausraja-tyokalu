@@ -438,56 +438,54 @@ async function checkRes(){
   }catch(e){console.error('checkRes',e)}
 }
 
-// Vector path analysis — uses server-side PDF parsing for accurate spot color detection
+// Vector path analysis — calls Python backend on Render
+const BACKEND = 'https://leikkausraja-backend.onrender.com';
+
 async function analyzeVectorPaths(){
   if(!pdfDoc||!pdfBytes)return;
   const pg_el=document.getElementById('pgroups');
-  pg_el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Analysoidaan...</div>';
+  pg_el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Analysoidaan...<br><span style="font-size:10px">(ensimmäinen kutsu voi kestää ~15s)</span></div>';
   try{
-    // Send PDF to server-side function for accurate spot color parsing
-    // Convert to base64 for JSON transport
+    // Convert PDF to base64
     const b64=btoa(String.fromCharCode(...new Uint8Array(pdfBytes)));
-    const resp=await fetch('/api/pdf-layers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pdf:b64})});
+    const resp=await fetch(BACKEND+'/analyze',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({pdf:b64})
+    });
+    if(!resp.ok) throw new Error('Backend vastasi: '+resp.status);
     const data=await resp.json();
-    
     if(data.error) throw new Error(data.error);
-    
-    const vp=pageVps[curPage];
-    const pal=['#CC0000','#0055CC','#00AA44','#FF6600','#9900CC','#CC6600','#008888','#884400'];
-    
-    // Build groups from server response
+
+    const pal=['#CC0000','#0055CC','#00AA44','#FF6600','#9900CC','#CC6600','#008888'];
     const groups={};
+
     data.groups.forEach((g,i)=>{
       const hex=pal[i%pal.length];
+      // Convert mm coords to canvas px (RS=1.8, 1pt=1px at RS, 1mm=2.8346pt)
       groups[g.key]={
-        hex,
-        name:g.name,
+        hex, name:g.name,
         paths:g.paths.map(p=>({
-          x0:p.x0*RS, y0:p.y0*RS,
-          x1:(p.x0+p.w)*RS, y1:(p.y0+p.h)*RS,
-          w:p.w*RS, h:p.h*RS, lw:p.lw
+          x0:p.x*2.8346*RS, y0:p.y*2.8346*RS,
+          w:p.w*2.8346*RS, h:p.h*2.8346*RS, lw:p.lw
         })),
-        selected:false,
-        previewColor:hex,
-        spotName:g.name
+        selected:false, previewColor:hex, spotName:g.name
       };
     });
-    
+
     if(!Object.keys(groups).length){
       pg_el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Ei vektoripolkuja löydetty</div>';
       document.getElementById('smaps').innerHTML='';
       return;
     }
-    
     detectedPaths=groups;
     renderPathGroups(groups);
-    
   }catch(e){
     console.error('analyzeVectorPaths',e);
-    // Fallback: try PDF.js-based parsing
-    analyzeVectorPathsFallback();
+    pg_el.innerHTML='<div style="font-size:12px;color:var(--red);padding:8px">Analyysi epäonnistui: '+e.message+'<br><small>Tarkista internet-yhteys</small></div>';
   }
 }
+
 
 // Fallback: PDF.js operator list parsing
 async function analyzeVectorPathsFallback(){
