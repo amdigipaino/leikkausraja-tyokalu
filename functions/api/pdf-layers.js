@@ -1,110 +1,103 @@
-// Cloudflare Pages Function: analyze PDF layers/spot colors server-side
 export async function onRequestPost(context) {
   try {
-    const formData = await context.request.formData();
-    const file = formData.get('pdf');
-    if (!file) return json({error: 'No PDF'}, 400);
+    const body = await context.request.json();
+    const b64 = body.pdf;
+    if (!b64) return json({error: 'No PDF data'}, 400);
 
-    const buf = await file.arrayBuffer();
-    const bytes = new Uint8Array(buf);
-
-    // Parse PDF stream to find spot colors and their paths
-    const text = new TextDecoder('latin1').decode(bytes);
+    // Decode base64 to text (latin1 for binary-safe parsing)
+    const binary = atob(b64);
     
-    // Find ColorSpace resources
+    // Find page height
+    let pageH = 842;
+    const pbMatch = binary.match(/\/MediaBox\s*\[\s*[\d.]+\s+[\d.]+\s+[\d.]+\s+([\d.]+)/);
+    if (pbMatch) pageH = parseFloat(pbMatch[1]);
+
+    // Find ColorSpace names (spot colors)
     const csMap = {};
-    const csRegex = /\/(CS\d+)\s*\[\/Separation\s*\/([^\s\/\]]+)/g;
+    const csRe = /\/(CS\d+)\s*\[\/Separation\s+\/([A-Za-z0-9_ ]+)/g;
     let m;
-    while ((m = csRegex.exec(text)) !== null) {
-      csMap['/'+m[1]] = m[2].replace(/\//g,'');
+    while ((m = csRe.exec(binary)) !== null) {
+      csMap['/'+m[1]] = m[2].trim();
+    }
+    // Also try without slash
+    const csRe2 = /\/(CS\d+)\s*\[\/Separation\s+\(([^)]+)\)/g;
+    while ((m = csRe2.exec(binary)) !== null) {
+      csMap['/'+m[1]] = m[2].trim();
     }
 
-    // Find all layers (OCGs)
-    const layers = [];
-    const ocgRegex = /\/Name\s*\(([^)]+)\)/g;
-    while ((m = ocgRegex.exec(text)) !== null) {
-      if (!layers.includes(m[1])) layers.push(m[1]);
-    }
-
-    // Parse content stream for colored paths
-    // Find CS commands followed by paths and S command
-    const groups = {};
-    
-    // Simple line-by-line parse
-    const lines = text.split('\n');
+    // Parse lines for colored paths
+    const lines = binary.split('\n');
     let curCS = 'default';
     let curLW = 1;
-    let curPaths = [];
-    let curPts = [];
-    let pageH = 842; // default A4
+    let pts = [];
+    const groups = {};
 
-    // Get page size
-    const pbMatch = text.match(/\/MediaBox\s*\[\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)/);
-    if (pbMatch) pageH = parseFloat(pbMatch[4]);
-
-    function flushPath() {
-      if (curPts.length < 2) return;
-      const key = curCS;
-      const name = csMap[curCS] || curCS;
-      if (!groups[key]) groups[key] = {name, paths: []};
+    function flush() {
+      if (pts.length < 2) { pts = []; return; }
+      if (!groups[curCS]) groups[curCS] = { name: csMap[curCS] || curCS, paths: [] };
       let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
-      curPts.forEach(([x,y])=>{x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);});
-      groups[key].paths.push({x0,y0,w:x1-x0,h:y1-y0,lw:curLW});
-      curPts = [];
+      pts.forEach(([x,y])=>{ x0=Math.min(x0,x); y0=Math.min(y0,y); x1=Math.max(x1,x); y1=Math.max(y1,y); });
+      groups[curCS].paths.push({ x0, y0, w: x1-x0, h: y1-y0, lw: curLW });
+      pts = [];
     }
 
-    for (const line of lines) {
-      const parts = line.trim().split(/\s+/);
-      if (parts.length === 0) continue;
-      const cmd = parts[parts.length-1];
-      const args = parts.slice(0,-1);
+    for (const raw of lines) {
+      const line = raw.trim();
+      if (!line) continue;
+      const parts = line.split(/\s+/);
+      const cmd = parts[parts.length - 1];
+      const args = parts.slice(0, -1);
 
-      if (cmd === 'w') curLW = parseFloat(args[0])||1;
-      else if (cmd === 'CS' && args[0]) curCS = args[0];
-      else if (cmd === 'cs' && args[0]) { /* fill cs, ignore */ }
-      else if (cmd === 're' && args.length >= 4) {
-        flushPath();
-        const x=parseFloat(args[0]),y=parseFloat(args[1]),w=parseFloat(args[2]),h=parseFloat(args[3]);
-        curPts = [[x,pageH-y-h],[x+w,pageH-y-h],[x+w,pageH-y],[x,pageH-y]];
+      if (cmd === 'w' && args.length) {
+        curLW = parseFloat(args[0]) || 1;
+      } else if (cmd === 'CS' && args.length) {
+        flush();
+        curCS = args[0];
+      } else if (cmd === 're' && args.length >= 4) {
+        flush();
+        const x=parseFloat(args[0]), y=parseFloat(args[1]), w=parseFloat(args[2]), h=parseFloat(args[3]);
+        // Convert PDF coords (origin bottom-left) to canvas (origin top-left)
+        pts = [[x, pageH-y-h],[x+w, pageH-y-h],[x+w, pageH-y],[x, pageH-y]];
+      } else if (cmd === 'm' && args.length >= 2) {
+        flush();
+        pts = [[parseFloat(args[0]), pageH-parseFloat(args[1])]];
+      } else if (cmd === 'l' && args.length >= 2) {
+        pts.push([parseFloat(args[0]), pageH-parseFloat(args[1])]);
+      } else if (cmd === 'S' || cmd === 's') {
+        flush();
+      } else if (cmd === 'n' || cmd === 'Q') {
+        pts = [];
       }
-      else if (cmd === 'm' && args.length >= 2) {
-        flushPath();
-        curPts = [[parseFloat(args[0]),pageH-parseFloat(args[1])]];
-      }
-      else if (cmd === 'l' && args.length >= 2) curPts.push([parseFloat(args[0]),pageH-parseFloat(args[1])]);
-      else if (cmd === 'S' || cmd === 's') { flushPath(); }
-      else if (cmd === 'n' || cmd === 'Q') curPts = [];
     }
+    flush();
 
-    // Build result
+    // Filter and format result
     const result = Object.entries(groups)
-      .filter(([,g]) => g.paths.length > 0)
       .map(([key, g]) => ({
         key,
         name: g.name,
-        count: g.paths.length,
-        paths: g.paths.filter(p => p.w > 2 || p.h > 2).slice(0, 100)
-      }));
+        paths: g.paths.filter(p => p.w > 2 || p.h > 2)
+      }))
+      .filter(g => g.paths.length > 0);
 
-    return json({
-      colorspaces: csMap,
-      layers,
-      groups: result,
-      pageH
-    });
+    return json({ csMap, groups: result, pageH });
 
   } catch(e) {
-    return json({error: e.message}, 500);
+    return json({ error: e.message }, 500);
   }
 }
 
 export async function onRequestOptions() {
-  return new Response(null, {headers: {'Access-Control-Allow-Origin':'*','Access-Control-Allow-Methods':'POST,OPTIONS','Access-Control-Allow-Headers':'Content-Type'}});
+  return new Response(null, { headers: {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type'
+  }});
 }
 
 function json(data, status=200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'}
+    headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' }
   });
 }
