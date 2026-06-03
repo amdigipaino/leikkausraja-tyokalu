@@ -7,503 +7,317 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
   --ink:#1c1917;--ink2:#57534e;--ink3:#a8a29e;
   --paper:#fafaf9;--paper2:#f5f5f4;--paper3:#e7e5e4;
-  --cut:#FF0099;--cut-bg:#fff0f9;
-  --blue:#2563eb;--blue-bg:#eff6ff;--blue-border:#bfdbfe;
-  --green:#16a34a;--green-bg:#f0fdf4;--green-border:#bbf7d0;
-  --amber:#d97706;--amber-bg:#fffbeb;--amber-border:#fcd34d;
-  --red:#dc2626;--red-bg:#fef2f2;--red-border:#fecaca;
-  --r:6px;--r-lg:10px;
-  --shadow:0 1px 3px rgba(0,0,0,.08);
-  --shadow-lg:0 4px 20px rgba(0,0,0,.12);
+  --pink:#FF0099;--blue:#2563eb;--blue-bg:#eff6ff;
+  --green:#16a34a;--green-bg:#f0fdf4;
+  --red:#dc2626;--red-bg:#fef2f2;
+  --amber:#d97706;--amber-bg:#fffbeb;
+  --r:6px;
 }
 html,body{height:100%;overflow:hidden}
-body{font-family:'DM Sans',sans-serif;background:var(--paper2);color:var(--ink);font-size:14px}
-
-/* Layout */
-.app{display:grid;grid-template-rows:48px 1fr;height:100vh}
-.topbar{background:var(--ink);display:flex;align-items:center;padding:0 16px;gap:12px}
-.topbar-logo{font-family:'DM Mono',monospace;font-size:13px;color:#fff;letter-spacing:.08em;white-space:nowrap}
-.topbar-sep{width:1px;height:20px;background:#44403c;flex-shrink:0}
-.topbar-title{font-size:13px;color:#a8a29e}
-.topbar-right{margin-left:auto;display:flex;gap:8px;align-items:center}
-.workspace{display:grid;grid-template-columns:300px 1fr;height:100%;overflow:hidden}
-
-/* Sidebar */
-.sidebar{background:var(--paper);border-right:1px solid var(--paper3);display:flex;flex-direction:column;overflow:hidden}
-.tab-bar{display:flex;border-bottom:2px solid var(--paper3);flex-shrink:0}
-.tab{flex:1;padding:10px 4px;font-size:11px;font-weight:600;text-align:center;cursor:pointer;border:none;background:transparent;color:var(--ink3);border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .15s;font-family:'DM Sans',sans-serif;line-height:1.3}
-.tab.active{color:var(--blue);border-bottom-color:var(--blue);background:var(--blue-bg)}
-.tab-content{flex:1;overflow-y:auto;display:none;flex-direction:column}
-.tab-content.active{display:flex}
-.sec{padding:12px 14px;border-bottom:1px solid var(--paper3)}
-.sec:last-child{border-bottom:none}
-.sec-lbl{font-family:'DM Mono',monospace;font-size:10px;color:var(--ink3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
-
-/* Upload zone */
-.upload-zone{border:1.5px dashed var(--paper3);border-radius:var(--r-lg);padding:16px;text-align:center;cursor:pointer;transition:all .2s;color:var(--ink2)}
-.upload-zone:hover,.upload-zone.drag{border-color:var(--blue);background:var(--blue-bg);color:var(--blue)}
-.upload-zone svg{margin:0 auto 6px;display:block;opacity:.6}
-.uz-t{font-weight:500;font-size:13px;margin-bottom:2px}
-.uz-s{font-size:11px;color:var(--ink3)}
-.file-badge{margin-top:8px;padding:7px 10px;background:var(--paper2);border-radius:var(--r);font-size:12px;display:flex;align-items:center;gap:8px}
-.file-badge svg{flex-shrink:0;color:var(--ink3)}
-.file-badge-info{min-width:0}
-.file-badge-name{font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.file-badge-meta{color:var(--ink3);font-size:11px;margin-top:1px}
-.thumbs{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
-.thumb{border:2px solid transparent;border-radius:4px;overflow:hidden;cursor:pointer;transition:border-color .15s}
-.thumb.active{border-color:var(--blue)}
-.thumb canvas{display:block}
-
-/* Resolution badge */
-.res-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:var(--r);font-size:11px;font-weight:500;font-family:'DM Mono',monospace;margin-top:6px}
-.res-badge.ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
-.res-badge.warn{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
-.res-badge.err{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
-
-/* Form */
-label.lbl{display:block;font-size:11px;color:var(--ink2);font-weight:500;margin-bottom:4px;margin-top:10px}
-label.lbl:first-child{margin-top:0}
-select,input[type=text],input[type=number]{width:100%;padding:5px 8px;border:1px solid var(--paper3);border-radius:var(--r);font-size:12px;font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);outline:none}
-select:focus,input:focus{border-color:var(--blue)}
-input[type=range]{width:100%;accent-color:var(--cut);height:3px}
-input[type=color]{width:100%;height:28px;border:1px solid var(--paper3);border-radius:var(--r);padding:2px;cursor:pointer}
-.row2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.pval{font-family:'DM Mono',monospace;font-size:11px;color:var(--ink3)}
-.tgl{display:flex;border:1px solid var(--paper3);border-radius:var(--r);overflow:hidden}
-.tgl button{flex:1;padding:5px 4px;font-size:11px;border:none;background:transparent;cursor:pointer;color:var(--ink2);font-family:'DM Sans',sans-serif;transition:background .15s;font-weight:500}
-.tgl button.on{background:var(--ink);color:#fff}
-
-/* Buttons */
-.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;font-size:12px;font-weight:500;border-radius:var(--r);cursor:pointer;border:1px solid var(--paper3);background:var(--paper);color:var(--ink);transition:all .15s;font-family:'DM Sans',sans-serif;white-space:nowrap}
-.btn:hover{background:var(--paper2)}
-.btn:disabled{opacity:.4;cursor:not-allowed}
-.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
-.btn.primary:hover{opacity:.85}
-.btn.blue{background:var(--blue);color:#fff;border-color:var(--blue)}
-.btn.blue:hover{opacity:.85}
-.btn.green{background:var(--green);color:#fff;border-color:var(--green)}
-.btn.green:hover{opacity:.85}
-.btn.pink{background:var(--cut);color:#fff;border-color:var(--cut)}
-.btn.pink:hover{opacity:.85}
-.btn.sm{padding:4px 8px;font-size:11px}
-.btn.xs{padding:3px 6px;font-size:10px}
-.brow{display:flex;gap:5px;flex-wrap:wrap}
-
-/* Vector path list (tab 1) */
-.path-group{border:1px solid var(--paper3);border-radius:var(--r);margin-bottom:6px;overflow:hidden}
-.path-group-header{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;background:var(--paper2);transition:background .15s}
-.path-group-header:hover{background:var(--paper3)}
-.color-swatch{width:16px;height:16px;border-radius:3px;flex-shrink:0;border:1px solid rgba(0,0,0,.1)}
-.path-group-info{flex:1;min-width:0}
-.path-group-name{font-size:12px;font-weight:500}
-.path-group-meta{font-size:10px;color:var(--ink3);font-family:'DM Mono',monospace}
-.path-group-check{width:16px;height:16px;flex-shrink:0;accent-color:var(--cut);cursor:pointer}
-.path-group-body{padding:8px 10px;background:var(--paper);border-top:1px solid var(--paper3);display:none}
-.path-group-body.open{display:block}
-.path-item{font-size:11px;color:var(--ink2);font-family:'DM Mono',monospace;padding:2px 0;border-bottom:1px solid var(--paper3)}
-.path-item:last-child{border-bottom:none}
-
-/* Object list (tab 2) */
-.obj-list{display:flex;flex-direction:column;gap:4px}
-.obj-row{display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:var(--r);border:1px solid var(--paper3);cursor:pointer;transition:all .15s;font-size:12px}
-.obj-row:hover{border-color:var(--ink3)}
-.obj-row.sel{border-color:var(--blue);background:var(--blue-bg)}
-.obj-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;border:1.5px solid currentColor}
-.obj-name{flex:1;font-weight:500}
-.obj-shape{font-size:10px;color:var(--ink3);font-family:'DM Mono',monospace}
-.obj-del{opacity:0;font-size:16px;line-height:1;color:var(--ink3);cursor:pointer;padding:0 2px}
-.obj-row:hover .obj-del{opacity:1}
-.obj-del:hover{color:var(--cut)}
-.obj-empty{font-size:12px;color:var(--ink3);text-align:center;padding:16px 0}
-
-/* Edit panel */
-.edit-panel{display:none}
-.edit-panel.vis{display:block}
-.nudge-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px}
-.nc{display:flex;align-items:center;gap:3px;background:var(--paper2);border-radius:var(--r);padding:4px 6px}
-.nc label{flex:1;font-size:10px;color:var(--ink3);font-family:'DM Mono',monospace}
-.nb{width:20px;height:20px;border:1px solid var(--paper3);border-radius:3px;background:var(--paper);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.nb:hover{background:var(--paper2)}
-.nv{font-size:10px;font-family:'DM Mono',monospace;min-width:24px;text-align:center}
-
-/* Imposition */
-.imp-result{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:var(--r);padding:10px;font-size:12px;line-height:1.7;margin-top:8px;display:none}
-.imp-result.visible{display:block}
-
-/* Main area */
-.main{display:flex;flex-direction:column;overflow:hidden}
-.toolbar{padding:8px 12px;background:var(--paper);border-bottom:1px solid var(--paper3);display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0}
-.tool-group{display:flex;gap:2px;border:1px solid var(--paper3);border-radius:var(--r);padding:2px}
-.tbtn{padding:5px 9px;border:none;background:transparent;border-radius:4px;cursor:pointer;color:var(--ink2);font-size:12px;display:flex;align-items:center;gap:5px;white-space:nowrap;transition:all .15s;font-family:'DM Sans',sans-serif;font-weight:500}
-.tbtn:hover{background:var(--paper2);color:var(--ink)}
-.tbtn.active{background:var(--ink);color:#fff}
-.tsep{width:1px;height:20px;background:var(--paper3);flex-shrink:0}
-.page-nav{display:flex;align-items:center;gap:5px;font-family:'DM Mono',monospace;font-size:12px}
-.page-nav button{width:24px;height:24px;border:1px solid var(--paper3);border-radius:var(--r);background:var(--paper);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
-.zoom-ctrl{display:flex;align-items:center;gap:4px}
-.zoom-ctrl button{width:26px;height:26px;border:1px solid var(--paper3);border-radius:var(--r);background:var(--paper);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
-.zoom-lbl{font-family:'DM Mono',monospace;font-size:11px;min-width:38px;text-align:center}
-.zoom-fit{padding:4px 7px;font-size:11px;border:1px solid var(--paper3);border-radius:var(--r);background:var(--paper);cursor:pointer;font-family:'DM Sans',sans-serif}
-
-/* Canvas */
-.canvas-area{flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:24px;background:var(--paper2)}
-.canvas-outer{display:inline-block;transform-origin:top center}
-.canvas-wrap{position:relative;box-shadow:var(--shadow-lg);display:inline-block}
-#pdfCanvas{display:block}
-#overlayCanvas{position:absolute;top:0;left:0;cursor:default}
-
-/* Status */
-.sbar{font-size:11px;font-family:'DM Mono',monospace;padding:3px 8px;border-radius:var(--r);color:var(--ink2);background:var(--paper2)}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--paper2);color:var(--ink);font-size:14px}
+.app{display:grid;grid-template-columns:300px 1fr;grid-template-rows:48px 1fr;height:100vh}
+.topbar{grid-column:1/-1;background:var(--ink);display:flex;align-items:center;padding:0 16px;gap:12px}
+.logo{font-size:13px;color:#fff;font-weight:600;letter-spacing:.05em}
+.title{font-size:13px;color:#a8a29e}
+.topbar-right{margin-left:auto}
+.sbar{font-size:11px;padding:3px 8px;border-radius:var(--r);background:var(--paper2);color:var(--ink2)}
 .sbar.ok{background:var(--green-bg);color:var(--green)}
 .sbar.err{background:var(--red-bg);color:var(--red)}
 .sbar.info{background:var(--blue-bg);color:var(--blue)}
 .sbar.warn{background:var(--amber-bg);color:var(--amber)}
-
-/* Info box */
-.info-box{border-radius:var(--r);padding:9px 11px;font-size:12px;line-height:1.6;margin-top:8px}
-.info-box.blue{background:var(--blue-bg);border:1px solid var(--blue-border)}
-.info-box.green{background:var(--green-bg);border:1px solid var(--green-border)}
-.info-box.amber{background:var(--amber-bg);border:1px solid var(--amber-border)}
-.conf{display:inline-block;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:600;margin-left:4px;font-family:'DM Mono',monospace}
-.conf.hi{background:#d1fae5;color:#065f46}
-.conf.med{background:#fef3c7;color:#92400e}
-.conf.lo{background:#fee2e2;color:#991b1b}
-
-/* Spinner */
-.spin{width:12px;height:12px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:none;flex-shrink:0}
-.spin.dark{border-color:rgba(0,0,0,.15);border-top-color:var(--ink2)}
+.sidebar{background:var(--paper);border-right:1px solid var(--paper3);overflow-y:auto;display:flex;flex-direction:column}
+.main{display:flex;flex-direction:column;overflow:hidden}
+.tabs{display:flex;border-bottom:2px solid var(--paper3);flex-shrink:0}
+.tab{flex:1;padding:10px 4px;font-size:11px;font-weight:600;text-align:center;cursor:pointer;border:none;background:transparent;color:var(--ink3);border-bottom:3px solid transparent;margin-bottom:-2px;font-family:inherit}
+.tab.on{color:var(--blue);border-bottom-color:var(--blue);background:var(--blue-bg)}
+.tc{flex:1;overflow-y:auto;display:none;flex-direction:column}
+.tc.on{display:flex}
+.sec{padding:12px 14px;border-bottom:1px solid var(--paper3)}
+.slbl{font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:10px;font-weight:600}
+.uz{border:1.5px dashed var(--paper3);border-radius:var(--r);padding:18px 12px;text-align:center;cursor:pointer;color:var(--ink2);transition:all .2s}
+.uz:hover{border-color:var(--blue);background:var(--blue-bg);color:var(--blue)}
+.lbl{display:block;font-size:11px;color:var(--ink2);font-weight:500;margin-bottom:4px;margin-top:8px}
+.lbl:first-child{margin-top:0}
+input[type=text],input[type=number],select{width:100%;padding:5px 8px;border:1px solid var(--paper3);border-radius:var(--r);font-size:12px;font-family:inherit;background:var(--paper);color:var(--ink);outline:none}
+input[type=color]{width:100%;height:28px;border:1px solid var(--paper3);border-radius:var(--r);padding:2px;cursor:pointer}
+input[type=range]{width:100%;height:3px}
+.r2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tgl{display:flex;border:1px solid var(--paper3);border-radius:var(--r);overflow:hidden}
+.tgl button{flex:1;padding:5px;font-size:11px;border:none;background:transparent;cursor:pointer;color:var(--ink2);font-family:inherit;font-weight:500}
+.tgl button.on{background:var(--ink);color:#fff}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 11px;font-size:12px;font-weight:500;border-radius:var(--r);cursor:pointer;border:1px solid var(--paper3);background:var(--paper);color:var(--ink);font-family:inherit;white-space:nowrap}
+.btn:hover{background:var(--paper2)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.blue{background:var(--blue);color:#fff;border-color:var(--blue)}
+.btn.green{background:var(--green);color:#fff;border-color:var(--green)}
+.btn.pink{background:var(--pink);color:#fff;border-color:var(--pink)}
+.btn.sm{padding:4px 8px;font-size:11px}
+.brow{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}
+.pg-group{border:1px solid var(--paper3);border-radius:var(--r);margin-bottom:6px;overflow:hidden}
+.pg-hdr{display:flex;align-items:center;gap:8px;padding:8px 10px;cursor:pointer;background:var(--paper2)}
+.pg-hdr:hover{background:var(--paper3)}
+.swatch{width:14px;height:14px;border-radius:3px;flex-shrink:0;border:1px solid rgba(0,0,0,.15)}
+.pg-info{flex:1;min-width:0}
+.pg-name{font-size:12px;font-weight:500}
+.pg-meta{font-size:10px;color:var(--ink3);font-family:monospace}
+.pg-chk{width:16px;height:16px;cursor:pointer;accent-color:var(--pink)}
+.pg-body{padding:8px 10px;border-top:1px solid var(--paper3);display:none;font-size:11px;font-family:monospace;color:var(--ink2)}
+.pg-body.open{display:block}
+.pg-item{padding:2px 0;border-bottom:1px solid var(--paper3)}
+.pg-item:last-child{border:none}
+.smap-row{display:flex;align-items:center;gap:6px;padding:5px 8px;background:var(--paper2);border-radius:var(--r);border:1px solid var(--paper3);margin-bottom:4px}
+.obj-row{display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:var(--r);border:1px solid var(--paper3);cursor:pointer;font-size:12px}
+.obj-row:hover{border-color:var(--ink3)}
+.obj-row.sel{border-color:var(--blue);background:var(--blue-bg)}
+.obj-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;border:1.5px solid currentColor}
+.obj-del{opacity:0;margin-left:auto;cursor:pointer;color:var(--ink3)}
+.obj-row:hover .obj-del{opacity:1}
+.ep{display:none}.ep.on{display:block}
+.nc{display:flex;align-items:center;gap:3px;background:var(--paper2);border-radius:var(--r);padding:4px 6px}
+.nc label{flex:1;font-size:10px;color:var(--ink3);font-family:monospace}
+.nb{width:20px;height:20px;border:1px solid var(--paper3);border-radius:3px;background:var(--paper);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center}
+.nv{font-size:10px;font-family:monospace;min-width:24px;text-align:center}
+.ng{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px}
+.imp-res{background:var(--amber-bg);border:1px solid #fcd34d;border-radius:var(--r);padding:10px;font-size:12px;line-height:1.7;margin-top:8px;display:none}
+.imp-res.on{display:block}
+.info{background:var(--blue-bg);border:1px solid #bfdbfe;border-radius:var(--r);padding:8px 10px;font-size:12px;line-height:1.6;margin-top:8px}
+.res-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 8px;border-radius:var(--r);font-size:11px;font-weight:500;margin-top:6px}
+.res-badge.ok{background:var(--green-bg);color:var(--green);border:1px solid #bbf7d0}
+.res-badge.warn{background:var(--amber-bg);color:var(--amber);border:1px solid #fcd34d}
+.thumbs{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
+.thumb{border:2px solid transparent;border-radius:4px;overflow:hidden;cursor:pointer}
+.thumb.on{border-color:var(--blue)}
+.toolbar{padding:8px 12px;background:var(--paper);border-bottom:1px solid var(--paper3);display:flex;align-items:center;gap:8px;flex-wrap:wrap;flex-shrink:0}
+.tg{display:flex;gap:2px;border:1px solid var(--paper3);border-radius:var(--r);padding:2px}
+.tb{padding:5px 9px;border:none;background:transparent;border-radius:4px;cursor:pointer;color:var(--ink2);font-size:12px;display:flex;align-items:center;gap:5px;font-family:inherit;font-weight:500}
+.tb:hover{background:var(--paper2)}
+.tb.on{background:var(--ink);color:#fff}
+.sep{width:1px;height:20px;background:var(--paper3)}
+.pnav{display:flex;align-items:center;gap:5px;font-size:12px;font-family:monospace}
+.pnav button{width:24px;height:24px;border:1px solid var(--paper3);border-radius:var(--r);background:var(--paper);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center}
+.zc{display:flex;align-items:center;gap:4px}
+.zc button{width:26px;height:26px;border:1px solid var(--paper3);border-radius:var(--r);background:var(--paper);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.zlbl{font-size:11px;font-family:monospace;min-width:38px;text-align:center}
+.zfit{padding:4px 7px;font-size:11px;border:1px solid var(--paper3);border-radius:var(--r);background:var(--paper);cursor:pointer}
+.ca{flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:24px}
+.co{display:inline-block;transform-origin:top center}
+.cw{position:relative;box-shadow:0 4px 20px rgba(0,0,0,.12);display:inline-block}
+#pc{display:block}
+#oc{position:absolute;top:0;left:0;cursor:default}
+.spin{width:12px;height:12px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:none}
+.spin.dk{border-color:rgba(0,0,0,.15);border-top-color:var(--ink2)}
 @keyframes spin{to{transform:rotate(360deg)}}
-::-webkit-scrollbar{width:4px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--paper3);border-radius:2px}
+select.esm{width:110px;font-size:11px;padding:3px 5px}
 .hidden{display:none!important}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--paper3);border-radius:2px}
 </style>
 </head>
 <body>
 <div class="app">
-
-<!-- Topbar -->
 <div class="topbar">
-  <span class="topbar-logo">AM DIGIPAINO</span>
-  <div class="topbar-sep"></div>
-  <span class="topbar-title">Leikkausraja-työkalu</span>
-  <div class="topbar-right">
-    <span id="sbar" class="sbar">Lataa PDF aloittaaksesi</span>
-  </div>
+  <span class="logo">AM DIGIPAINO</span>
+  <span style="color:#44403c">|</span>
+  <span class="title">Leikkausraja-työkalu</span>
+  <div class="topbar-right"><span id="sb" class="sbar">Lataa PDF aloittaaksesi</span></div>
 </div>
-
-<div class="workspace">
-
-<!-- SIDEBAR -->
 <div class="sidebar">
-  <div class="tab-bar">
-    <button class="tab active" id="tab1" onclick="switchTab(1)">1 · Tunnista</button>
-    <button class="tab" id="tab2" onclick="switchTab(2)">2 · Piirrä</button>
-    <button class="tab" id="tab3" onclick="switchTab(3)">3 · Monista</button>
+  <div class="tabs">
+    <button class="tab on" id="t1" onclick="switchTab(1)">1 · Tunnista</button>
+    <button class="tab" id="t2" onclick="switchTab(2)">2 · Piirrä</button>
+    <button class="tab" id="t3" onclick="switchTab(3)">3 · Monista</button>
   </div>
-
-  <!-- TAB 1: Tunnista viivat -->
-  <div class="tab-content active" id="tc1">
+  <!-- TAB 1 -->
+  <div class="tc on" id="tc1">
     <div class="sec">
-      <div class="sec-lbl">Aineisto</div>
-      <div class="upload-zone" id="uz" onclick="document.getElementById('pdfIn').click()">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
-        <div class="uz-t">Lataa PDF</div>
-        <div class="uz-s">Raahaa tai klikkaa</div>
+      <div class="slbl">Aineisto</div>
+      <div class="uz" id="uz" onclick="document.getElementById('fi').click()">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="margin:0 auto 6px;display:block"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><polyline points="9 15 12 12 15 15"/></svg>
+        <div style="font-weight:500;font-size:13px">Lataa PDF</div>
+        <div style="font-size:11px;color:var(--ink3)">Raahaa tai klikkaa</div>
       </div>
-      <input type="file" id="pdfIn" accept=".pdf" style="display:none">
-      <div id="fileBadge" class="hidden">
-        <div class="file-badge">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          <div class="file-badge-info">
-            <div class="file-badge-name" id="fName"></div>
-            <div class="file-badge-meta" id="fMeta"></div>
-          </div>
+      <input type="file" id="fi" accept=".pdf" style="display:none">
+      <div id="finfo" class="hidden" style="margin-top:8px">
+        <div style="padding:7px 9px;background:var(--paper2);border-radius:var(--r);font-size:12px">
+          <div style="font-weight:500" id="fn"></div>
+          <div style="color:var(--ink3);font-size:11px" id="fm"></div>
         </div>
         <div id="resBadge"></div>
         <div class="thumbs" id="thumbs"></div>
       </div>
     </div>
-
     <div class="sec">
-      <div class="sec-lbl">Löydetyt viivat</div>
-      <p style="font-size:12px;color:var(--ink2);margin-bottom:10px">Valitse mitkä viivat ovat leikkausrajoja ja muunna ne spot-väriksi.</p>
-      <div id="pathGroups"><div class="obj-empty">Lataa PDF nähdäksesi viivat</div></div>
+      <div class="slbl">Löydetyt viivat</div>
+      <p style="font-size:12px;color:var(--ink2);margin-bottom:10px">Valitse checkbox-merkinnällä mitkä viivat ovat leikkausrajoja.</p>
+      <div id="pgroups"><div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Lataa PDF nähdäksesi viivat</div></div>
     </div>
-
     <div class="sec">
-      <div class="sec-lbl">Nimeä spot-värit</div>
-      <p style="font-size:11px;color:var(--ink2);margin-bottom:10px">Valitse viivaryhmät yllä ja anna jokaiselle spot-värinimi. Useammalle ryhmälle voi antaa saman nimen jos ne kuuluvat samaan leikkaustapaan.</p>
-      <div id="spotMappings" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
-      <div style="margin-bottom:8px">
-        <label class="lbl">Viivan paksuus (pt)</label>
-        <input type="number" id="t1LineWidth" value="0.5" min="0.1" max="5" step="0.1">
+      <div class="slbl">Nimeä spot-värit</div>
+      <p style="font-size:12px;color:var(--ink2);margin-bottom:10px">Anna valituille viivaryhmille spot-värinimi (DK1, DK2, CREASE…)</p>
+      <div id="smaps"></div>
+      <label class="lbl">Viivan paksuus (pt)</label>
+      <input type="number" id="t1lw" value="0.5" min="0.1" max="5" step="0.1">
+      <label class="lbl" style="margin-top:12px">Lisää CCD-kohdistusmerkit</label>
+      <div class="tgl">
+        <button id="ccdOff" class="on" onclick="setCCD(false)">Ei</button>
+        <button id="ccdOn" onclick="setCCD(true)">Kyllä — 4 kulmaan</button>
       </div>
-      <div style="margin-bottom:12px">
-        <label class="lbl">Lisää CCD-kohdistusmerkit</label>
-        <div class="tgl">
-          <button id="ccdOff" class="on" onclick="setCCD(false)">Ei</button>
-          <button id="ccdOn" onclick="setCCD(true)">Kyllä — 4 kulmaan</button>
-        </div>
-        <p style="font-size:11px;color:var(--ink2);margin-top:4px">Mustat täytetyt pallot spot-värillä "CCD" neljään kulmaan. Leikkauslaite käyttää kohdistukseen.</p>
+      <div id="ccdSet" class="hidden" style="margin-top:8px">
+        <label class="lbl">Halkaisija (mm) <span id="ccdSzV">5</span></label>
+        <input type="range" id="ccdSz" min="2" max="15" value="5" oninput="document.getElementById('ccdSzV').textContent=this.value">
+        <label class="lbl">Etäisyys kulmasta (mm) <span id="ccdOV">10</span></label>
+        <input type="range" id="ccdOf" min="3" max="30" value="10" oninput="document.getElementById('ccdOV').textContent=this.value">
       </div>
-      <div id="ccdSizeRow" style="display:none;margin-bottom:12px">
-        <label class="lbl">CCD-merkin koko (mm) <span class="pval" id="ccdSizeVal">5</span></label>
-        <input type="range" id="ccdSize" min="2" max="15" value="5" oninput="document.getElementById('ccdSizeVal').textContent=this.value;redraw()">
-        <label class="lbl" style="margin-top:8px">Etäisyys kulmasta (mm) <span class="pval" id="ccdOffVal">5</span></label>
-        <input type="range" id="ccdOff2" min="1" max="20" value="5" oninput="document.getElementById('ccdOffVal').textContent=this.value;redraw()">
-      </div>
-      <button class="btn pink" style="width:100%;justify-content:center" onclick="convertToSpot()">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-        Muunna spot-väreiksi + lisää CCD
+      <button class="btn pink" style="width:100%;justify-content:center;margin-top:12px" onclick="convertToSpot()">
+        ✦ Muunna spot-väreiksi
       </button>
     </div>
   </div>
-
-  <!-- TAB 2: Piirrä -->
-  <div class="tab-content" id="tc2">
+  <!-- TAB 2 -->
+  <div class="tc" id="tc2">
     <div class="sec">
-      <div class="sec-lbl">Aineisto</div>
-      <div id="fileBadge2" class="hidden">
-        <div class="file-badge">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          <div class="file-badge-info">
-            <div class="file-badge-name" id="fName2"></div>
-          </div>
-        </div>
-      </div>
-      <div id="noFile2" style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Lataa PDF välilehdeltä 1</div>
-      <button class="btn blue" style="width:100%;justify-content:center;margin-top:8px" id="aiSuggestBtn" onclick="runAISuggest()" disabled>
-        <div class="spin" id="aiSpin"></div>
-        ✦ AI ehdottaa muotoa
-      </button>
-      <div id="aiSuggestRes"></div>
-    </div>
-
-    <div class="sec">
-      <div class="sec-lbl">Leikkausrajat</div>
-      <div class="brow" style="margin-bottom:8px">
+      <div class="slbl">Leikkausrajat</div>
+      <div class="brow">
         <button class="btn sm" onclick="addObj()">+ Lisää</button>
-        <button class="btn sm" onclick="deleteAllObjs()" style="color:var(--red)">✕ Tyhjennä</button>
+        <button class="btn sm blue" id="aiBtn" onclick="runAI()" disabled>
+          <div class="spin" id="aiSpin"></div>✦ AI ehdottaa
+        </button>
+        <button class="btn sm" onclick="delAllObjs()" style="color:var(--red)">✕ Tyhjennä</button>
       </div>
-      <div class="obj-list" id="objList"><div class="obj-empty">Ei kohteita</div></div>
+      <div id="olist" style="display:flex;flex-direction:column;gap:4px">
+        <div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Ei kohteita</div>
+      </div>
+      <div id="aiRes"></div>
     </div>
-
-    <div class="sec" id="editSec">
-      <div class="sec-lbl" id="editLbl">Muokkaa kohdetta</div>
-      <div class="edit-panel" id="editPanel">
-        <div style="margin-bottom:8px">
-          <label class="lbl">Muoto</label>
-          <select id="eShape" onchange="updObj()">
-            <option value="rect">Suorakulmio</option>
-            <option value="rounded">Pyöristetty</option>
-            <option value="circle">Ellipsi / ympyrä</option>
-          </select>
+    <div class="sec">
+      <div class="slbl" id="elbl">Muokkaa</div>
+      <div class="ep" id="ep">
+        <label class="lbl">Muoto</label>
+        <select id="eShape" onchange="updObj()"><option value="rect">Suorakulmio</option><option value="rounded">Pyöristetty</option><option value="circle">Ellipsi</option></select>
+        <div id="eRadRow" class="hidden">
+          <label class="lbl">Pyöristys <span id="eRadV">0</span></label>
+          <input type="range" id="eRad" min="0" max="300" value="0" oninput="document.getElementById('eRadV').textContent=this.value;updObj()">
         </div>
-        <div id="eRadRow" class="hidden" style="margin-bottom:8px">
-          <label class="lbl">Pyöristys <span class="pval" id="eRadVal">0</span></label>
-          <input type="range" id="eRad" min="0" max="300" value="0" oninput="updObj()">
-        </div>
-        <div style="margin-bottom:8px">
-          <label class="lbl">Spot-värin nimi</label>
-          <input type="text" id="eSpot" value="Die Cut" oninput="updObj()">
-        </div>
-        <div style="margin-bottom:8px">
-          <label class="lbl">Väri (esikatselu)</label>
-          <input type="color" id="eColor" value="#FF0099" oninput="updObj()">
-        </div>
-        <div style="margin-bottom:8px">
-          <label class="lbl">Paksuus <span class="pval" id="eWVal">0.5pt</span></label>
-          <input type="range" id="eW" min="0.25" max="5" step="0.25" value="0.5" oninput="updObj()">
-        </div>
-        <div style="margin-bottom:8px">
-          <label class="lbl">Viivalaji</label>
-          <div class="tgl">
-            <button id="dS" class="on" onclick="setDash('solid')">Yhtenäinen</button>
-            <button id="dD" onclick="setDash('dashed')">Katko</button>
-            <button id="dDt" onclick="setDash('dotted')">Piste</button>
-          </div>
-        </div>
-        <div style="margin-bottom:8px">
-          <label class="lbl">Marginaali <span class="pval" id="eMVal">0pt</span></label>
-          <input type="range" id="eM" min="-20" max="30" step="0.5" value="0" oninput="updObj()">
-        </div>
-        <div style="margin-bottom:8px">
-          <label class="lbl">Sijainti</label>
-          <div class="tgl">
-            <button id="pI" onclick="setPos('inside')">Sisällä</button>
-            <button id="pC" class="on" onclick="setPos('center')">Reunalla</button>
-            <button id="pO" onclick="setPos('outside')">Ulkona</button>
-          </div>
-        </div>
-        <div style="margin-bottom:8px">
-          <label class="lbl">Hienosäätö (pt)</label>
-          <div class="nudge-grid">
-            <div class="nc"><label>X</label><button class="nb" onclick="nudge('x',-1)">−</button><span class="nv" id="nX">0</span><button class="nb" onclick="nudge('x',1)">+</button></div>
-            <div class="nc"><label>Y</label><button class="nb" onclick="nudge('y',-1)">−</button><span class="nv" id="nY">0</span><button class="nb" onclick="nudge('y',1)">+</button></div>
-            <div class="nc"><label>W</label><button class="nb" onclick="nudge('w',-1)">−</button><span class="nv" id="nW">0</span><button class="nb" onclick="nudge('w',1)">+</button></div>
-            <div class="nc"><label>H</label><button class="nb" onclick="nudge('h',-1)">−</button><span class="nv" id="nH">0</span><button class="nb" onclick="nudge('h',1)">+</button></div>
-          </div>
-        </div>
-        <div>
-          <label class="lbl">Rekisteröintimerkit</label>
-          <div class="tgl"><button id="rOff" class="on" onclick="setReg(false)">Ei</button><button id="rOn" onclick="setReg(true)">Kyllä</button></div>
+        <label class="lbl">Spot-nimi</label>
+        <input type="text" id="eSpot" value="DK1" oninput="updObj()">
+        <label class="lbl">Väri</label>
+        <input type="color" id="eCol" value="#FF0099" oninput="updObj()">
+        <label class="lbl">Paksuus <span id="eWV">0.5pt</span></label>
+        <input type="range" id="eW" min="0.25" max="5" step="0.25" value="0.5" oninput="document.getElementById('eWV').textContent=this.value+'pt';updObj()">
+        <label class="lbl">Marginaali <span id="eMV">0pt</span></label>
+        <input type="range" id="eM" min="-20" max="30" step="0.5" value="0" oninput="document.getElementById('eMV').textContent=this.value+'pt';updObj()">
+        <label class="lbl">Sijainti</label>
+        <div class="tgl"><button id="pI" onclick="setPos('inside')">Sisällä</button><button id="pC" class="on" onclick="setPos('center')">Reunalla</button><button id="pO" onclick="setPos('outside')">Ulkona</button></div>
+        <label class="lbl" style="margin-top:8px">Hienosäätö (pt)</label>
+        <div class="ng">
+          <div class="nc"><label>X</label><button class="nb" onclick="nudge('x',-1)">−</button><span class="nv" id="nX">0</span><button class="nb" onclick="nudge('x',1)">+</button></div>
+          <div class="nc"><label>Y</label><button class="nb" onclick="nudge('y',-1)">−</button><span class="nv" id="nY">0</span><button class="nb" onclick="nudge('y',1)">+</button></div>
+          <div class="nc"><label>W</label><button class="nb" onclick="nudge('w',-1)">−</button><span class="nv" id="nW">0</span><button class="nb" onclick="nudge('w',1)">+</button></div>
+          <div class="nc"><label>H</label><button class="nb" onclick="nudge('h',-1)">−</button><span class="nv" id="nH">0</span><button class="nb" onclick="nudge('h',1)">+</button></div>
         </div>
       </div>
     </div>
   </div>
-
-  <!-- TAB 3: Monista -->
-  <div class="tab-content" id="tc3">
+  <!-- TAB 3 -->
+  <div class="tc" id="tc3">
     <div class="sec">
-      <div class="sec-lbl">Tarran tiedot</div>
-      <button class="btn blue" style="width:100%;justify-content:center;margin-bottom:10px" id="aiMeasBtn" onclick="runAIMeasure()" disabled>
-        <div class="spin dark" id="aiMeasSpin"></div>
-        ✦ Tunnista mitat automaattisesti
+      <div class="slbl">Tarran tiedot</div>
+      <button class="btn blue" style="width:100%;justify-content:center;margin-bottom:10px" id="aiMBtn" onclick="runAIMeas()" disabled>
+        <div class="spin dk" id="aiMS"></div>✦ Tunnista mitat
       </button>
-      <div id="aiMeasRes"></div>
-      <div class="row2" style="margin-bottom:8px">
+      <div id="aiMR"></div>
+      <div class="r2">
         <div><label class="lbl">Leveys (mm)</label><input type="number" id="sW" value="125" min="1" oninput="calcImp()"></div>
         <div><label class="lbl">Korkeus (mm)</label><input type="number" id="sH" value="35" min="1" oninput="calcImp()"></div>
       </div>
-      <div style="margin-bottom:8px">
-        <label class="lbl">Muoto</label>
-        <select id="sShape" onchange="onSShapeChange()">
-          <option value="rect">Suorakulmio</option>
-          <option value="rounded">Pyöristetty</option>
-          <option value="circle">Ellipsi / ympyrä</option>
-        </select>
-      </div>
-      <div id="sRadRow" class="hidden" style="margin-bottom:8px">
-        <label class="lbl">Pyöristyssäde (mm) <span class="pval" id="sRadVal">5</span></label>
-        <input type="range" id="sRad" min="0" max="50" value="5" oninput="document.getElementById('sRadVal').textContent=this.value;calcImp()">
+      <label class="lbl">Muoto</label>
+      <select id="sShape" onchange="onSShape()"><option value="rect">Suorakulmio</option><option value="rounded">Pyöristetty</option><option value="circle">Ellipsi</option></select>
+      <div id="sRadRow" class="hidden">
+        <label class="lbl">Pyöristys (mm) <span id="sRadV">5</span></label>
+        <input type="range" id="sRad" min="0" max="50" value="5" oninput="document.getElementById('sRadV').textContent=this.value;calcImp()">
       </div>
     </div>
-
     <div class="sec">
-      <div class="sec-lbl">Arkkiasemointi</div>
-      <div style="margin-bottom:8px">
-        <label class="lbl">Arkkikoko</label>
-        <select id="sheetSz" onchange="onSheetChange()">
-          <option value="210x297">A4 (210×297mm)</option>
-          <option value="297x420">A3 (297×420mm)</option>
-          <option value="320x450" selected>SRA3 (320×450mm)</option>
-          <option value="320x480">320×480mm</option>
-          <option value="custom">Mukautettu</option>
-        </select>
+      <div class="slbl">Arkkiasemointi</div>
+      <label class="lbl">Arkkikoko</label>
+      <select id="shSz" onchange="onSheet()"><option value="210x297">A4 (210×297mm)</option><option value="297x420">A3 (297×420mm)</option><option value="320x450" selected>SRA3 (320×450mm)</option><option value="custom">Mukautettu</option></select>
+      <div id="shCust" class="r2 hidden">
+        <div><label class="lbl">Leveys</label><input type="number" id="shW" value="320" oninput="calcImp()"></div>
+        <div><label class="lbl">Korkeus</label><input type="number" id="shH" value="450" oninput="calcImp()"></div>
       </div>
-      <div id="customSheet" class="row2 hidden" style="margin-bottom:8px">
-        <div><label class="lbl">Leveys (mm)</label><input type="number" id="shW" value="320" min="50" oninput="calcImp()"></div>
-        <div><label class="lbl">Korkeus (mm)</label><input type="number" id="shH" value="450" min="50" oninput="calcImp()"></div>
+      <label class="lbl">Reunus (mm)</label>
+      <input type="number" id="shM" value="23" min="0" oninput="calcImp()">
+      <label class="lbl">DK1→DK2 bleed (mm)</label>
+      <input type="number" id="shBl" value="1.5" min="0" step="0.5" oninput="calcImp()">
+      <label class="lbl">Väli tarrojen välillä (mm)</label>
+      <input type="number" id="shGap" value="13.8" min="0" step="0.1" oninput="calcImp()">
+      <div class="r2" style="margin-top:8px">
+        <div><label class="lbl">Rivejä</label><input type="number" id="iR" value="4" min="1" oninput="drawImp()"></div>
+        <div><label class="lbl">Sarakkeita</label><input type="number" id="iC" value="2" min="1" oninput="drawImp()"></div>
       </div>
-      <div style="margin-bottom:8px">
-        <label class="lbl">Arkkireunus (mm)</label>
-        <input type="number" id="shMargin" value="23" min="0" max="50" oninput="calcImp()">
-      </div>
-      <div style="margin-bottom:8px">
-        <label class="lbl">DK1→DK2 bleed (mm) <span style="font-size:10px;color:var(--ink3)">raja tarran ympärillä</span></label>
-        <input type="number" id="bleed" value="1.5" min="0" max="20" step="0.5" oninput="calcImp()">
-      </div>
-      <div style="margin-bottom:8px">
-        <label class="lbl">Väli tarrojen välillä (mm)</label>
-        <input type="number" id="impGap" value="13.8" min="0" max="50" step="0.1" oninput="calcImp()">
-      </div>
-      <div class="row2" style="margin-bottom:8px">
-        <div><label class="lbl">Rivejä</label><input type="number" id="impR" value="4" min="1" max="50" oninput="drawImp()"></div>
-        <div><label class="lbl">Sarakkeita</label><input type="number" id="impC" value="2" min="1" max="50" oninput="drawImp()"></div>
-      </div>
-      <div class="imp-result" id="impResult"></div>
+      <div id="iRes" class="imp-res"></div>
     </div>
-
     <div class="sec">
-      <div class="sec-lbl">Leikkausrajat</div>
-      <div style="margin-bottom:8px">
-        <label class="lbl">DK1 spot-nimi <span style="font-size:10px;color:var(--ink3)">tarkka tarran raja</span></label>
-        <input type="text" id="impDK1" value="DK1">
+      <div class="slbl">Leikkausrajat</div>
+      <div class="r2">
+        <div><label class="lbl">DK1 spot-nimi</label><input type="text" id="iDK1" value="DK1"></div>
+        <div><label class="lbl">DK2 spot-nimi</label><input type="text" id="iDK2" value="DK2"></div>
       </div>
-      <div style="margin-bottom:8px">
-        <label class="lbl">DK2 spot-nimi <span style="font-size:10px;color:var(--ink3)">ulompi bleed-raja</span></label>
-        <input type="text" id="impDK2" value="DK2">
-      </div>
-      <div style="margin-bottom:8px">
-        <label class="lbl">Esikatselu DK1-väri</label>
-        <input type="color" id="impColor" value="#FF0099" oninput="drawImp()">
-      </div>
-      <div style="margin-bottom:8px">
-        <label class="lbl">Esikatselu DK2-väri</label>
-        <input type="color" id="impColor2" value="#0055CC" oninput="drawImp()">
+      <div class="r2" style="margin-top:8px">
+        <div><label class="lbl">DK1 väri</label><input type="color" id="iC1" value="#FF0099" oninput="drawImp()"></div>
+        <div><label class="lbl">DK2 väri</label><input type="color" id="iC2" value="#0055CC" oninput="drawImp()"></div>
       </div>
     </div>
-
     <div class="sec">
-      <div class="sec-lbl">CCD-kohdistusmerkit</div>
-      <div style="margin-bottom:8px">
-        <label class="lbl">Lisää CCD-merkit</label>
-        <div class="tgl">
-          <button id="impCcdOff" class="on" onclick="setImpCCD(false)">Ei</button>
-          <button id="impCcdOn" onclick="setImpCCD(true)">Kyllä</button>
-        </div>
+      <div class="slbl">CCD-kohdistusmerkit</div>
+      <div class="tgl">
+        <button id="iCCDOff" class="on" onclick="setICCD(false)">Ei</button>
+        <button id="iCCDOn" onclick="setICCD(true)">Kyllä</button>
       </div>
-      <div id="impCcdSettings" class="hidden">
-        <div style="margin-bottom:8px">
-          <label class="lbl">CCD spot-nimi</label>
-          <input type="text" id="impCcdName" value="ccd">
-        </div>
-        <div style="margin-bottom:8px">
-          <label class="lbl">Merkin halkaisija (mm) <span class="pval" id="impCcdSzVal">5</span></label>
-          <input type="range" id="impCcdSz" min="2" max="15" value="5" oninput="document.getElementById('impCcdSzVal').textContent=this.value;drawImp()">
-        </div>
-        <div>
-          <label class="lbl">Etäisyys kulmasta (mm) <span class="pval" id="impCcdOffVal">10</span></label>
-          <input type="range" id="impCcdOff3" min="3" max="30" value="10" oninput="document.getElementById('impCcdOffVal').textContent=this.value;drawImp()">
-        </div>
+      <div id="iCCDSet" class="hidden" style="margin-top:8px">
+        <label class="lbl">Spot-nimi</label><input type="text" id="iCCDN" value="ccd">
+        <label class="lbl">Halkaisija (mm) <span id="iCSV">5</span></label>
+        <input type="range" id="iCS" min="2" max="15" value="5" oninput="document.getElementById('iCSV').textContent=this.value;drawImp()">
+        <label class="lbl">Etäisyys (mm) <span id="iCOV">10</span></label>
+        <input type="range" id="iCO" min="3" max="30" value="10" oninput="document.getElementById('iCOV').textContent=this.value;drawImp()">
       </div>
     </div>
   </div>
-
 </div>
-
 <!-- MAIN -->
 <div class="main">
   <div class="toolbar">
-    <div class="page-nav">
-      <button onclick="chPage(-1)">‹</button>
-      <span id="pageLbl" style="font-size:12px">– / –</span>
-      <button onclick="chPage(1)">›</button>
-    </div>
-    <div class="tsep"></div>
-    <div class="zoom-ctrl">
+    <div class="pnav"><button onclick="chPage(-1)">‹</button><span id="plbl">– / –</span><button onclick="chPage(1)">›</button></div>
+    <div class="sep"></div>
+    <div class="zc">
       <button onclick="doZoom(-0.25)">−</button>
-      <span class="zoom-lbl" id="zoomLbl">100%</span>
+      <span class="zlbl" id="zlbl">100%</span>
       <button onclick="doZoom(0.25)">+</button>
-      <button class="zoom-fit" onclick="doZoom(0)">Sovita</button>
+      <button class="zfit" onclick="doZoom(0)">Sovita</button>
     </div>
-    <div class="tsep"></div>
-    <div class="tool-group" id="drawToolGroup">
-      <button class="tbtn active" id="toolSelect" onclick="setTool('select')" title="Valitse (V)">
+    <div class="sep"></div>
+    <div class="tg" id="dtg">
+      <button class="tb on" id="tSel" onclick="setTool('select')" title="V">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3l14 9-7 1-3 7z"/></svg>Valitse
       </button>
-      <button class="tbtn" id="toolPen" onclick="setTool('pen')" title="Pen (P)">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><circle cx="11" cy="11" r="2"/></svg>Pen
+      <button class="tb" id="tPen" onclick="setTool('pen')" title="P">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>Pen
       </button>
-      <button class="tbtn" id="toolRect" onclick="setTool('rect')" title="Rect (R)">
+      <button class="tb" id="tRect" onclick="setTool('rect')" title="R">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Rect
       </button>
-      <button class="tbtn" id="toolCircle" onclick="setTool('circle')" title="Ellipsi (E)">
+      <button class="tb" id="tCirc" onclick="setTool('circle')" title="E">
         <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Ellipsi
       </button>
     </div>
-    <div class="tsep"></div>
-    <select id="expMode" style="padding:5px 8px;border:1px solid var(--paper3);border-radius:var(--r);font-size:12px;background:var(--paper);font-family:'DM Sans',sans-serif">
+    <div class="sep"></div>
+    <select id="expMode" style="padding:5px 8px;border:1px solid var(--paper3);border-radius:var(--r);font-size:12px;background:var(--paper);font-family:inherit">
       <option value="combo">Yhdistetty PDF</option>
       <option value="split">Erilliset PDF:t</option>
-      <option value="cutonly">Vain leikkaus-PDF</option>
+      <option value="cutonly">Vain leikkaus</option>
     </select>
     <button class="btn green" onclick="doExport()" id="expBtn" disabled>
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Vie PDF
@@ -511,412 +325,491 @@ input[type=color]{width:100%;height:28px;border:1px solid var(--paper3);border-r
     <button class="btn sm" onclick="expScript('ai')" id="aiScr" disabled>Ai .jsx</button>
     <button class="btn sm" onclick="expScript('id')" id="idScr" disabled>Id .jsx</button>
   </div>
-
-  <div class="canvas-area" id="canvasArea">
-    <div class="canvas-outer" id="canvasOuter">
-      <div class="canvas-wrap">
-        <canvas id="pdfCanvas"></canvas>
-        <canvas id="overlayCanvas"></canvas>
-      </div>
-    </div>
-  </div>
-</div>
-
+  <div class="ca"><div class="co" id="co"><div class="cw"><canvas id="pc"></canvas><canvas id="oc"></canvas></div></div></div>
 </div>
 </div>
-
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-// ─── State ─────────────────────────────────────────────────────────────────
-let pdfDoc=null, pdfBytes=null, curPage=1, totalPages=0, RS=1.8;
-let pageData={}, pageVps={};
-let selId=null, objCtr=0, tool='select', activeTab=1;
-let dragSt=null, penPts=[], penPrev=null, renderTask=null;
-let zoomLevel=1.0;
-let impData=null;
-let addCCD=false;
-let detectedPaths=[]; // tab1: vector paths grouped by color
+let pdfDoc=null,pdfBytes=null,curPage=1,totalPages=0,RS=1.8,zoom=1;
+let pageData={},pageVps={},selId=null,objCtr=0,tool='select',activeTab=1;
+let dragSt=null,penPts=[],penPrev=null,renderTask=null;
+let detectedPaths={},impData=null,addCCD_=false;
 
-const pdfCan=document.getElementById('pdfCanvas');
-const ovrCan=document.getElementById('overlayCanvas');
-const pdfCtx=pdfCan.getContext('2d');
-const ovrCtx=ovrCan.getContext('2d');
+const pc=document.getElementById('pc'),oc=document.getElementById('oc');
+const pCtx=pc.getContext('2d'),oCtx=oc.getContext('2d');
 
-// ─── Helpers ───────────────────────────────────────────────────────────────
 function getObjs(){return pageData[curPage]||(pageData[curPage]=[])}
 function getSel(){return selId?getObjs().find(o=>o.id===selId)||null:null}
-function ss(msg,t=''){const e=document.getElementById('sbar');e.textContent=msg;e.className='sbar'+(t?' '+t:'')}
-function mmToPt(mm){return mm*2.8346}
+function ss(m,t=''){const e=document.getElementById('sb');e.textContent=m;e.className='sbar'+(t?' '+t:'')}
+function pt2mm(pt){return pt/2.8346}
+function mm2pt(mm){return mm*2.8346}
 
-function setImpCCD(v){
-  document.getElementById('impCcdOff').classList.toggle('on',!v);
-  document.getElementById('impCcdOn').classList.toggle('on',v);
-  document.getElementById('impCcdSettings').classList.toggle('hidden',!v);
-  drawImp();
-}
-
-function setCCD(v){
-  addCCD=v;
-  document.getElementById('ccdOff').classList.toggle('on',!v);
-  document.getElementById('ccdOn').classList.toggle('on',v);
-  document.getElementById('ccdSizeRow').style.display=v?'':'none';
-  redraw();
-}
-function ptToMm(pt){return pt/2.8346}
-
-// ─── Tab switching ─────────────────────────────────────────────────────────
-function switchTab(n){
-  activeTab=n;
-  [1,2,3].forEach(i=>{
-    document.getElementById('tab'+i).classList.toggle('active',i===n);
-    document.getElementById('tc'+i).classList.toggle('active',i===n);
-  });
-  document.getElementById('drawToolGroup').classList.toggle('hidden',n!==2);
-  redraw();
-}
-
-// ─── Upload ────────────────────────────────────────────────────────────────
+// Upload
 const uz=document.getElementById('uz');
-uz.addEventListener('dragover',e=>{e.preventDefault();uz.classList.add('drag')});
-uz.addEventListener('dragleave',()=>uz.classList.remove('drag'));
-uz.addEventListener('drop',e=>{e.preventDefault();uz.classList.remove('drag');if(e.dataTransfer.files[0])loadPDF(e.dataTransfer.files[0])});
-document.getElementById('pdfIn').addEventListener('change',function(){if(this.files[0])loadPDF(this.files[0])});
+uz.addEventListener('dragover',e=>{e.preventDefault();uz.style.borderColor='var(--blue)'});
+uz.addEventListener('dragleave',()=>{uz.style.borderColor=''});
+uz.addEventListener('drop',e=>{e.preventDefault();uz.style.borderColor='';const f=e.dataTransfer.files[0];if(f)loadPDF(f)});
+document.getElementById('fi').addEventListener('change',function(){if(this.files[0])loadPDF(this.files[0])});
 
 async function loadPDF(file){
   ss('Ladataan...','info');
-  const buf=await file.arrayBuffer();
-  pdfBytes=buf;
-  pdfDoc=await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
-  totalPages=pdfDoc.numPages; curPage=1; pageData={};
-
-  // File info
-  const fname=file.name;
-  document.getElementById('fName').textContent=fname;
-  document.getElementById('fName2').textContent=fname;
-  document.getElementById('fMeta').textContent=totalPages+' sivu'+(totalPages!==1?'a':'');
-  document.getElementById('fileBadge').classList.remove('hidden');
-  document.getElementById('fileBadge2').classList.remove('hidden');
-  document.getElementById('noFile2').classList.add('hidden');
-
-  ['expBtn','aiScr','idScr','aiSuggestBtn','aiMeasBtn'].forEach(id=>{
-    const el=document.getElementById(id); if(el) el.disabled=false;
-  });
-
-  await buildThumbs();
-  await renderPage(1);
-  try { analyzeVectorPaths(); } catch(e) { console.error('analyzeVectorPaths error:', e); }
-  try { checkResolution(); } catch(e) { console.error('checkResolution error:', e); }
-  try { calcImp(); } catch(e) { console.error('calcImp error:', e); }
-  ss('Valmis','ok');
-}
-
-// ─── Resolution check ──────────────────────────────────────────────────────
-async function checkResolution(){
-  if(!pdfDoc) return;
-  const pg=await pdfDoc.getPage(curPage);
-  const vp=pg.getViewport({scale:1});
-  // PDF pt to mm: 1pt = 0.352mm
-  const wMM=ptToMm(vp.width), hMM=ptToMm(vp.height);
-  // Render at high res and check image sharpness as proxy
-  // Actual DPI = content resolution. For vector PDFs this is infinite.
-  // For raster images embedded: check via operators
-  // Simple approach: render at 300dpi equivalent and compare
-  const dpi300scale = 300/72; // 300dpi vs 72dpi base
-  const testVp=pg.getViewport({scale:1});
-  // PDF pt * (1inch/72pt) * DPI = pixels
-  // At scale=1, 1pt = 1px in pdfjs (72dpi equivalent)
-  // So page at 300dpi would be scale=300/72=4.167
-  
-  const wIn=vp.width/72, hIn=vp.height/72; // inches
-  const badge=document.getElementById('resBadge');
-  
-  // Check if PDF has embedded raster images by rendering at 2x and checking
-  const tc=document.createElement('canvas');
-  const checkScale=2;
-  const cvp=pg.getViewport({scale:checkScale});
-  tc.width=cvp.width; tc.height=cvp.height;
-  await pg.render({canvasContext:tc.getContext('2d'),viewport:cvp}).promise;
-  
-  // Estimate effective DPI: if PDF is purely vector, it's infinite
-  // We check by looking at how many image operators are in the page
-  const ops=await pg.getOperatorList();
-  const hasRasterImages=ops.fnArray.some(fn=>fn===pdfjsLib.OPS.paintImageXObject||fn===pdfjsLib.OPS.paintInlineImageXObject);
-  
-  const pageSizeMM=`${wMM.toFixed(1)}×${hMM.toFixed(1)}mm`;
-  
-  if(!hasRasterImages){
-    badge.innerHTML=`<span class="res-badge ok">✓ Vektori — ${pageSizeMM}</span>`;
-  } else {
-    // Estimate raster DPI
-    badge.innerHTML=`<span class="res-badge warn">⚠ Sisältää rastereita — tarkista DPI — ${pageSizeMM}</span>`;
+  try{
+    const buf=await file.arrayBuffer();
+    pdfBytes=buf;
+    pdfDoc=await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
+    totalPages=pdfDoc.numPages;curPage=1;pageData={};
+    document.getElementById('fn').textContent=file.name;
+    document.getElementById('fm').textContent=totalPages+' sivu'+(totalPages!==1?'a':'');
+    document.getElementById('finfo').classList.remove('hidden');
+    ['expBtn','aiScr','idScr','aiBtn','aiMBtn'].forEach(id=>{const el=document.getElementById(id);if(el)el.disabled=false});
+    await buildThumbs();
+    await renderPage(1);
+    ss('Valmis','ok');
+    analyzeVectorPaths();
+    checkRes();
+    calcImp();
+  }catch(e){
+    ss('Virhe: '+e.message,'err');
+    console.error(e);
   }
 }
 
-// ─── Vector path analysis ──────────────────────────────────────────────────
+async function buildThumbs(){
+  const row=document.getElementById('thumbs');row.innerHTML='';
+  for(let i=1;i<=Math.min(totalPages,12);i++){
+    const pg=await pdfDoc.getPage(i);const vp=pg.getViewport({scale:.1});
+    const tc=document.createElement('canvas');tc.width=vp.width;tc.height=vp.height;
+    await pg.render({canvasContext:tc.getContext('2d'),viewport:vp}).promise;
+    const w=document.createElement('div');w.className='thumb'+(i===1?' on':'');w.dataset.p=i;
+    w.appendChild(tc);w.onclick=()=>{curPage=i;renderPage(i);updThumbs();analyzeVectorPaths();checkRes()};
+    row.appendChild(w);
+  }
+}
+function updThumbs(){document.querySelectorAll('.thumb').forEach(t=>t.classList.toggle('on',parseInt(t.dataset.p)===curPage))}
+
+async function renderPage(n){
+  if(!pdfDoc)return;
+  if(renderTask){try{renderTask.cancel()}catch(e){}}
+  curPage=n;
+  document.getElementById('plbl').textContent=n+' / '+totalPages;
+  const pg=await pdfDoc.getPage(n);
+  const vp=pg.getViewport({scale:RS});
+  pageVps[n]=vp;
+  pc.width=vp.width;pc.height=vp.height;
+  oc.width=vp.width;oc.height=vp.height;
+  renderTask=pg.render({canvasContext:pCtx,viewport:vp});
+  await renderTask.promise;
+  redraw();updOList();
+}
+function chPage(d){const n=curPage+d;if(n<1||n>totalPages)return;renderPage(n);updThumbs();analyzeVectorPaths();checkRes()}
+
+// Zoom
+function doZoom(d){
+  if(d===0){const a=document.getElementById('co').parentElement;const vp=pageVps[curPage];if(!vp)return;zoom=Math.min((a.clientWidth-48)/vp.width,(a.clientHeight-48)/vp.height,1.5);}
+  else zoom=Math.max(0.25,Math.min(4,zoom+d));
+  document.getElementById('zlbl').textContent=Math.round(zoom*100)+'%';
+  document.getElementById('co').style.transform='scale('+zoom+')';
+}
+
+// Tabs
+function switchTab(n){
+  activeTab=n;
+  [1,2,3].forEach(i=>{document.getElementById('t'+i).classList.toggle('on',i===n);document.getElementById('tc'+i).classList.toggle('on',i===n)});
+  document.getElementById('dtg').classList.toggle('hidden',n!==2);
+  redraw();
+}
+
+// Resolution check
+async function checkRes(){
+  if(!pdfDoc)return;
+  try{
+    const pg=await pdfDoc.getPage(curPage);
+    const vp=pg.getViewport({scale:1});
+    const wMM=pt2mm(vp.width),hMM=pt2mm(vp.height);
+    const ops=await pg.getOperatorList();
+    const OPS=pdfjsLib.OPS;
+    const hasRaster=ops.fnArray.some(f=>f===OPS.paintImageXObject||f===OPS.paintInlineImageXObject);
+    const sz=wMM.toFixed(1)+'×'+hMM.toFixed(1)+'mm';
+    const el=document.getElementById('resBadge');
+    el.innerHTML=hasRaster
+      ?'<span class="res-badge warn">⚠ Rastereita — tarkista DPI — '+sz+'</span>'
+      :'<span class="res-badge ok">✓ Vektori — '+sz+'</span>';
+  }catch(e){console.error('checkRes',e)}
+}
+
+// Vector path analysis
 async function analyzeVectorPaths(){
-  if(!pdfDoc) return;
-  document.getElementById('pathGroups').innerHTML='<div class="obj-empty"><div class="spin dark" style="display:inline-block;margin-right:6px"></div>Analysoidaan...</div>';
+  if(!pdfDoc)return;
+  const pg_el=document.getElementById('pgroups');
+  pg_el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Analysoidaan...</div>';
+  try{
+    const pg=await pdfDoc.getPage(curPage);
+    const ops=await pg.getOperatorList();
+    const vp=pg.getViewport({scale:1});
+    const pH=vp.height;
+    const OPS=pdfjsLib.OPS;
+    const fns=ops.fnArray,args=ops.argsArray;
 
-  const pg = await pdfDoc.getPage(curPage);
-  const ops = await pg.getOperatorList();
-  const vp = pg.getViewport({scale:1});
-  const pH = vp.height;
-  const OPS = pdfjsLib.OPS;
-  const fnArray = ops.fnArray;
-  const argsArray = ops.argsArray;
-
-  // Color tracking
-  let strokeCS = 'default';
-  let fillCS = 'default';
-  let strokeVals = [0];
-  let fillVals = [0];
-  let lineWidth = 1;
-
-  // Spot color palette
-  const palette = ['#CC0000','#0055CC','#00AA44','#FF6600','#9900CC','#CC6600','#008888'];
-  const csColors = {};
-  let csIdx = 0;
-  function csHex(cs){
-    if(!csColors[cs]){ csColors[cs]=palette[csIdx%palette.length]; csIdx++; }
-    return csColors[cs];
-  }
-  function getHex(cs, vals){
-    if(cs !== 'default' && cs !== 'rgb' && cs !== 'cmyk' && cs !== 'gray') return csHex(cs);
-    if(cs === 'gray'){ const v=Math.round((1-(vals[0]||0))*255); return '#'+[v,v,v].map(x=>x.toString(16).padStart(2,'0')).join(''); }
-    if(cs === 'rgb') return '#'+vals.slice(0,3).map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('');
-    if(cs === 'cmyk'){ const[c,m,y,k]=vals; const r=Math.round(255*(1-c)*(1-k)),g=Math.round(255*(1-m)*(1-k)),b=Math.round(255*(1-y)*(1-k)); return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join(''); }
-    return '#000000';
-  }
-  function colorKey(cs, vals){ return cs+':'+vals.map(v=>Math.round(v*100)).join(','); }
-
-  // Path accumulator
-  let pathPts = [];
-  let groups = {};
-
-  function addRect(x,y,w,h){
-    // rectangle in PDF coords (y from bottom) -> canvas coords (y from top)
-    const cx = x;
-    const cy = pH - y - h;
-    pathPts = [[cx,cy],[cx+w,cy],[cx+w,cy+h],[cx,cy+h],[cx,cy]];
-  }
-
-  function flushPath(isStroke){
-    if(pathPts.length < 2) return;
-    const cs = isStroke ? strokeCS : fillCS;
-    const vals = isStroke ? strokeVals : fillVals;
-    const key = colorKey(cs, vals);
-    const hex = getHex(cs, vals);
-    if(!groups[key]) groups[key] = {hex, cs, vals, paths:[], selected:false};
-
-    let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
-    pathPts.forEach(([px,py])=>{ x0=Math.min(x0,px); y0=Math.min(y0,py); x1=Math.max(x1,px); y1=Math.max(y1,py); });
-    groups[key].paths.push({ x0, y0, x1, y1, w:x1-x0, h:y1-y0, lineWidth, pts:[...pathPts] });
-    pathPts = [];
-  }
-
-  for(let i=0;i<fnArray.length;i++){
-    const fn = fnArray[i];
-    const args = argsArray[i] || [];
-
-    switch(fn){
-      case OPS.setLineWidth: lineWidth = args[0]||1; break;
-      case OPS.setStrokeColorSpace: strokeCS = String(args[0]||'default'); break;
-      case OPS.setFillColorSpace:   fillCS   = String(args[0]||'default'); break;
-      case OPS.setStrokeRGBColor:   strokeCS='rgb';  strokeVals=[...args]; break;
-      case OPS.setFillRGBColor:     fillCS='rgb';    fillVals=[...args]; break;
-      case OPS.setStrokeGray:       strokeCS='gray'; strokeVals=[args[0]]; break;
-      case OPS.setFillGray:         fillCS='gray';   fillVals=[args[0]]; break;
-      case OPS.setStrokeCMYKColor:  strokeCS='cmyk'; strokeVals=[...args]; break;
-      case OPS.setFillCMYKColor:    fillCS='cmyk';   fillVals=[...args]; break;
-      case OPS.setStrokeColor:      strokeVals=[...args]; break;
-      case OPS.setFillColor:        fillVals=[...args]; break;
-      case OPS.setStrokeColorN:     strokeVals=[...args]; break;
-      case OPS.setFillColorN:       fillVals=[...args]; break;
-
-      case OPS.moveTo:
-        pathPts = [[args[0], pH-args[1]]];
-        break;
-      case OPS.lineTo:
-        pathPts.push([args[0], pH-args[1]]);
-        break;
-      case OPS.curveTo:
-      case OPS.curveTo2:
-      case OPS.curveTo3:
-        pathPts.push([args[args.length-2], pH-args[args.length-1]]);
-        break;
-      case OPS.rectangle:
-        // KEY FIX: rectangle is a self-contained path
-        // First flush any existing path, then create rect
-        if(pathPts.length > 1) flushPath(true);
-        addRect(args[0], args[1], args[2], args[3]);
-        break;
-      case OPS.stroke:
-        flushPath(true);
-        break;
-      case OPS.fill:
-      case OPS.eoFill:
-        flushPath(false);
-        break;
-      case OPS.fillStroke:
-      case OPS.eoFillStroke:
-        flushPath(true);
-        break;
-      case OPS.endPath:
-      case OPS.closePath:
-        pathPts = [];
-        break;
-      case OPS.restore:
-        pathPts = [];
-        break;
+    let sCS='default',fCS='default',sVals=[0],fVals=[0],lw=1;
+    const pal=['#CC0000','#0055CC','#00AA44','#FF6600','#9900CC','#CC6600','#008888'];
+    const csMap={};let csI=0;
+    function csHex(cs){if(!csMap[cs]){csMap[cs]=pal[csI%pal.length];csI++;}return csMap[cs];}
+    function getHex(cs,v){
+      if(cs!=='default'&&cs!=='rgb'&&cs!=='cmyk'&&cs!=='gray')return csHex(cs);
+      if(cs==='gray'){const x=Math.round((1-(v[0]||0))*255);return'#'+[x,x,x].map(c=>c.toString(16).padStart(2,'0')).join('');}
+      if(cs==='rgb')return'#'+v.slice(0,3).map(c=>Math.round(c*255).toString(16).padStart(2,'0')).join('');
+      if(cs==='cmyk'){const[c,m,y,k]=v;return'#'+[Math.round(255*(1-c)*(1-k)),Math.round(255*(1-m)*(1-k)),Math.round(255*(1-y)*(1-k))].map(x=>x.toString(16).padStart(2,'0')).join('');}
+      return'#000000';
     }
-  }
+    function cKey(cs,v){return cs+':'+v.map(x=>Math.round(x*100)).join(',')}
 
-  // Filter out tiny paths and full-page backgrounds
-  const pvp = pageVps[curPage];
-  const pageW = pvp ? pvp.width/RS : 1000;
-  const pageH = pvp ? pvp.height/RS : 1000;
+    let pts=[],groups={};
+    function addRect(x,y,w,h){pts=[[x,pH-y-h],[x+w,pH-y-h],[x+w,pH-y],[x,pH-y]];}
+    function flush(stroke){
+      if(pts.length<2)return;
+      const cs=stroke?sCS:fCS,v=stroke?sVals:fVals;
+      const key=cKey(cs,v),hex=getHex(cs,v);
+      if(!groups[key])groups[key]={hex,paths:[],selected:false};
+      let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+      pts.forEach(([px,py])=>{x0=Math.min(x0,px);y0=Math.min(y0,py);x1=Math.max(x1,px);y1=Math.max(y1,py);});
+      groups[key].paths.push({x0,y0,x1,y1,w:x1-x0,h:y1-y0,lw});
+      pts=[];
+    }
 
-  Object.keys(groups).forEach(key => {
-    groups[key].paths = groups[key].paths.filter(p => {
-      if(p.w < 2 && p.h < 2) return false; // too tiny
-      return true;
+    for(let i=0;i<fns.length;i++){
+      const fn=fns[i],a=args[i]||[];
+      if(fn===OPS.setLineWidth)lw=a[0]||1;
+      else if(fn===OPS.setStrokeColorSpace)sCS=String(a[0]||'default');
+      else if(fn===OPS.setFillColorSpace)fCS=String(a[0]||'default');
+      else if(fn===OPS.setStrokeRGBColor){sCS='rgb';sVals=[...a];}
+      else if(fn===OPS.setFillRGBColor){fCS='rgb';fVals=[...a];}
+      else if(fn===OPS.setStrokeGray){sCS='gray';sVals=[a[0]];}
+      else if(fn===OPS.setFillGray){fCS='gray';fVals=[a[0]];}
+      else if(fn===OPS.setStrokeCMYKColor){sCS='cmyk';sVals=[...a];}
+      else if(fn===OPS.setFillCMYKColor){fCS='cmyk';fVals=[...a];}
+      else if(fn===OPS.setStrokeColor)sVals=[...a];
+      else if(fn===OPS.setFillColor)fVals=[...a];
+      else if(fn===OPS.setStrokeColorN)sVals=[...a];
+      else if(fn===OPS.setFillColorN)fVals=[...a];
+      else if(fn===OPS.moveTo)pts=[[a[0],pH-a[1]]];
+      else if(fn===OPS.lineTo)pts.push([a[0],pH-a[1]]);
+      else if(fn===OPS.curveTo||fn===OPS.curveTo2||fn===OPS.curveTo3)pts.push([a[a.length-2],pH-a[a.length-1]]);
+      else if(fn===OPS.rectangle){flush(true);addRect(a[0],a[1],a[2],a[3]);}
+      else if(fn===OPS.stroke)flush(true);
+      else if(fn===OPS.fill||fn===OPS.eoFill)flush(false);
+      else if(fn===OPS.fillStroke||fn===OPS.eoFillStroke)flush(true);
+      else if(fn===OPS.endPath||fn===OPS.closePath||fn===OPS.restore)pts=[];
+    }
+
+    // Filter tiny
+    Object.keys(groups).forEach(k=>{
+      groups[k].paths=groups[k].paths.filter(p=>p.w>2||p.h>2);
+      if(!groups[k].paths.length)delete groups[k];
     });
-    if(!groups[key].paths.length) delete groups[key];
-  });
 
-  // Debug: show what we found on screen
-  const groupCount = Object.keys(groups).length;
-  const totalFound = Object.values(groups).reduce((s,g)=>s+g.paths.length,0);
-  
-  if(groupCount === 0){
-    // Show detailed debug
-    const opsUsed = new Set(fnArray);
-    // Check which color OPS fired
-    const colorOpsFound = [];
-    if(fnArray.includes(OPS.setStrokeColorSpace)) colorOpsFound.push('setStrokeColorSpace');
-    if(fnArray.includes(OPS.setStrokeRGBColor)) colorOpsFound.push('setStrokeRGBColor');
-    if(fnArray.includes(OPS.setStrokeColorN)) colorOpsFound.push('setStrokeColorN');
-    if(fnArray.includes(OPS.setStrokeColor)) colorOpsFound.push('setStrokeColor');
-    if(fnArray.includes(OPS.rectangle)) colorOpsFound.push('rectangle');
-    if(fnArray.includes(OPS.stroke)) colorOpsFound.push('stroke');
-    
-    // Count rectangles and strokes
-    const rectCount = fnArray.filter(f=>f===OPS.rectangle).length;
-    const strokeCount = fnArray.filter(f=>f===OPS.stroke).length;
-    const csCount = fnArray.filter(f=>f===OPS.setStrokeColorSpace).length;
-    const scnCount = fnArray.filter(f=>f===OPS.setStrokeColorN).length;
-    
-    document.getElementById('pathGroups').innerHTML = 
-      '<div style="font-size:10px;font-family:monospace;background:#1c1917;color:#a8e6cf;padding:10px;border-radius:6px;line-height:1.8">'
-      +'<b>Debug:</b><br>'
-      +'Ops löydetty: '+colorOpsFound.join(', ')+'<br>'
-      +'rectangle: '+rectCount+' stroke: '+strokeCount+'<br>'
-      +'setStrokeColorSpace: '+csCount+' setStrokeColorN: '+scnCount+'<br>'
-      +'strokeCS arvo: "'+strokeCS+'"<br>'
-      +'strokeVals: '+JSON.stringify(strokeVals)+'<br>'
-      +'OPS.setStrokeColorSpace = '+OPS.setStrokeColorSpace+'<br>'
-      +'OPS.rectangle = '+OPS.rectangle+'<br>'
-      +'OPS.stroke = '+OPS.stroke+'<br>'
-      +'fnArray sample: '+fnArray.slice(0,20).join(',')
-      +'</div>';
+    detectedPaths=groups;
+    renderPathGroups(groups);
+  }catch(e){
+    console.error('analyzeVectorPaths',e);
+    pg_el.innerHTML='<div style="font-size:12px;color:var(--red)">Analyysi epäonnistui: '+e.message+'</div>';
+  }
+}
+
+const SPOTS=['DK1','DK2','CREASE','Kiss Cut','CUT1','Die Cut','Perf'];
+
+function renderPathGroups(groups){
+  const el=document.getElementById('pgroups');
+  const entries=Object.entries(groups);
+  if(!entries.length){el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Ei vektoripolkuja löydetty</div>';document.getElementById('smaps').innerHTML='';return;}
+  entries.sort(([,a],[,b])=>b.paths.length-a.paths.length);
+  el.innerHTML='';
+  entries.forEach(([key,g],i)=>{
+    const lw=(g.paths.reduce((s,p)=>s+p.lw,0)/g.paths.length).toFixed(2);
+    const ws=g.paths.map(p=>p.w).filter(w=>w>1);
+    const sz=ws.length?(' · '+Math.min(...ws).toFixed(0)+'–'+Math.max(...ws).toFixed(0)+'pt'):'';
+    const div=document.createElement('div');div.className='pg-group';
+    div.innerHTML='<div class="pg-hdr" onclick="togglePG(\''+key+'\')"><div class="swatch" style="background:'+g.hex+'"></div><div class="pg-info"><div class="pg-name">'+g.hex+'</div><div class="pg-meta">'+g.paths.length+' viivaa · lw '+lw+'pt'+sz+'</div></div><input type="checkbox" class="pg-chk" id="chk_'+key+'" onclick="event.stopPropagation();toggleSel(\''+key+'\',this.checked);updSmaps();redraw()"></div><div class="pg-body" id="body_'+key+'">'+g.paths.slice(0,8).map((p,j)=>'<div class="pg-item">'+(j+1)+'. '+p.w.toFixed(1)+'×'+p.h.toFixed(1)+'pt @ ('+p.x0.toFixed(1)+','+p.y0.toFixed(1)+')</div>').join('')+(g.paths.length>8?'<div class="pg-item">...ja '+(g.paths.length-8)+' lisää</div>':'')+'</div>';
+    el.appendChild(div);
+    g.selected=false;g.spotName=SPOTS[i]||'Die Cut';g.previewColor='#FF0099';
+  });
+  updSmaps();
+}
+function togglePG(key){const b=document.getElementById('body_'+key);if(b)b.classList.toggle('open');}
+function toggleSel(key,val){if(detectedPaths[key])detectedPaths[key].selected=val;}
+function updSmaps(){
+  const el=document.getElementById('smaps');
+  const sel=Object.entries(detectedPaths).filter(([k])=>{const c=document.getElementById('chk_'+k);return c&&c.checked;});
+  if(!sel.length){el.innerHTML='<p style="font-size:11px;color:var(--ink3)">Valitse viivaryhmät yllä.</p>';return;}
+  const opts=SPOTS.map(n=>'<option value="'+n+'">'+n+'</option>').join('');
+  el.innerHTML=sel.map(([key,g],i)=>'<div class="smap-row"><div class="swatch" style="background:'+g.hex+'"></div><span style="font-size:10px;flex:1;font-family:monospace">'+g.paths.length+' viivaa</span><select class="esm" id="sm_'+key+'" onchange="detectedPaths[\''+key+'\'].spotName=this.value">'+opts+'</select><input type="color" value="'+g.previewColor+'" style="width:28px;height:24px;padding:1px;border:1px solid var(--paper3);border-radius:3px;cursor:pointer" oninput="detectedPaths[\''+key+'\'].previewColor=this.value;redraw()"></div>').join('');
+}
+
+// CCD
+function setCCD(v){addCCD_=v;document.getElementById('ccdOff').classList.toggle('on',!v);document.getElementById('ccdOn').classList.toggle('on',v);document.getElementById('ccdSet').classList.toggle('hidden',!v);}
+function setICCD(v){document.getElementById('iCCDOff').classList.toggle('on',!v);document.getElementById('iCCDOn').classList.toggle('on',v);document.getElementById('iCCDSet').classList.toggle('hidden',!v);drawImp();}
+
+// Convert to spot
+function convertToSpot(){
+  const vp=pageVps[curPage];if(!vp){ss('Lataa PDF ensin','warn');return;}
+  const sel=Object.entries(detectedPaths).filter(([k])=>{const c=document.getElementById('chk_'+k);return c&&c.checked;});
+  if(!sel.length){ss('Valitse ensin viivaryhmät','warn');return;}
+  const lw=parseFloat(document.getElementById('t1lw').value)||0.5;
+  let n=0;
+  sel.forEach(([key,g])=>{
+    const smEl=document.getElementById('sm_'+key);
+    const spotName=smEl?smEl.value:g.spotName||'DK1';
+    const col=g.previewColor||'#FF0099';
+    g.paths.forEach(p=>{
+      if(p.w<2&&p.h<2)return;
+      addObjDirect({name:spotName+' '+(++objCtr),shape:'rect',x:p.x0*RS,y:p.y0*RS,w:p.w*RS,h:p.h*RS,color:col,lineWidth:lw,spotName,dash:'solid',margin:0,pos:'center',regMarks:false,nx:0,ny:0,nw:0,nh:0});
+      n++;
+    });
+  });
+  if(addCCD_){
+    const sz=parseFloat(document.getElementById('ccdSz').value)||5;
+    const off=parseFloat(document.getElementById('ccdOf').value)||10;
+    const szPx=mm2pt(sz)*RS,offPx=mm2pt(off)*RS;
+    const W=vp.width,H=vp.height;
+    [[offPx,offPx],[W-offPx-szPx,offPx],[W-offPx-szPx,H-offPx-szPx],[offPx,H-offPx-szPx]].forEach(([x,y],i)=>{
+      addObjDirect({name:'CCD-'+(i+1),shape:'circle',x,y,w:szPx,h:szPx,color:'#000000',lineWidth:0,spotName:'ccd',dash:'solid',margin:0,pos:'center',regMarks:false,filled:true,nx:0,ny:0,nw:0,nh:0});
+    });
+  }
+  ss('Muunnettu: '+n+' viivaa'+(addCCD_?' + 4 CCD':''),'ok');
+  switchTab(2);redraw();
+}
+
+// Objects
+function mkObj(p={}){
+  const vp=pageVps[curPage]||{width:400,height:400};const id=++objCtr;
+  return{id,name:p.name||('Kohde '+id),shape:p.shape||'rect',x:p.x!==undefined?p.x:vp.width*.1,y:p.y!==undefined?p.y:vp.height*.1,w:p.w!==undefined?p.w:vp.width*.8,h:p.h!==undefined?p.h:vp.height*.8,points:p.points||null,closed:p.closed||false,radius:p.radius||0,color:p.color||'#FF0099',lineWidth:p.lineWidth||0.5,spotName:p.spotName||'DK1',dash:p.dash||'solid',margin:p.margin||0,pos:p.pos||'center',regMarks:false,filled:p.filled||false,nx:0,ny:0,nw:0,nh:0};
+}
+function addObj(p={}){if(!pdfDoc){ss('Lataa PDF ensin','warn');return;}const o=mkObj(p);getObjs().push(o);selObj(o.id);updOList();redraw();return o;}
+function addObjDirect(p){const o=Object.assign({},mkObj({}),p,{id:++objCtr});getObjs().push(o);updOList();redraw();return o;}
+function delAllObjs(){pageData[curPage]=[];selId=null;document.getElementById('ep').className='ep';updOList();redraw();}
+function selObj(id){
+  selId=id;const o=getSel();
+  document.getElementById('ep').className='ep'+(o?' on':'');
+  if(!o){updOList();return;}
+  document.getElementById('elbl').textContent=o.name;
+  document.getElementById('eShape').value=o.shape;
+  document.getElementById('eRad').value=o.radius;
+  document.getElementById('eRadV').textContent=o.radius;
+  document.getElementById('eRadRow').classList.toggle('hidden',o.shape!=='rounded');
+  document.getElementById('eCol').value=o.color;
+  document.getElementById('eW').value=o.lineWidth;
+  document.getElementById('eWV').textContent=o.lineWidth+'pt';
+  document.getElementById('eM').value=o.margin;
+  document.getElementById('eMV').textContent=o.margin+'pt';
+  document.getElementById('eSpot').value=o.spotName;
+  setPos(o.pos,false);
+  ['x','y','w','h'].forEach(k=>document.getElementById('n'+k.toUpperCase()).textContent=Math.round(o['n'+k]||0));
+  updOList();
+}
+function updObj(){
+  const o=getSel();if(!o)return;
+  o.shape=document.getElementById('eShape').value;
+  o.radius=parseInt(document.getElementById('eRad').value);
+  document.getElementById('eRadRow').classList.toggle('hidden',o.shape!=='rounded');
+  o.color=document.getElementById('eCol').value;
+  o.lineWidth=parseFloat(document.getElementById('eW').value);
+  o.margin=parseInt(document.getElementById('eM').value);
+  o.spotName=document.getElementById('eSpot').value;
+  redraw();
+}
+function setPos(m,upd=true){
+  ['I','C','O'].forEach(d=>document.getElementById('p'+d).classList.remove('on'));
+  const map={'inside':'I','center':'C','outside':'O'};
+  document.getElementById('p'+map[m])?.classList.add('on');
+  if(upd){const o=getSel();if(o){o.pos=m;redraw();}}
+}
+function nudge(ax,val){
+  const o=getSel();if(!o)return;
+  o['n'+ax]=(o['n'+ax]||0)+val;
+  document.getElementById('n'+ax.toUpperCase()).textContent=Math.round(o['n'+ax]);
+  redraw();
+}
+function delObj(id){
+  const obs=getObjs();const i=obs.findIndex(o=>o.id===id);if(i>=0)obs.splice(i,1);
+  if(selId===id){selId=null;document.getElementById('ep').className='ep';}
+  updOList();redraw();
+}
+function updOList(){
+  const el=document.getElementById('olist');const obs=getObjs();
+  if(!obs.length){el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Ei kohteita</div>';return;}
+  el.innerHTML=obs.map(o=>'<div class="obj-row'+(o.id===selId?' sel':'')+'" onclick="selObj('+o.id+')"><div class="obj-dot" style="color:'+o.color+'"></div><span style="flex:1;font-weight:500">'+o.name+'</span><span style="font-size:10px;color:var(--ink3);font-family:monospace">'+o.spotName+'</span><span class="obj-del" onclick="event.stopPropagation();delObj('+o.id+')">×</span></div>').join('');
+}
+
+// Cut rect
+function getCR(o){const off=o.pos==='inside'?o.margin:o.pos==='outside'?-o.margin:o.margin/2;return{x:o.x+off+(o.nx||0),y:o.y+off+(o.ny||0),w:o.w-off*2+(o.nw||0),h:o.h-off*2+(o.nh||0)};}
+
+// Drawing
+function applyDash(ctx,d){if(d==='dashed')ctx.setLineDash([8,5]);else if(d==='dotted')ctx.setLineDash([2,4]);else ctx.setLineDash([]);}
+function handles(x,y,w,h){const mx=x+w/2,my=y+h/2;return[{x,y,n:'nw'},{x:mx,y,n:'n'},{x:x+w,y,n:'ne'},{x:x+w,y:my,n:'e'},{x:x+w,y:y+h,n:'se'},{x:mx,y:y+h,n:'s'},{x,y:y+h,n:'sw'},{x,y:my,n:'w'}];}
+
+function drawObj(ctx,o,sel){
+  if(o.points&&o.points.length>1){
+    ctx.strokeStyle=o.color;ctx.lineWidth=o.lineWidth*RS;applyDash(ctx,o.dash);
+    ctx.beginPath();ctx.moveTo(o.points[0].x,o.points[0].y);
+    for(let i=1;i<o.points.length;i++)ctx.lineTo(o.points[i].x,o.points[i].y);
+    if(o.closed)ctx.closePath();ctx.stroke();
     return;
   }
-
-  detectedPaths = groups;
-  renderPathGroups(groups, vp);
+  const{x,y,w,h}=getCR(o);
+  if(o.filled){ctx.fillStyle=o.color;ctx.beginPath();if(o.shape==='circle')ctx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);else ctx.rect(x,y,w,h);ctx.fill();return;}
+  if(sel){
+    ctx.strokeStyle='rgba(37,99,235,.3)';ctx.lineWidth=1;ctx.setLineDash([4,3]);ctx.strokeRect(x-6,y-6,w+12,h+12);ctx.setLineDash([]);
+    handles(x,y,w,h).forEach(hh=>{ctx.fillStyle='#fff';ctx.strokeStyle=o.color;ctx.lineWidth=1.5;ctx.setLineDash([]);ctx.beginPath();ctx.rect(hh.x-4,hh.y-4,8,8);ctx.fill();ctx.stroke();});
+  }
+  ctx.strokeStyle=o.color;ctx.lineWidth=o.lineWidth*RS;applyDash(ctx,o.dash);
+  ctx.beginPath();
+  if(o.shape==='circle')ctx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);
+  else if(o.shape==='rounded'){const r=Math.min(o.radius,w/2,h/2);ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();}
+  else ctx.rect(x,y,w,h);
+  ctx.stroke();
 }
 
+function drawTab1(ctx){
+  Object.values(detectedPaths).filter(g=>g.selected).forEach(g=>{
+    ctx.strokeStyle=g.previewColor||'#FF0099';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+    g.paths.forEach(p=>{ctx.beginPath();ctx.rect(p.x0*RS,p.y0*RS,p.w*RS,p.h*RS);ctx.stroke();});
+    ctx.setLineDash([]);
+  });
+}
 
+function drawImpOverlay(ctx){
+  if(!impData)return;
+  const{rows,cols,cW,cH,oX,oY,gX,gY,bPx,shape,rPx,c1,c2,useCCD,cSz,cOff}=impData;
+  const vp=pageVps[curPage];if(!vp)return;
+  const sc=vp.width/impData.sheetW;
+  function sh(ctx,x,y,w,h,r){ctx.beginPath();if(shape==='circle')ctx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);else if(shape==='rounded'){const rv=Math.min(r,w/2,h/2);ctx.moveTo(x+rv,y);ctx.lineTo(x+w-rv,y);ctx.arcTo(x+w,y,x+w,y+rv,rv);ctx.lineTo(x+w,y+h-rv);ctx.arcTo(x+w,y+h,x+w-rv,y+h,rv);ctx.lineTo(x+rv,y+h);ctx.arcTo(x,y+h,x,y+h-rv,rv);ctx.lineTo(x,y+rv);ctx.arcTo(x,y,x+rv,y,rv);ctx.closePath();}else ctx.rect(x,y,w,h);}
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    const x=oX+c*(cW+gX),y=oY+r*(cH+gY);
+    if(bPx>0){ctx.strokeStyle=c2;ctx.lineWidth=1;ctx.setLineDash([5,3]);sh(ctx,x-bPx,y-bPx,cW+bPx*2,cH+bPx*2,rPx+bPx);ctx.stroke();}
+    ctx.strokeStyle=c1;ctx.lineWidth=1.5;ctx.setLineDash([]);sh(ctx,x,y,cW,cH,rPx);ctx.stroke();
+  }
+  if(useCCD&&cSz>0){
+    const cpx=cSz*sc,cofx=cOff*sc;const W=vp.width,H=vp.height;
+    ctx.fillStyle='#000';ctx.setLineDash([]);
+    [[cofx,cofx],[W-cofx-cpx,cofx],[W-cofx-cpx,H-cofx-cpx],[cofx,H-cofx-cpx]].forEach(([cx,cy])=>{ctx.beginPath();ctx.ellipse(cx+cpx/2,cy+cpx/2,cpx/2,cpx/2,0,0,Math.PI*2);ctx.fill();});
+  }
+}
 
-async function runAISuggest(){
+function redraw(){
+  oCtx.clearRect(0,0,oc.width,oc.height);
+  if(activeTab===1){drawTab1(oCtx);return;}
+  if(activeTab===3){drawImpOverlay(oCtx);return;}
+  getObjs().forEach(o=>drawObj(oCtx,o,o.id===selId));
+  if(penPts.length>0){
+    oCtx.strokeStyle='#FF0099';oCtx.lineWidth=1.5;oCtx.setLineDash([4,3]);
+    oCtx.beginPath();oCtx.moveTo(penPts[0].x,penPts[0].y);
+    for(let i=1;i<penPts.length;i++)oCtx.lineTo(penPts[i].x,penPts[i].y);
+    if(penPrev)oCtx.lineTo(penPrev.x,penPrev.y);
+    oCtx.stroke();oCtx.setLineDash([]);
+  }
+  if(dragSt&&(dragSt.type==='dR'||dragSt.type==='dC')){
+    const{sx,sy,cx,cy}=dragSt;const x=Math.min(sx,cx),y=Math.min(sy,cy),w=Math.abs(cx-sx),h=Math.abs(cy-sy);
+    oCtx.strokeStyle='#FF0099';oCtx.lineWidth=1.5;oCtx.setLineDash([4,3]);
+    oCtx.beginPath();if(dragSt.type==='dC')oCtx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);else oCtx.rect(x,y,w,h);
+    oCtx.stroke();oCtx.setLineDash([]);
+  }
+}
+
+// Tool
+function setTool(t){tool=t;penPts=[];penPrev=null;['Sel','Pen','Rect','Circ'].forEach(n=>document.getElementById('t'+n).classList.toggle('on',n.toLowerCase().startsWith(t.substring(0,3))));oc.style.cursor=t==='select'?'default':'crosshair';redraw();}
+document.getElementById('tSel').addEventListener('click',()=>setTool('select'));
+document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;if(activeTab!==2)return;if(e.key==='v')setTool('select');if(e.key==='p')setTool('pen');if(e.key==='r')setTool('rect');if(e.key==='e')setTool('circle');if(e.key==='Escape'){penPts=[];penPrev=null;redraw();}if((e.key==='Delete'||e.key==='Backspace')&&selId)delObj(selId);});
+
+// Mouse
+function cXY(e){const r=oc.getBoundingClientRect();return{x:(e.clientX-r.left)*(oc.width/r.width)/zoom,y:(e.clientY-r.top)*(oc.height/r.height)/zoom};}
+function hitH(o,mx,my){const{x,y,w,h}=getCR(o);for(const hh of handles(x,y,w,h)){if(Math.abs(mx-hh.x)<7&&Math.abs(my-hh.y)<7)return hh.n;}return null;}
+function hitO(mx,my){const obs=getObjs();for(let i=obs.length-1;i>=0;i--){const o=obs[i];if(o.points){for(let j=1;j<o.points.length;j++){const p1=o.points[j-1],p2=o.points[j];const dx=p2.x-p1.x,dy=p2.y-p1.y,t=Math.max(0,Math.min(1,((mx-p1.x)*dx+(my-p1.y)*dy)/(dx*dx+dy*dy||1)));if(Math.hypot(mx-(p1.x+t*dx),my-(p1.y+t*dy))<8)return o;}continue;}const{x,y,w,h}=getCR(o);if(mx>=x-4&&mx<=x+w+4&&my>=y-4&&my<=y+h+4)return o;}return null;}
+function curH(n){if(n==='n'||n==='s')return 'n-resize';if(n==='e'||n==='w')return 'e-resize';if(n==='nw'||n==='se')return 'nw-resize';return 'ne-resize';}
+
+oc.addEventListener('mousemove',e=>{
+  if(activeTab!==2)return;
+  const{x,y}=cXY(e);
+  if(tool==='pen'&&penPts.length>0){penPrev={x,y};redraw();return;}
+  if(dragSt){
+    const ds=dragSt;
+    if(ds.type==='move'){const o=getObjs().find(o=>o.id===ds.id);if(o){o.x=ds.ox+(x-ds.sx);o.y=ds.oy+(y-ds.sy);}redraw();}
+    else if(ds.type==='resize'){const o=getObjs().find(o=>o.id===ds.id);if(!o)return;const dx=x-ds.sx,dy=y-ds.sy;let nx=ds.ox,ny=ds.oy,nw=ds.ow,nh=ds.oh;if(ds.h.includes('e'))nw=Math.max(10,ds.ow+dx);if(ds.h.includes('s'))nh=Math.max(10,ds.oh+dy);if(ds.h.includes('w')){nx=ds.ox+dx;nw=Math.max(10,ds.ow-dx);}if(ds.h.includes('n')){ny=ds.oy+dy;nh=Math.max(10,ds.oh-dy);}o.x=nx;o.y=ny;o.w=nw;o.h=nh;redraw();}
+    else if(ds.type==='dR'||ds.type==='dC'){ds.cx=x;ds.cy=y;redraw();}
+    return;
+  }
+  if(tool==='select'){const o=getSel();if(o&&!o.points){const hh=hitH(o,x,y);if(hh){oc.style.cursor=curH(hh);return;}}oc.style.cursor=hitO(x,y)?'move':'default';}
+});
+oc.addEventListener('mousedown',e=>{
+  if(activeTab!==2)return;
+  const{x,y}=cXY(e);
+  if(tool==='pen'){if(penPts.length>2&&Math.hypot(x-penPts[0].x,y-penPts[0].y)<10){addObj({type:'pen',shape:'pen',points:[...penPts],closed:true,x:0,y:0,w:0,h:0});penPts=[];penPrev=null;redraw();return;}penPts.push({x,y});redraw();return;}
+  if(tool==='rect'||tool==='circle'){dragSt={type:tool==='rect'?'dR':'dC',sx:x,sy:y,cx:x,cy:y};return;}
+  const o=getSel();if(o&&!o.points){const hh=hitH(o,x,y);if(hh){dragSt={type:'resize',id:o.id,h:hh,sx:x,sy:y,ox:o.x,oy:o.y,ow:o.w,oh:o.h};return;}}
+  const hit=hitO(x,y);
+  if(hit){selObj(hit.id);if(!hit.points)dragSt={type:'move',id:hit.id,sx:x,sy:y,ox:hit.x,oy:hit.y};}
+  else{selId=null;document.getElementById('ep').className='ep';updOList();redraw();}
+});
+oc.addEventListener('mouseup',e=>{
+  if(activeTab!==2)return;
+  const{x,y}=cXY(e);
+  if(dragSt&&(dragSt.type==='dR'||dragSt.type==='dC')){const{sx,sy}=dragSt;const rx=Math.min(sx,x),ry=Math.min(sy,y),rw=Math.abs(x-sx),rh=Math.abs(y-sy);if(rw>5&&rh>5)addObj({shape:dragSt.type==='dC'?'circle':'rect',x:rx,y:ry,w:rw,h:rh});dragSt=null;redraw();return;}
+  dragSt=null;
+});
+oc.addEventListener('dblclick',e=>{if(activeTab!==2)return;if(tool==='pen'&&penPts.length>=2){addObj({type:'pen',shape:'pen',points:[...penPts],closed:false,x:0,y:0,w:0,h:0});penPts=[];penPrev=null;redraw();}});
+
+// AI
+async function runAI(){
   if(!pdfDoc)return;
-  const btn=document.getElementById('aiSuggestBtn');
-  const spin=document.getElementById('aiSpin');
-  btn.disabled=true;spin.style.display='inline-block';
-  ss('AI analysoi muotoa...','info');
-  const pg=await pdfDoc.getPage(curPage);
-  const vp=pg.getViewport({scale:1.5});
-  const tc=document.createElement('canvas');tc.width=vp.width;tc.height=vp.height;
-  await pg.render({canvasContext:tc.getContext('2d'),viewport:vp}).promise;
-  const b64=tc.toDataURL('image/jpeg',.85).split(',')[1];
+  const btn=document.getElementById('aiBtn'),sp=document.getElementById('aiSpin');
+  btn.disabled=true;sp.style.display='inline-block';ss('AI analysoi...','info');
   try{
-    const resp=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:300,
-        messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
-        {type:'text',text:'Analysoi tämä tarra-aineisto. Kerro vain: 1) onko tarran muoto pyöreä, suorakulmainen vai vapaamuotoinen, 2) montako tarraa näkyy, 3) suositteletko rect, circle vai rounded. Vastaa VAIN JSON: {"shape":"rect","count":1,"note":"lyhyt selitys suomeksi"}'}]}]})});
+    const pg=await pdfDoc.getPage(curPage);const vp=pg.getViewport({scale:1.5});
+    const tc=document.createElement('canvas');tc.width=vp.width;tc.height=vp.height;
+    await pg.render({canvasContext:tc.getContext('2d'),viewport:vp}).promise;
+    const b64=tc.toDataURL('image/jpeg',.85).split(',')[1];
+    const resp=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:200,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},{type:'text',text:'Analysoi tarra-aineisto. Vastaa VAIN JSON: {"shape":"rect","note":"lyhyt selitys suomeksi"}'}]}]})});
     const data=await resp.json();
     const txt=data.content?.filter(b=>b.type==='text').map(b=>b.text).join('');
-    if(txt){
-      const p=JSON.parse(txt.replace(/```json|```/g,'').trim());
-      document.getElementById('aiSuggestRes').innerHTML=`<div class="info-box blue" style="margin-top:8px"><strong>Muotosuositus: ${p.shape}</strong><br>${p.note}<br><em>Piirrä itse yllä olevilla työkaluilla.</em></div>`;
-      ss('AI ehdottaa: '+p.shape,'ok');
-    }
+    if(txt){const p=JSON.parse(txt.replace(/```json|```/g,'').trim());document.getElementById('aiRes').innerHTML='<div class="info">Muotosuositus: <strong>'+p.shape+'</strong><br>'+p.note+'</div>';ss('AI ehdottaa: '+p.shape,'ok');}
   }catch(e){ss('AI ei vastannut','warn');}
-  btn.disabled=false;spin.style.display='none';
+  btn.disabled=false;sp.style.display='none';
 }
 
-// ─── AI Measure (tab3) ───────────────────────────────────────────────────
-async function runAIMeasure(){
+async function runAIMeas(){
   if(!pdfDoc)return;
-  const btn=document.getElementById('aiMeasBtn');
-  const spin=document.getElementById('aiMeasSpin');
-  btn.disabled=true;spin.style.display='inline-block';
-  ss('AI mittaa tarraa...','info');
-  const pg=await pdfDoc.getPage(curPage);
-  const vp1=pg.getViewport({scale:1});
-  const wMM=ptToMm(vp1.width),hMM=ptToMm(vp1.height);
-  const vp=pg.getViewport({scale:1.5});
-  const tc=document.createElement('canvas');tc.width=vp.width;tc.height=vp.height;
-  await pg.render({canvasContext:tc.getContext('2d'),viewport:vp}).promise;
-  const b64=tc.toDataURL('image/jpeg',.85).split(',')[1];
+  const btn=document.getElementById('aiMBtn'),sp=document.getElementById('aiMS');
+  btn.disabled=true;sp.style.display='inline-block';ss('AI mittaa...','info');
   try{
-    const resp=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:200,
-        messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},
-        {type:'text',text:`Tämä on yksittäinen tarra. Sivu on ${wMM.toFixed(1)}x${hMM.toFixed(1)}mm. Mittaa tarran koko ja muoto. Vastaa VAIN JSON: {"widthMM":50,"heightMM":50,"shape":"circle","radiusMM":0}`}]}]})});
+    const pg=await pdfDoc.getPage(curPage);const vp1=pg.getViewport({scale:1});
+    const wMM=pt2mm(vp1.width),hMM=pt2mm(vp1.height);
+    const vp=pg.getViewport({scale:1.5});
+    const tc=document.createElement('canvas');tc.width=vp.width;tc.height=vp.height;
+    await pg.render({canvasContext:tc.getContext('2d'),viewport:vp}).promise;
+    const b64=tc.toDataURL('image/jpeg',.85).split(',')[1];
+    const resp=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:150,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},{type:'text',text:'Tämä on tarra. Sivu: '+wMM.toFixed(1)+'x'+hMM.toFixed(1)+'mm. Vastaa VAIN JSON: {"widthMM":50,"heightMM":50,"shape":"circle"}'}]}]})});
     const data=await resp.json();
     const txt=data.content?.filter(b=>b.type==='text').map(b=>b.text).join('');
-    if(txt){
-      const p=JSON.parse(txt.replace(/```json|```/g,'').trim());
-      document.getElementById('sW').value=p.widthMM.toFixed(1);
-      document.getElementById('sH').value=p.heightMM.toFixed(1);
-      document.getElementById('sShape').value=p.shape||'rect';
-      document.getElementById('sRadRow').classList.toggle('hidden',p.shape!=='rounded');
-      document.getElementById('aiMeasRes').innerHTML=`<div class="info-box blue" style="margin-bottom:8px">${p.widthMM.toFixed(1)}×${p.heightMM.toFixed(1)}mm · ${p.shape}</div>`;
-      calcImp();ss('Mitat tunnistettu','ok');
-    }
+    if(txt){const p=JSON.parse(txt.replace(/```json|```/g,'').trim());document.getElementById('sW').value=p.widthMM.toFixed(1);document.getElementById('sH').value=p.heightMM.toFixed(1);document.getElementById('sShape').value=p.shape||'rect';document.getElementById('aiMR').innerHTML='<div class="info">'+p.widthMM.toFixed(1)+'×'+p.heightMM.toFixed(1)+'mm · '+p.shape+'</div>';calcImp();ss('Mitat tunnistettu','ok');}
   }catch(e){ss('Mittaus epäonnistui','warn');}
-  btn.disabled=false;spin.style.display='none';
+  btn.disabled=false;sp.style.display='none';
 }
 
-// ─── Imposition ───────────────────────────────────────────────────────────
-function onSShapeChange(){
-  document.getElementById('sRadRow').classList.toggle('hidden',document.getElementById('sShape').value!=='rounded');
-  calcImp();
-}
-function onSheetChange(){
-  document.getElementById('customSheet').classList.toggle('hidden',document.getElementById('sheetSz').value!=='custom');
-  calcImp();
-}
-function getSheetMM(){
-  const v=document.getElementById('sheetSz').value;
-  if(v==='custom')return{w:parseFloat(document.getElementById('shW').value)||210,h:parseFloat(document.getElementById('shH').value)||297};
-  const[sw,sh]=v.split('x').map(Number);return{w:sw,h:sh};
-}
+// Imposition
+function onSShape(){document.getElementById('sRadRow').classList.toggle('hidden',document.getElementById('sShape').value!=='rounded');calcImp();}
+function onSheet(){document.getElementById('shCust').classList.toggle('hidden',document.getElementById('shSz').value!=='custom');calcImp();}
+function getShMM(){const v=document.getElementById('shSz').value;if(v==='custom')return{w:parseFloat(document.getElementById('shW').value)||320,h:parseFloat(document.getElementById('shH').value)||450};const[a,b]=v.split('x').map(Number);return{w:a,h:b};}
+
 function calcImp(){
   if(!pdfDoc)return;
   const sw=parseFloat(document.getElementById('sW').value)||50;
   const sh=parseFloat(document.getElementById('sH').value)||50;
-  const gap=parseFloat(document.getElementById('impGap').value)||3;
-  const margin=parseFloat(document.getElementById('shMargin').value)||23;
-  const sheet=getSheetMM();
-  const usableW=sheet.w-margin*2;
-  const usableH=sheet.h-margin*2;
-  const cols=Math.max(1,Math.floor((usableW+gap)/(sw+gap)));
-  const rows=Math.max(1,Math.floor((usableH+gap)/(sh+gap)));
-  document.getElementById('impR').value=rows;
-  document.getElementById('impC').value=cols;
+  const gap=parseFloat(document.getElementById('shGap').value)||13.8;
+  const margin=parseFloat(document.getElementById('shM').value)||23;
+  const sheet=getShMM();
+  const cols=Math.max(1,Math.floor((sheet.w-margin*2+gap)/(sw+gap)));
+  const rows=Math.max(1,Math.floor((sheet.h-margin*2+gap)/(sh+gap)));
+  document.getElementById('iR').value=rows;
+  document.getElementById('iC').value=cols;
   drawImp();
 }
 
@@ -924,252 +817,173 @@ function drawImp(){
   if(!pdfDoc)return;
   const sw=parseFloat(document.getElementById('sW').value)||50;
   const sh=parseFloat(document.getElementById('sH').value)||50;
-  const bleed=parseFloat(document.getElementById('bleed').value)||1.5;
-  const gap=parseFloat(document.getElementById('impGap').value)||13.8;
-  const margin=parseFloat(document.getElementById('shMargin').value)||23;
-  const rows=parseInt(document.getElementById('impR').value)||1;
-  const cols=parseInt(document.getElementById('impC').value)||1;
-  const sheet=getSheetMM();
+  const bl=parseFloat(document.getElementById('shBl').value)||1.5;
+  const gap=parseFloat(document.getElementById('shGap').value)||13.8;
+  const margin=parseFloat(document.getElementById('shM').value)||23;
+  const rows=parseInt(document.getElementById('iR').value)||1;
+  const cols=parseInt(document.getElementById('iC').value)||1;
+  const sheet=getShMM();
   const shape=document.getElementById('sShape').value;
   const radMM=parseFloat(document.getElementById('sRad').value)||0;
-  const dk1Color=document.getElementById('impColor').value;
-  const dk2Color=(document.getElementById('impColor2')||{value:'#0055CC'}).value;
+  const c1=document.getElementById('iC1').value;
+  const c2=document.getElementById('iC2').value;
   const vp=pageVps[curPage];if(!vp)return;
-  const scale=vp.width/sheet.w;
-
+  const sc=vp.width/sheet.w;
+  const useCCD=document.getElementById('iCCDOn').classList.contains('on');
+  const cSz=useCCD?parseFloat(document.getElementById('iCS').value)||5:0;
+  const cOff=useCCD?parseFloat(document.getElementById('iCO').value)||10:0;
   const totalW=cols*sw+(cols-1)*gap+margin*2;
   const totalH=rows*sh+(rows-1)*gap+margin*2;
   const fits=totalW<=sheet.w&&totalH<=sheet.h;
-
-  // CCD settings
-  const useCCD=(document.getElementById('impCcdOn')||{classList:{contains:()=>false}}).classList.contains('on');
-  const ccdSizeMM=useCCD?parseFloat(document.getElementById('impCcdSz').value)||5:0;
-  const ccdOffMM=useCCD?parseFloat(document.getElementById('impCcdOff3').value)||10:0;
-  const ccdName=document.getElementById('impCcdName')?.value||'ccd';
-
-  impData={
-    rows,cols,shape,
-    dk1Color,dk2Color,
-    dk1Name:document.getElementById('impDK1').value||'DK1',
-    dk2Name:document.getElementById('impDK2').value||'DK2',
-    cellW:sw*scale, cellH:sh*scale,
-    offX:margin*scale, offY:margin*scale,
-    gapX:gap*scale, gapY:gap*scale,
-    bleedPx:bleed*scale,
-    radPx:radMM*scale,
-    swMM:sw, shMM:sh, bleedMM:bleed, gapMM:gap, marginMM:margin,
-    radiusMM:radMM, sheetW:sheet.w, sheetH:sheet.h,
-    useCCD, ccdSizeMM, ccdOffMM, ccdName
-  };
-
-  const res=document.getElementById('impResult');
-  res.classList.add('visible');
-  const ccdLine=useCCD?('CCD-merkit: ⌀'+ccdSizeMM+'mm neljässä kulmassa<br>'):'';
-  res.innerHTML='<strong>'+rows*cols+' tarraa</strong> ('+rows+'×'+cols+')<br>'
-    +'DK1 '+sw+'×'+sh+'mm · DK2 '+(sw+bleed*2).toFixed(1)+'×'+(sh+bleed*2).toFixed(1)+'mm<br>'
-    +'Käytetty: '+totalW.toFixed(1)+'×'+totalH.toFixed(1)+'mm / '+sheet.w+'×'+sheet.h+'mm<br>'
-    +ccdLine
-    +(fits?'✓ Mahtuu arkille':'⚠️ Ylittää arkin');
+  impData={rows,cols,shape,c1,c2,cW:sw*sc,cH:sh*sc,oX:margin*sc,oY:margin*sc,gX:gap*sc,gY:gap*sc,bPx:bl*sc,rPx:radMM*sc,swMM:sw,shMM:sh,blMM:bl,gapMM:gap,marMM:margin,radMM,sheetW:sheet.w,sheetH:sheet.h,useCCD,cSz,cOff,dk1:document.getElementById('iDK1').value||'DK1',dk2:document.getElementById('iDK2').value||'DK2',ccdN:document.getElementById('iCCDN')?.value||'ccd'};
+  const res=document.getElementById('iRes');
+  res.classList.add('on');
+  res.innerHTML='<strong>'+(rows*cols)+' tarraa</strong> ('+rows+'×'+cols+')<br>DK1 '+sw+'×'+sh+'mm · DK2 '+(sw+bl*2).toFixed(1)+'×'+(sh+bl*2).toFixed(1)+'mm<br>Käytetty: '+totalW.toFixed(1)+'×'+totalH.toFixed(1)+'mm / '+sheet.w+'×'+sheet.h+'mm<br>'+(useCCD?'CCD: ⌀'+cSz+'mm neljässä kulmassa<br>':'')+(fits?'✓ Mahtuu arkille':'⚠ Ylittää arkin');
   res.style.borderColor=fits?'#fcd34d':'#fecaca';
   if(activeTab===3)redraw();
 }
 
-// ─── Export ───────────────────────────────────────────────────────────────
-function colorToRGBOps(hex){
-  const r=parseInt(hex.slice(1,3),16)/255;
-  const g=parseInt(hex.slice(3,5),16)/255;
-  const b=parseInt(hex.slice(5,7),16)/255;
-  return`${r.toFixed(3)} ${g.toFixed(3)} ${b.toFixed(3)}`;
-}
+// Export
+function rgb(hex){const r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255;return r.toFixed(3)+' '+g.toFixed(3)+' '+b.toFixed(3);}
 
 function buildOps(o,pW,pH,vp){
   const sx=pW/(vp.width/RS),sy=pH/(vp.height/RS);
-  const rgb=colorToRGBOps(o.color||'#FF0099');
+  const c=rgb(o.color||'#FF0099');
   if(o.points&&o.points.length>1){
     const pts=o.points.map(p=>({x:(p.x/RS)*sx,y:pH-(p.y/RS)*sy*(pH/(vp.height/RS))}));
-    let d=`${pts[0].x} ${pts[0].y} m`;for(let i=1;i<pts.length;i++)d+=` ${pts[i].x} ${pts[i].y} l`;if(o.closed)d+=' h';
-    const dash=o.dash==='dashed'?'[6 4] 0 d ':o.dash==='dotted'?'[2 3] 0 d ':'';
-    return `q ${rgb} RG [] 0 d ${o.lineWidth} w ${dash}${d} S Q`;
+    let d=pts[0].x+' '+pts[0].y+' m';for(let i=1;i<pts.length;i++)d+=' '+pts[i].x+' '+pts[i].y+' l';if(o.closed)d+=' h';
+    return 'q '+c+' RG [] 0 d '+o.lineWidth+' w '+d+' S Q';
   }
   const{x,y,w,h}=getCR(o);
-  const rx=(x/RS)*sx,ry2=(y/RS)*sy,rw=(w/RS)*sx,rh=(h/RS)*sy,pdfY=pH-ry2-rh;
+  const rx=(x/RS)*sx,ry2=(y/RS)*sy,rw=(w/RS)*sx,rh=(h/RS)*sy,pY=pH-ry2-rh;
+  if(o.filled){return 'q '+c+' rg '+rx+' '+pY+' '+rw+' '+rh+' re f Q';}
   let path='';
-  if(o.shape==='circle'){const cx=rx+rw/2,cy=pdfY+rh/2,a=rw/2,b=rh/2,k=.5523;path=`${cx} ${cy+b} m ${cx+a*k} ${cy+b} ${cx+a} ${cy+b*k} ${cx+a} ${cy} c ${cx+a} ${cy-b*k} ${cx+a*k} ${cy-b} ${cx} ${cy-b} c ${cx-a*k} ${cy-b} ${cx-a} ${cy-b*k} ${cx-a} ${cy} c ${cx-a} ${cy+b*k} ${cx-a*k} ${cy+b} ${cx} ${cy+b} c`;}
-  else if(o.shape==='rounded'){const r=Math.min(o.radius*sx,rw/2,rh/2);const x0=rx,y0=pdfY,x1=rx+rw,y1=pdfY+rh;path=`${x0+r} ${y0} m ${x1-r} ${y0} l ${x1} ${y0} ${x1} ${y0+r} v ${x1} ${y1-r} l ${x1} ${y1} ${x1-r} ${y1} v ${x0+r} ${y1} l ${x0} ${y1} ${x0} ${y1-r} v ${x0} ${y0+r} l ${x0} ${y0} ${x0+r} ${y0} v`;}
-  else{path=`${rx} ${pdfY} m ${rx+rw} ${pdfY} l ${rx+rw} ${pdfY+rh} l ${rx} ${pdfY+rh} l h`;}
+  if(o.shape==='circle'){const cx=rx+rw/2,cy=pY+rh/2,a=rw/2,b=rh/2,k=.5523;path=cx+' '+(cy+b)+' m '+(cx+a*k)+' '+(cy+b)+' '+(cx+a)+' '+(cy+b*k)+' '+(cx+a)+' '+cy+' c '+(cx+a)+' '+(cy-b*k)+' '+(cx+a*k)+' '+(cy-b)+' '+cx+' '+(cy-b)+' c '+(cx-a*k)+' '+(cy-b)+' '+(cx-a)+' '+(cy-b*k)+' '+(cx-a)+' '+cy+' c '+(cx-a)+' '+(cy+b*k)+' '+(cx-a*k)+' '+(cy+b)+' '+cx+' '+(cy+b)+' c';}
+  else if(o.shape==='rounded'){const r=Math.min(o.radius*sx,rw/2,rh/2);const x0=rx,y0=pY,x1=rx+rw,y1=pY+rh;path=(x0+r)+' '+y0+' m '+(x1-r)+' '+y0+' l '+x1+' '+y0+' '+x1+' '+(y0+r)+' v '+x1+' '+(y1-r)+' l '+x1+' '+y1+' '+(x1-r)+' '+y1+' v '+(x0+r)+' '+y1+' l '+x0+' '+y1+' '+x0+' '+(y1-r)+' v '+x0+' '+(y0+r)+' l '+x0+' '+y0+' '+(x0+r)+' '+y0+' v';}
+  else{path=rx+' '+pY+' m '+(rx+rw)+' '+pY+' l '+(rx+rw)+' '+(pY+rh)+' l '+rx+' '+(pY+rh)+' l h';}
   const dash=o.dash==='dashed'?'[6 4] 0 d ':o.dash==='dotted'?'[2 3] 0 d ':'';
-  // Filled objects (CCD marks) — use fill operator
-  if(o.filled){
-    return `q ${rgb} rg ${path} f Q`;
-  }
-  return `q ${rgb} RG [] 0 d ${o.lineWidth} w ${dash}${path} S Q`;
+  return 'q '+c+' RG [] 0 d '+o.lineWidth+' w '+dash+path+' S Q';
 }
-
-// Tab1: build ops from detected paths directly (100% accurate)
-function buildTab1Ops(pW,pH,pageVp){
-  const spotColor=document.getElementById('t1Color').value;
-  const lw=parseFloat(document.getElementById('t1LineWidth').value)||0.5;
-  const r=parseInt(spotColor.slice(1,3),16)/255;
-  const g=parseInt(spotColor.slice(3,5),16)/255;
-  const b=parseInt(spotColor.slice(5,7),16)/255;
-  let ops=`q ${r.toFixed(3)} ${g.toFixed(3)} ${b.toFixed(3)} RG [] 0 d ${lw} w\n`;
-  Object.values(detectedPaths).filter(gr=>gr.selected).forEach(group=>{
-    group.paths.forEach(path=>{
-      if(path.w<2&&path.h<2) return;
-      // path coords are in PDF pt (pdfjs scale=1, y flipped)
-      // pdfY = pageVp.height/RS - path.y0... actually path.y0 is already canvas-y (top-down)
-      // We stored y as pH-args[1] where pH=pageVp.height/1 (scale=1)
-      // So to get PDF y (bottom-up): pdfY = (pageVp.height/RS) - (path.y0/RS) ... wait
-      // path.y0 = canvas top-down y in scale=1 units
-      // PDF uses bottom-up: pdf_y = page_height_pt - canvas_y_pt
-      const pageHpt=pageVp.height/RS; // page height in pt
-      const x=path.x0, y=pageHpt-path.y0-path.h; // PDF bottom-up y
-      const w=path.w, h=path.h;
-      ops+=`${x.toFixed(3)} ${y.toFixed(3)} ${w.toFixed(3)} ${h.toFixed(3)} re S\n`;
-    });
-  });
-  ops+='Q';
-  return ops;
-}
-
-function rectPath(x,y,w,h){return `${x} ${y} m ${x+w} ${y} l ${x+w} ${y+h} l ${x} ${y+h} l h`;}
-function circlePath(cx,cy,rx,ry){const k=.5523,a=rx,b=ry;return `${cx} ${cy+b} m ${cx+a*k} ${cy+b} ${cx+a} ${cy+b*k} ${cx+a} ${cy} c ${cx+a} ${cy-b*k} ${cx+a*k} ${cy-b} ${cx} ${cy-b} c ${cx-a*k} ${cy-b} ${cx-a} ${cy-b*k} ${cx-a} ${cy} c ${cx-a} ${cy+b*k} ${cx-a*k} ${cy+b} ${cx} ${cy+b} c`;}
-function roundedPath(x,y,w,h,r){const x0=x,y0=y,x1=x+w,y1=y+h;return `${x0+r} ${y0} m ${x1-r} ${y0} l ${x1} ${y0} ${x1} ${y0+r} v ${x1} ${y1-r} l ${x1} ${y1} ${x1-r} ${y1} v ${x0+r} ${y1} l ${x0} ${y1} ${x0} ${y1-r} v ${x0} ${y0+r} l ${x0} ${y0} ${x0+r} ${y0} v`;}
-function shapePath(shape,x,y,w,h,r){if(shape==='circle')return circlePath(x+w/2,y+h/2,w/2,h/2);if(shape==='rounded')return roundedPath(x,y,w,h,Math.min(r,w/2,h/2));return rectPath(x,y,w,h);}
 
 function buildImpOps(d,pW,pH){
-  const{rows,cols,swMM,shMM,bleedMM,gapMM,marginMM,shape,radiusMM,sheetW,sheetH,
-        dk1Color,dk2Color,useCCD,ccdSizeMM,ccdOffMM}=d;
-  const scX=pW/mmToPt(sheetW),scY=pH/mmToPt(sheetH);
-  const swPt=mmToPt(swMM)*scX,shPt=mmToPt(shMM)*scY;
-  const gapX=mmToPt(gapMM||3)*scX,gapY=mmToPt(gapMM||3)*scY;
-  const blX=mmToPt(bleedMM||0)*scX,blY=mmToPt(bleedMM||0)*scY;
-  const offX=mmToPt(marginMM)*scX,offY=mmToPt(marginMM)*scY;
-  const radPt=mmToPt(radiusMM||0)*Math.min(scX,scY);
-  const dk1rgb=colorToRGBOps(dk1Color||'#FF0099');
-  const dk2rgb=colorToRGBOps(dk2Color||'#0055CC');
+  const{rows,cols,swMM,shMM,blMM,gapMM,marMM,shape,radMM,sheetW,sheetH,c1,c2,useCCD,cSz,cOff}=d;
+  const scX=pW/mm2pt(sheetW),scY=pH/mm2pt(sheetH);
+  const swPt=mm2pt(swMM)*scX,shPt=mm2pt(shMM)*scY;
+  const gX=mm2pt(gapMM||3)*scX,gY=mm2pt(gapMM||3)*scY;
+  const blX=mm2pt(blMM||0)*scX,blY=mm2pt(blMM||0)*scY;
+  const oX=mm2pt(marMM)*scX,oY=mm2pt(marMM)*scY;
+  const rPt=mm2pt(radMM||0)*Math.min(scX,scY);
+  function sp(sh,x,y,w,h,r){
+    if(sh==='circle'){const cx=x+w/2,cy=y+h/2,a=w/2,b=h/2,k=.5523;return cx+' '+(cy+b)+' m '+(cx+a*k)+' '+(cy+b)+' '+(cx+a)+' '+(cy+b*k)+' '+(cx+a)+' '+cy+' c '+(cx+a)+' '+(cy-b*k)+' '+(cx+a*k)+' '+(cy-b)+' '+cx+' '+(cy-b)+' c '+(cx-a*k)+' '+(cy-b)+' '+(cx-a)+' '+(cy-b*k)+' '+(cx-a)+' '+cy+' c '+(cx-a)+' '+(cy+b*k)+' '+(cx-a*k)+' '+(cy+b)+' '+cx+' '+(cy+b)+' c';}
+    if(sh==='rounded'){r=Math.min(r,w/2,h/2);return(x+r)+' '+y+' m '+(x+w-r)+' '+y+' l '+(x+w)+' '+y+' '+(x+w)+' '+(y+r)+' v '+(x+w)+' '+(y+h-r)+' l '+(x+w)+' '+(y+h)+' '+(x+w-r)+' '+(y+h)+' v '+(x+r)+' '+(y+h)+' l '+x+' '+(y+h)+' '+x+' '+(y+h-r)+' v '+x+' '+(y+r)+' l '+x+' '+y+' '+(x+r)+' '+y+' v';}
+    return x+' '+y+' m '+(x+w)+' '+y+' l '+(x+w)+' '+(y+h)+' l '+x+' '+(y+h)+' l h';
+  }
   let ops='';
-
-  // DK2 — outer bleed
-  if(bleedMM>0){
-    ops+='q '+dk2rgb+' RG [] 0 d 0.25 w\n';
-    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
-      const x=offX+c*(swPt+gapX)-blX;
-      const y2=offY+r*(shPt+gapY)-blY;
-      const pY=pH-y2-shPt-blY*2;
-      ops+=shapePath(shape,x,pY,swPt+blX*2,shPt+blY*2,radPt+blX)+'  S\n';
-    }
+  if(blMM>0){
+    ops+='q '+rgb(c2)+' RG [] 0 d 0.25 w\n';
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=oX+c*(swPt+gX)-blX,y2=oY+r*(shPt+gY)-blY,pY=pH-y2-shPt-blY*2;ops+=sp(shape,x,pY,swPt+blX*2,shPt+blY*2,rPt+blX)+' S\n';}
     ops+='Q\n';
   }
-
-  // DK1 — exact sticker
-  ops+='q '+dk1rgb+' RG [] 0 d 0.25 w\n';
-  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
-    const x=offX+c*(swPt+gapX);
-    const y2=offY+r*(shPt+gapY);
-    const pY=pH-y2-shPt;
-    ops+=shapePath(shape,x,pY,swPt,shPt,radPt)+'  S\n';
-  }
+  ops+='q '+rgb(c1)+' RG [] 0 d 0.25 w\n';
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=oX+c*(swPt+gX),y2=oY+r*(shPt+gY),pY=pH-y2-shPt;ops+=sp(shape,x,pY,swPt,shPt,rPt)+' S\n';}
   ops+='Q\n';
-
-  // CCD — filled circles at 4 corners
-  if(useCCD&&ccdSizeMM>0){
-    const ccdPt=mmToPt(ccdSizeMM)*Math.min(scX,scY);
-    const ccdOff=mmToPt(ccdOffMM||10)*Math.min(scX,scY);
+  if(useCCD&&cSz>0){
+    const cPt=mm2pt(cSz)*Math.min(scX,scY),coP=mm2pt(cOff||10)*Math.min(scX,scY);
     ops+='q 0 0 0 rg\n';
-    [[ccdOff,pH-ccdOff-ccdPt],[pW-ccdOff-ccdPt,pH-ccdOff-ccdPt],[pW-ccdOff-ccdPt,ccdOff],[ccdOff,ccdOff]]
-      .forEach(([cx,cy])=>{ops+=circlePath(cx+ccdPt/2,cy+ccdPt/2,ccdPt/2,ccdPt/2)+' f\n';});
+    [[coP,pH-coP-cPt],[pW-coP-cPt,pH-coP-cPt],[pW-coP-cPt,coP],[coP,coP]].forEach(([cx,cy])=>{const a=cPt/2,k=.5523;ops+=(cx+a)+' '+(cy+a+a)+' m '+(cx+a+a*k)+' '+(cy+a+a)+' '+(cx+a+a)+' '+(cy+a+a*k)+' '+(cx+a+a)+' '+(cy+a)+' c '+(cx+a+a)+' '+(cy+a-a*k)+' '+(cx+a+a*k)+' '+(cy+a-a)+' '+(cx+a)+' '+(cy+a-a)+' c '+(cx+a-a*k)+' '+(cy+a-a)+' '+(cx+a-a)+' '+(cy+a-a*k)+' '+(cx+a-a)+' '+(cy+a)+' c '+(cx+a-a)+' '+(cy+a+a*k)+' '+(cx+a-a*k)+' '+(cy+a+a)+' '+(cx+a)+' '+(cy+a+a)+' c f\n';});
     ops+='Q\n';
   }
   return ops;
 }
 
-function drawCutsOn(page,obs,vp){
-  const{width:pW,height:pH}=page.getSize();
-  page.drawRectangle({x:0,y:0,width:0,height:0,opacity:0});
-  obs.forEach(o=>page.pushOperators({toString:()=>'\n'+buildOps(o,pW,pH,vp)}));
-}
+function drawCutsOn(page,obs,vp){const{width:pW,height:pH}=page.getSize();page.drawRectangle({x:0,y:0,width:0,height:0,opacity:0});obs.forEach(o=>page.pushOperators({toString:()=>'\n'+buildOps(o,pW,pH,vp)}));}
 
 async function doExport(){
-  if(!pdfDoc){alert('Lataa PDF ensin.');return;}
+  if(!pdfDoc){alert('Lataa PDF ensin');return;}
   ss('Generoidaan...','info');
   const mode=document.getElementById('expMode').value;
   try{
     if(activeTab===1){
-      // Export with detected paths as spot color
-      const selected=Object.values(detectedPaths).filter(g=>g.selected);
-      if(!selected.length){ss('Valitse viivat ensin','warn');return;}
+      const sel=Object.values(detectedPaths).filter(g=>g.selected);
+      if(!sel.length){ss('Valitse viivat ensin','warn');return;}
       const doc=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));
-      const pages=doc.getPages();
-      const page=pages[curPage-1];
+      const page=doc.getPages()[curPage-1];
       const{width:pW,height:pH}=page.getSize();
       const vp=pageVps[curPage];
-      const ops=buildTab1Ops(pW,pH,vp);
+      const lw=parseFloat(document.getElementById('t1lw').value)||0.5;
+      let ops='';
+      sel.forEach(g=>{
+        const smEl=document.getElementById('sm_'+Object.keys(detectedPaths).find(k=>detectedPaths[k]===g));
+        const c=g.previewColor||'#FF0099';
+        ops+='q '+rgb(c)+' RG [] 0 d '+lw+' w\n';
+        g.paths.forEach(p=>{
+          const pageHpt=vp.height/RS;
+          const x=p.x0,y=pageHpt-p.y0-p.h,w=p.w,h=p.h;
+          ops+=x.toFixed(3)+' '+y.toFixed(3)+' '+w.toFixed(3)+' '+h.toFixed(3)+' re S\n';
+        });
+        ops+='Q\n';
+      });
       page.drawRectangle({x:0,y:0,width:0,height:0,opacity:0});
       page.pushOperators({toString:()=>'\n'+ops});
       dlPDF(await doc.save(),'leikkausraja_spotcolor.pdf');
-      ss('PDF viety spot-väreillä','ok');
+      ss('PDF viety','ok');
     } else if(activeTab===2){
-      const obs=Object.values(pageData).flat();
-      if(!obs.length){ss('Lisää leikkausrajoja ensin','warn');return;}
+      const allObs=Object.values(pageData).flat();
+      if(!allObs.length){ss('Lisää leikkausrajoja ensin','warn');return;}
       if(mode==='combo'){
         const doc=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));
         const pgs=doc.getPages();
         Object.entries(pageData).forEach(([pg,obs])=>{const idx=parseInt(pg)-1;if(idx>=pgs.length||!obs.length)return;const vp=pageVps[parseInt(pg)]||{width:pgs[idx].getSize().width*RS,height:pgs[idx].getSize().height*RS};drawCutsOn(pgs[idx],obs,vp);});
-        dlPDF(await doc.save(),'leikkausraja_yhdistetty.pdf');ss('Yhdistetty PDF ladattu','ok');
+        dlPDF(await doc.save(),'leikkausraja_yhdistetty.pdf');ss('PDF ladattu','ok');
       } else if(mode==='split'){
         const docP=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));
         const docC=await PDFLib.PDFDocument.create();
         const srcPgs=docP.getPages();
         for(let i=0;i<srcPgs.length;i++){const pgN=i+1,blank=docC.addPage([srcPgs[i].getSize().width,srcPgs[i].getSize().height]);const obs=pageData[pgN]||[];if(obs.length){const vp=pageVps[pgN]||{width:srcPgs[i].getSize().width*RS,height:srcPgs[i].getSize().height*RS};drawCutsOn(blank,obs,vp);}}
-        dlPDF(await docP.save(),'tulostusaineisto.pdf');await new Promise(r=>setTimeout(r,400));dlPDF(await docC.save(),'leikkausrajat.pdf');ss('Kaksi PDF:ää ladattu','ok');
+        dlPDF(await docP.save(),'tulostusaineisto.pdf');await new Promise(r=>setTimeout(r,400));dlPDF(await docC.save(),'leikkausrajat.pdf');ss('Kaksi tiedostoa ladattu','ok');
       } else {
         const src=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));
         const docC=await PDFLib.PDFDocument.create();
         const srcPgs=src.getPages();
         for(let i=0;i<srcPgs.length;i++){const pgN=i+1,blank=docC.addPage([srcPgs[i].getSize().width,srcPgs[i].getSize().height]);const obs=pageData[pgN]||[];if(obs.length){const vp=pageVps[pgN]||{width:srcPgs[i].getSize().width*RS,height:srcPgs[i].getSize().height*RS};drawCutsOn(blank,obs,vp);}}
-        dlPDF(await docC.save(),'leikkausrajat_only.pdf');ss('Leikkaus-PDF ladattu','ok');
+        dlPDF(await docC.save(),'leikkausrajat.pdf');ss('Leikkaus-PDF ladattu','ok');
       }
     } else {
       if(!impData){ss('Aseta tarran tiedot ensin','warn');return;}
       const{sheetW,sheetH}=impData;
-      const pW=mmToPt(sheetW),pH=mmToPt(sheetH);
+      const pW=mm2pt(sheetW),pH=mm2pt(sheetH);
       if(mode==='combo'){
-        const docOut=await PDFLib.PDFDocument.create();
-        const page=docOut.addPage([pW,pH]);
-        if(pdfBytes){const srcDoc=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));const[emb]=await docOut.embedPages([srcDoc.getPages()[curPage-1]]);const{rows,cols,swMM,shMM,bleedMM,marginMM}=impData;const offX=mmToPt(marginMM),offY=mmToPt(marginMM),swPt=mmToPt(swMM),shPt=mmToPt(shMM),blPt=mmToPt(bleedMM);for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=offX+c*(swPt+blPt);const y=pH-offY-shPt-r*(shPt+blPt);page.drawPage(emb,{x,y,width:swPt,height:shPt});}}
-        page.drawRectangle({x:0,y:0,width:0,height:0,opacity:0});
-        page.pushOperators({toString:()=>buildImpOps(impData,pW,pH)});
-        dlPDF(await docOut.save(),'arkki_leikkausraja.pdf');ss('Arkki ladattu','ok');
+        const docO=await PDFLib.PDFDocument.create();const pg=docO.addPage([pW,pH]);
+        if(pdfBytes){const src=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));const[emb]=await docO.embedPages([src.getPages()[curPage-1]]);const{rows,cols,swMM,shMM,blMM,gapMM,marMM}=impData;const oX=mm2pt(marMM),swPt=mm2pt(swMM),shPt=mm2pt(shMM),gPt=mm2pt(gapMM);for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=oX+c*(swPt+gPt),y=pH-mm2pt(marMM)-shPt-r*(shPt+gPt);pg.drawPage(emb,{x,y,width:swPt,height:shPt});}}
+        pg.drawRectangle({x:0,y:0,width:0,height:0,opacity:0});pg.pushOperators({toString:()=>buildImpOps(impData,pW,pH)});
+        dlPDF(await docO.save(),'arkki_leikkausraja.pdf');ss('Arkki ladattu','ok');
       } else {
-        const docC=await PDFLib.PDFDocument.create();const docK=await PDFLib.PDFDocument.create();
-        const pgC=docC.addPage([pW,pH]);const pgK=docK.addPage([pW,pH]);
-        if(pdfBytes){const srcDoc=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));const[emb]=await docC.embedPages([srcDoc.getPages()[curPage-1]]);const{rows,cols,swMM,shMM,bleedMM,marginMM}=impData;const offX=mmToPt(marginMM),swPt=mmToPt(swMM),shPt=mmToPt(shMM),blPt=mmToPt(bleedMM);for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=offX+c*(swPt+blPt);const y=pH-mmToPt(marginMM)-shPt-r*(shPt+blPt);pgC.drawPage(emb,{x,y,width:swPt,height:shPt});}}
+        const docC=await PDFLib.PDFDocument.create(),docK=await PDFLib.PDFDocument.create();
+        const pgC=docC.addPage([pW,pH]),pgK=docK.addPage([pW,pH]);
+        if(pdfBytes){const src=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));const[emb]=await docC.embedPages([src.getPages()[curPage-1]]);const{rows,cols,swMM,shMM,gapMM,marMM}=impData;const oX=mm2pt(marMM),swPt=mm2pt(swMM),shPt=mm2pt(shMM),gPt=mm2pt(gapMM);for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=oX+c*(swPt+gPt),y=pH-mm2pt(marMM)-shPt-r*(shPt+gPt);pgC.drawPage(emb,{x,y,width:swPt,height:shPt});}}
         pgK.drawRectangle({x:0,y:0,width:0,height:0,opacity:0});pgK.pushOperators({toString:()=>buildImpOps(impData,pW,pH)});
         dlPDF(await docC.save(),'arkki_tulostus.pdf');await new Promise(r=>setTimeout(r,400));dlPDF(await docK.save(),'arkki_leikkaus.pdf');ss('Kaksi arkkitiedostoa ladattu','ok');
       }
     }
   }catch(e){console.error(e);ss('Vienti epäonnistui: '+e.message,'err');}
 }
-
 function dlPDF(bytes,name){const a=document.createElement('a');a.download=name;a.href=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));a.click();}
 
-// ─── Script export ────────────────────────────────────────────────────────
 function expScript(type){
   const all=[];Object.entries(pageData).forEach(([pg,obs])=>obs.forEach(o=>all.push({page:parseInt(pg),obj:o})));
-  if(!all.length){alert('Lisää leikkausrajoja ensin (välilehti 2).');return;}
-  const sn=all[0].obj.spotName||'Die Cut';const L=[];
+  if(!all.length){alert('Lisää leikkausrajoja (välilehti 2)');return;}
+  const sn=all[0].obj.spotName||'DK1';const L=[];
   if(type==='ai'){
     L.push('// Leikkausraja — Illustrator\n// File > Scripts > Other Script');
-    L.push(`var doc=app.activeDocument;var layer;try{layer=doc.layers.getByName("${sn}");}catch(e){layer=doc.layers.add();layer.name="${sn}";}var spot;try{spot=doc.spots.getByName("${sn}");}catch(e){spot=doc.spots.add();spot.name="${sn}";var c=new CMYKColor();c.cyan=0;c.magenta=100;c.yellow=100;c.black=0;spot.color=c;spot.colorType=ColorModel.SPOT;}var sc=new SpotColor();sc.spot=spot;`);
-    all.forEach(({obj:o},i)=>{const vp=pageVps[curPage]||{width:595*RS,height:842*RS};const pH=vp.height/RS;if(o.points&&o.points.length>1){const pts=o.points.map(p=>({x:p.x/RS,y:pH-p.y/RS}));L.push(`var p${i}=doc.pathItems.add();p${i}.setEntirePath([${pts.map(p=>'['+p.x.toFixed(2)+','+p.y.toFixed(2)+']').join(',')}]);'+( o.closed?('p'+i+'.closed=true;'):'' )+'p${i}.filled=false;p${i}.stroked=true;p${i}.strokeColor=sc;p${i}.strokeWidth=${o.lineWidth};layer.pathItems.move(p${i},ElementPlacement.PLACEATEND);`);}else{const{x,y,w,h}=getCR(o);const rx=x/RS,ry=pH-(y/RS+h/RS),rw=w/RS,rh=h/RS;if(o.shape==='circle')L.push(`var e${i}=doc.pathItems.ellipse(${ry.toFixed(2)},${rx.toFixed(2)},${rw.toFixed(2)},${rh.toFixed(2)});`);else if(o.shape==='rounded'){const r=Math.min(o.radius,rw/2,rh/2);L.push(`var e${i}=doc.pathItems.roundedRectangle(${ry.toFixed(2)},${rx.toFixed(2)},${rw.toFixed(2)},${rh.toFixed(2)},${r.toFixed(1)},${r.toFixed(1)});`);}else L.push(`var e${i}=doc.pathItems.rectangle(${ry.toFixed(2)},${rx.toFixed(2)},${rw.toFixed(2)},${rh.toFixed(2)});`);L.push(`e${i}.filled=false;e${i}.stroked=true;e${i}.strokeColor=sc;e${i}.strokeWidth=${o.lineWidth};layer.pathItems.move(e${i},ElementPlacement.PLACEATEND);`);}});
-    L.push(`alert("Leikkausrajat lisätty: ${sn}");`);
+    L.push('var doc=app.activeDocument;var layer;try{layer=doc.layers.getByName("'+sn+'");}catch(e){layer=doc.layers.add();layer.name="'+sn+'";}var spot;try{spot=doc.spots.getByName("'+sn+'");}catch(e){spot=doc.spots.add();spot.name="'+sn+'";var c=new CMYKColor();c.cyan=0;c.magenta=100;c.yellow=100;c.black=0;spot.color=c;spot.colorType=ColorModel.SPOT;}var sc=new SpotColor();sc.spot=spot;');
+    all.forEach(({obj:o},i)=>{const vp=pageVps[curPage]||{width:595*RS,height:842*RS};const pH=vp.height/RS;const{x,y,w,h}=getCR(o);const rx=x/RS,ry=pH-(y/RS+h/RS),rw=w/RS,rh=h/RS;if(o.shape==='circle')L.push('var e'+i+'=doc.pathItems.ellipse('+ry.toFixed(2)+','+rx.toFixed(2)+','+rw.toFixed(2)+','+rh.toFixed(2)+');');else L.push('var e'+i+'=doc.pathItems.rectangle('+ry.toFixed(2)+','+rx.toFixed(2)+','+rw.toFixed(2)+','+rh.toFixed(2)+');');L.push('e'+i+'.filled=false;e'+i+'.stroked=true;e'+i+'.strokeColor=sc;e'+i+'.strokeWidth='+o.lineWidth+';layer.pathItems.move(e'+i+',ElementPlacement.PLACEATEND);');});
+    L.push('alert("Leikkausrajat lisätty: '+sn+'");');
   } else {
-    L.push(`// Leikkausraja — InDesign\nvar doc=app.activeDocument;var layer;try{layer=doc.layers.item("${sn}");if(!layer.isValid)throw 0;}catch(e){layer=doc.layers.add({name:"${sn}"});}var sw;try{sw=doc.swatches.item("${sn}");if(!sw.isValid)throw 0;}catch(e){sw=doc.colors.add();sw.name="${sn}";sw.model=ColorModel.SPOT;sw.colorValue=[0,100,100,0];sw.space=ColorSpace.CMYK;}`);
-    all.forEach(({obj:o,page},i)=>{const{x,y,w,h}=getCR(o);const rx=x/RS,ry=y/RS,rw=w/RS,rh=h/RS;if(o.shape==='circle')L.push(`var e${i}=doc.pages[${page-1}].ovals.add(layer,{geometricBounds:[${ry.toFixed(2)},${rx.toFixed(2)},${(ry+rh).toFixed(2)},${(rx+rw).toFixed(2)}]});`);else{L.push(`var e${i}=doc.pages[${page-1}].rectangles.add(layer,{geometricBounds:[${ry.toFixed(2)},${rx.toFixed(2)},${(ry+rh).toFixed(2)},${(rx+rw).toFixed(2)}]});`);if(o.shape==='rounded')L.push(`e${i}.cornerRadius=${Math.min(o.radius,rw/2,rh/2).toFixed(1)};`);}L.push(`e${i}.fillColor=doc.swatches.item("None");e${i}.strokeColor=sw;e${i}.strokeWeight=${o.lineWidth};`);});
-    L.push(`alert("Leikkausrajat lisätty: ${sn}");`);
+    L.push('// Leikkausraja — InDesign\nvar doc=app.activeDocument;var layer;try{layer=doc.layers.item("'+sn+'");if(!layer.isValid)throw 0;}catch(e){layer=doc.layers.add({name:"'+sn+'"});}var sw;try{sw=doc.swatches.item("'+sn+'");if(!sw.isValid)throw 0;}catch(e){sw=doc.colors.add();sw.name="'+sn+'";sw.model=ColorModel.SPOT;sw.colorValue=[0,100,100,0];sw.space=ColorSpace.CMYK;}');
+    all.forEach(({obj:o,page},i)=>{const{x,y,w,h}=getCR(o);const rx=x/RS,ry=y/RS,rw=w/RS,rh=h/RS;if(o.shape==='circle')L.push('var e'+i+'=doc.pages['+(page-1)+'].ovals.add(layer,{geometricBounds:['+ry.toFixed(2)+','+rx.toFixed(2)+','+(ry+rh).toFixed(2)+','+(rx+rw).toFixed(2)+']});');else L.push('var e'+i+'=doc.pages['+(page-1)+'].rectangles.add(layer,{geometricBounds:['+ry.toFixed(2)+','+rx.toFixed(2)+','+(ry+rh).toFixed(2)+','+(rx+rw).toFixed(2)+']});');L.push('e'+i+'.fillColor=doc.swatches.item("None");e'+i+'.strokeColor=sw;e'+i+'.strokeWeight='+o.lineWidth+';');});
+    L.push('alert("Leikkausrajat lisätty: '+sn+'");');
   }
-  const a=document.createElement('a');a.download=`leikkausraja_${type==='ai'?'illustrator':'indesign'}.jsx`;a.href=URL.createObjectURL(new Blob([L.join('\n')],{type:'text/plain'}));a.click();
+  const a=document.createElement('a');a.download='leikkausraja_'+(type==='ai'?'illustrator':'indesign')+'.jsx';a.href=URL.createObjectURL(new Blob([L.join('\n')],{type:'text/plain'}));a.click();
   ss((type==='ai'?'Illustrator':'InDesign')+'-skripti ladattu','ok');
 }
 </script>
