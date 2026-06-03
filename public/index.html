@@ -1052,8 +1052,7 @@ function buildImpOps(d,pW,pH){
 
   // DK2 — outer bleed
   if(bleedMM>0){
-    ops+=`q ${dk2rgb} RG [] 0 d 0.25 w
-`;
+    ops+='q '+dk2rgb+' RG [] 0 d 0.25 w\n';
     for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
       const x=offX+c*(swPt+gapX)-blX;
       const y2=offY+r*(shPt+gapY)-blY;
@@ -1064,8 +1063,7 @@ function buildImpOps(d,pW,pH){
   }
 
   // DK1 — exact sticker
-  ops+=`q ${dk1rgb} RG [] 0 d 0.25 w
-`;
+  ops+='q '+dk1rgb+' RG [] 0 d 0.25 w\n';
   for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
     const x=offX+c*(swPt+gapX);
     const y2=offY+r*(shPt+gapY);
@@ -1078,8 +1076,7 @@ function buildImpOps(d,pW,pH){
   if(useCCD&&ccdSizeMM>0){
     const ccdPt=mmToPt(ccdSizeMM)*Math.min(scX,scY);
     const ccdOff=mmToPt(ccdOffMM||10)*Math.min(scX,scY);
-    ops+=`q 0 0 0 rg
-`;
+    ops+='q 0 0 0 rg\n';
     [[ccdOff,pH-ccdOff-ccdPt],[pW-ccdOff-ccdPt,pH-ccdOff-ccdPt],[pW-ccdOff-ccdPt,ccdOff],[ccdOff,ccdOff]]
       .forEach(([cx,cy])=>{ops+=circlePath(cx+ccdPt/2,cy+ccdPt/2,ccdPt/2,ccdPt/2)+' f\n';});
     ops+='Q\n';
