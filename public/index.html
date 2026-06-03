@@ -763,6 +763,29 @@ async function analyzeVectorPaths(){
     }
   }
   
+  // Debug: show what we found
+  const groupCount=Object.keys(groups).length;
+  const totalPaths=Object.values(groups).reduce((s,g)=>s+g.paths.length,0);
+  console.log('Groups found:', groupCount, 'Total paths:', totalPaths, groups);
+  
+  // Also log all OPS used
+  const opsUsed=new Set(fnArray);
+  const OPS_names=Object.entries(OPS).filter(([k,v])=>opsUsed.has(v)).map(([k])=>k);
+  console.log('OPS used:', OPS_names.join(', '));
+
+  if(groupCount===0){
+    // Show debug info on screen
+    document.getElementById('pathGroups').innerHTML=
+      '<div style="font-size:10px;font-family:monospace;padding:8px;background:#f0f0f0;border-radius:6px;line-height:1.6">'
+      +'<b>Debug:</b> '+fnArray.length+' operaattoria<br>'
+      +'OPS löydetty: setStrokeRGBColor='+fnArray.includes(OPS.setStrokeRGBColor)
+      +' setStrokeCMYKColor='+fnArray.includes(OPS.setStrokeCMYKColor)
+      +' setStrokeColorN='+fnArray.includes(OPS.setStrokeColorN)
+      +'<br>stroke ops: '+[OPS.stroke,OPS.fillStroke,OPS.eoFillStroke].map(op=>fnArray.includes(op)).join(',')
+      +'</div>';
+    return;
+  }
+
   detectedPaths=groups;
   renderPathGroups(groups, vp);
 }
