@@ -438,21 +438,69 @@ async function checkRes(){
   }catch(e){console.error('checkRes',e)}
 }
 
-// Vector path analysis
+// Vector path analysis — uses server-side PDF parsing for accurate spot color detection
 async function analyzeVectorPaths(){
-  if(!pdfDoc)return;
+  if(!pdfDoc||!pdfBytes)return;
   const pg_el=document.getElementById('pgroups');
   pg_el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Analysoidaan...</div>';
+  try{
+    // Send PDF to server-side function for accurate spot color parsing
+    const formData=new FormData();
+    formData.append('pdf',new Blob([pdfBytes],{type:'application/pdf'}),'file.pdf');
+    const resp=await fetch('/api/pdf-layers',{method:'POST',body:formData});
+    const data=await resp.json();
+    
+    if(data.error) throw new Error(data.error);
+    
+    const vp=pageVps[curPage];
+    const pal=['#CC0000','#0055CC','#00AA44','#FF6600','#9900CC','#CC6600','#008888','#884400'];
+    
+    // Build groups from server response
+    const groups={};
+    data.groups.forEach((g,i)=>{
+      const hex=pal[i%pal.length];
+      groups[g.key]={
+        hex,
+        name:g.name,
+        paths:g.paths.map(p=>({
+          x0:p.x0*RS, y0:p.y0*RS,
+          x1:(p.x0+p.w)*RS, y1:(p.y0+p.h)*RS,
+          w:p.w*RS, h:p.h*RS, lw:p.lw
+        })),
+        selected:false,
+        previewColor:hex,
+        spotName:g.name
+      };
+    });
+    
+    if(!Object.keys(groups).length){
+      pg_el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Ei vektoripolkuja löydetty</div>';
+      document.getElementById('smaps').innerHTML='';
+      return;
+    }
+    
+    detectedPaths=groups;
+    renderPathGroups(groups);
+    
+  }catch(e){
+    console.error('analyzeVectorPaths',e);
+    // Fallback: try PDF.js-based parsing
+    analyzeVectorPathsFallback();
+  }
+}
+
+// Fallback: PDF.js operator list parsing
+async function analyzeVectorPathsFallback(){
+  const pg_el=document.getElementById('pgroups');
   try{
     const pg=await pdfDoc.getPage(curPage);
     const ops=await pg.getOperatorList();
     const vp=pg.getViewport({scale:1});
     const pH=vp.height;
     const OPS=pdfjsLib.OPS;
-    const fns=ops.fnArray,args=ops.argsArray;
-
-    let sCS='default',fCS='default',sVals=[0],fVals=[0],lw=1;
-    const pal=['#CC0000','#0055CC','#00AA44','#FF6600','#9900CC','#CC6600','#008888'];
+    const fns=ops.fnArray,args2=ops.argsArray;
+    let sCS='default',sVals=[0],lw=1,pts=[],groups={};
+    const pal=['#CC0000','#0055CC','#00AA44','#FF6600','#9900CC'];
     const csMap={};let csI=0;
     function csHex(cs){if(!csMap[cs]){csMap[cs]=pal[csI%pal.length];csI++;}return csMap[cs];}
     function getHex(cs,v){
@@ -462,300 +510,45 @@ async function analyzeVectorPaths(){
       if(cs==='cmyk'){const[c,m,y,k]=v;return'#'+[Math.round(255*(1-c)*(1-k)),Math.round(255*(1-m)*(1-k)),Math.round(255*(1-y)*(1-k))].map(x=>x.toString(16).padStart(2,'0')).join('');}
       return'#000000';
     }
-    function cKey(cs,v){return cs+':'+v.map(x=>Math.round(x*100)).join(',')}
-
-    let pts=[],groups={};
-    function addRect(x,y,w,h){pts=[[x,pH-y-h],[x+w,pH-y-h],[x+w,pH-y],[x,pH-y]];}
+    function cKey(cs,v){return cs+':'+v.map(x=>Math.round(x*100)).join(',');}
     function flush(stroke){
       if(pts.length<2)return;
-      const cs=stroke?sCS:fCS,v=stroke?sVals:fVals;
+      const cs=sCS,v=sVals;
       const key=cKey(cs,v),hex=getHex(cs,v);
-      if(!groups[key])groups[key]={hex,paths:[],selected:false};
+      if(!groups[key])groups[key]={hex,name:cs,paths:[],selected:false,previewColor:hex,spotName:'DK1'};
       let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
       pts.forEach(([px,py])=>{x0=Math.min(x0,px);y0=Math.min(y0,py);x1=Math.max(x1,px);y1=Math.max(y1,py);});
       groups[key].paths.push({x0,y0,x1,y1,w:x1-x0,h:y1-y0,lw});
       pts=[];
     }
-
     for(let i=0;i<fns.length;i++){
-      const fn=fns[i],a=args[i]||[];
+      const fn=fns[i],a=args2[i]||[];
       if(fn===OPS.setLineWidth)lw=a[0]||1;
       else if(fn===OPS.setStrokeColorSpace)sCS=String(a[0]||'default');
-      else if(fn===OPS.setFillColorSpace)fCS=String(a[0]||'default');
       else if(fn===OPS.setStrokeRGBColor){sCS='rgb';sVals=[...a];}
-      else if(fn===OPS.setFillRGBColor){fCS='rgb';fVals=[...a];}
       else if(fn===OPS.setStrokeGray){sCS='gray';sVals=[a[0]];}
-      else if(fn===OPS.setFillGray){fCS='gray';fVals=[a[0]];}
       else if(fn===OPS.setStrokeCMYKColor){sCS='cmyk';sVals=[...a];}
-      else if(fn===OPS.setFillCMYKColor){fCS='cmyk';fVals=[...a];}
       else if(fn===OPS.setStrokeColor)sVals=[...a];
-      else if(fn===OPS.setFillColor)fVals=[...a];
       else if(fn===OPS.setStrokeColorN)sVals=[...a];
-      else if(fn===OPS.setFillColorN)fVals=[...a];
       else if(fn===OPS.moveTo)pts=[[a[0],pH-a[1]]];
       else if(fn===OPS.lineTo)pts.push([a[0],pH-a[1]]);
       else if(fn===OPS.curveTo||fn===OPS.curveTo2||fn===OPS.curveTo3)pts.push([a[a.length-2],pH-a[a.length-1]]);
-      else if(fn===OPS.rectangle){flush(true);addRect(a[0],a[1],a[2],a[3]);}
+      else if(fn===OPS.rectangle){flush(true);const[x,y,w,h]=a;pts=[[x,pH-y-h],[x+w,pH-y-h],[x+w,pH-y],[x,pH-y]];}
       else if(fn===OPS.stroke)flush(true);
-      else if(fn===OPS.fill||fn===OPS.eoFill)flush(false);
+      else if(fn===OPS.fill||fn===OPS.eoFill)pts=[];
       else if(fn===OPS.fillStroke||fn===OPS.eoFillStroke)flush(true);
       else if(fn===OPS.endPath||fn===OPS.closePath||fn===OPS.restore)pts=[];
     }
-
-    // Filter tiny
-    Object.keys(groups).forEach(k=>{
-      groups[k].paths=groups[k].paths.filter(p=>p.w>2||p.h>2);
-      if(!groups[k].paths.length)delete groups[k];
-    });
-
+    Object.keys(groups).forEach(k=>{groups[k].paths=groups[k].paths.filter(p=>p.w>2*RS||p.h>2*RS);if(!groups[k].paths.length)delete groups[k];});
+    if(!Object.keys(groups).length){pg_el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Ei vektoripolkuja löydetty</div>';return;}
     detectedPaths=groups;
     renderPathGroups(groups);
   }catch(e){
-    console.error('analyzeVectorPaths',e);
+    console.error('fallback',e);
     pg_el.innerHTML='<div style="font-size:12px;color:var(--red)">Analyysi epäonnistui: '+e.message+'</div>';
   }
 }
 
-const SPOTS=['DK1','DK2','CREASE','Kiss Cut','CUT1','Die Cut','Perf'];
-
-function renderPathGroups(groups){
-  const el=document.getElementById('pgroups');
-  const entries=Object.entries(groups);
-  if(!entries.length){el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Ei vektoripolkuja löydetty</div>';document.getElementById('smaps').innerHTML='';return;}
-  entries.sort(([,a],[,b])=>b.paths.length-a.paths.length);
-  el.innerHTML='';
-  entries.forEach(([key,g],i)=>{
-    const lw=(g.paths.reduce((s,p)=>s+p.lw,0)/g.paths.length).toFixed(2);
-    const ws=g.paths.map(p=>p.w).filter(w=>w>1);
-    const sz=ws.length?(' · '+Math.min(...ws).toFixed(0)+'–'+Math.max(...ws).toFixed(0)+'pt'):'';
-    const div=document.createElement('div');div.className='pg-group';
-    div.innerHTML='<div class="pg-hdr" onclick="togglePG(\''+key+'\')"><div class="swatch" style="background:'+g.hex+'"></div><div class="pg-info"><div class="pg-name">'+g.hex+'</div><div class="pg-meta">'+g.paths.length+' viivaa · lw '+lw+'pt'+sz+'</div></div><input type="checkbox" class="pg-chk" id="chk_'+key+'" onclick="event.stopPropagation();toggleSel(\''+key+'\',this.checked);updSmaps();redraw()"></div><div class="pg-body" id="body_'+key+'">'+g.paths.slice(0,8).map((p,j)=>'<div class="pg-item">'+(j+1)+'. '+p.w.toFixed(1)+'×'+p.h.toFixed(1)+'pt @ ('+p.x0.toFixed(1)+','+p.y0.toFixed(1)+')</div>').join('')+(g.paths.length>8?'<div class="pg-item">...ja '+(g.paths.length-8)+' lisää</div>':'')+'</div>';
-    el.appendChild(div);
-    g.selected=false;g.spotName=SPOTS[i]||'Die Cut';g.previewColor='#FF0099';
-  });
-  updSmaps();
-}
-function togglePG(key){const b=document.getElementById('body_'+key);if(b)b.classList.toggle('open');}
-function toggleSel(key,val){if(detectedPaths[key])detectedPaths[key].selected=val;}
-function updSmaps(){
-  const el=document.getElementById('smaps');
-  const sel=Object.entries(detectedPaths).filter(([k])=>{const c=document.getElementById('chk_'+k);return c&&c.checked;});
-  if(!sel.length){el.innerHTML='<p style="font-size:11px;color:var(--ink3)">Valitse viivaryhmät yllä.</p>';return;}
-  const opts=SPOTS.map(n=>'<option value="'+n+'">'+n+'</option>').join('');
-  el.innerHTML=sel.map(([key,g],i)=>'<div class="smap-row"><div class="swatch" style="background:'+g.hex+'"></div><span style="font-size:10px;flex:1;font-family:monospace">'+g.paths.length+' viivaa</span><select class="esm" id="sm_'+key+'" onchange="detectedPaths[\''+key+'\'].spotName=this.value">'+opts+'</select><input type="color" value="'+g.previewColor+'" style="width:28px;height:24px;padding:1px;border:1px solid var(--paper3);border-radius:3px;cursor:pointer" oninput="detectedPaths[\''+key+'\'].previewColor=this.value;redraw()"></div>').join('');
-}
-
-// CCD
-function setCCD(v){addCCD_=v;document.getElementById('ccdOff').classList.toggle('on',!v);document.getElementById('ccdOn').classList.toggle('on',v);document.getElementById('ccdSet').classList.toggle('hidden',!v);}
-function setICCD(v){document.getElementById('iCCDOff').classList.toggle('on',!v);document.getElementById('iCCDOn').classList.toggle('on',v);document.getElementById('iCCDSet').classList.toggle('hidden',!v);drawImp();}
-
-// Convert to spot
-function convertToSpot(){
-  const vp=pageVps[curPage];if(!vp){ss('Lataa PDF ensin','warn');return;}
-  const sel=Object.entries(detectedPaths).filter(([k])=>{const c=document.getElementById('chk_'+k);return c&&c.checked;});
-  if(!sel.length){ss('Valitse ensin viivaryhmät','warn');return;}
-  const lw=parseFloat(document.getElementById('t1lw').value)||0.5;
-  let n=0;
-  sel.forEach(([key,g])=>{
-    const smEl=document.getElementById('sm_'+key);
-    const spotName=smEl?smEl.value:g.spotName||'DK1';
-    const col=g.previewColor||'#FF0099';
-    g.paths.forEach(p=>{
-      if(p.w<2&&p.h<2)return;
-      addObjDirect({name:spotName+' '+(++objCtr),shape:'rect',x:p.x0*RS,y:p.y0*RS,w:p.w*RS,h:p.h*RS,color:col,lineWidth:lw,spotName,dash:'solid',margin:0,pos:'center',regMarks:false,nx:0,ny:0,nw:0,nh:0});
-      n++;
-    });
-  });
-  if(addCCD_){
-    const sz=parseFloat(document.getElementById('ccdSz').value)||5;
-    const off=parseFloat(document.getElementById('ccdOf').value)||10;
-    const szPx=mm2pt(sz)*RS,offPx=mm2pt(off)*RS;
-    const W=vp.width,H=vp.height;
-    [[offPx,offPx],[W-offPx-szPx,offPx],[W-offPx-szPx,H-offPx-szPx],[offPx,H-offPx-szPx]].forEach(([x,y],i)=>{
-      addObjDirect({name:'CCD-'+(i+1),shape:'circle',x,y,w:szPx,h:szPx,color:'#000000',lineWidth:0,spotName:'ccd',dash:'solid',margin:0,pos:'center',regMarks:false,filled:true,nx:0,ny:0,nw:0,nh:0});
-    });
-  }
-  ss('Muunnettu: '+n+' viivaa'+(addCCD_?' + 4 CCD':''),'ok');
-  switchTab(2);redraw();
-}
-
-// Objects
-function mkObj(p={}){
-  const vp=pageVps[curPage]||{width:400,height:400};const id=++objCtr;
-  return{id,name:p.name||('Kohde '+id),shape:p.shape||'rect',x:p.x!==undefined?p.x:vp.width*.1,y:p.y!==undefined?p.y:vp.height*.1,w:p.w!==undefined?p.w:vp.width*.8,h:p.h!==undefined?p.h:vp.height*.8,points:p.points||null,closed:p.closed||false,radius:p.radius||0,color:p.color||'#FF0099',lineWidth:p.lineWidth||0.5,spotName:p.spotName||'DK1',dash:p.dash||'solid',margin:p.margin||0,pos:p.pos||'center',regMarks:false,filled:p.filled||false,nx:0,ny:0,nw:0,nh:0};
-}
-function addObj(p={}){if(!pdfDoc){ss('Lataa PDF ensin','warn');return;}const o=mkObj(p);getObjs().push(o);selObj(o.id);updOList();redraw();return o;}
-function addObjDirect(p){const o=Object.assign({},mkObj({}),p,{id:++objCtr});getObjs().push(o);updOList();redraw();return o;}
-function delAllObjs(){pageData[curPage]=[];selId=null;document.getElementById('ep').className='ep';updOList();redraw();}
-function selObj(id){
-  selId=id;const o=getSel();
-  document.getElementById('ep').className='ep'+(o?' on':'');
-  if(!o){updOList();return;}
-  document.getElementById('elbl').textContent=o.name;
-  document.getElementById('eShape').value=o.shape;
-  document.getElementById('eRad').value=o.radius;
-  document.getElementById('eRadV').textContent=o.radius;
-  document.getElementById('eRadRow').classList.toggle('hidden',o.shape!=='rounded');
-  document.getElementById('eCol').value=o.color;
-  document.getElementById('eW').value=o.lineWidth;
-  document.getElementById('eWV').textContent=o.lineWidth+'pt';
-  document.getElementById('eM').value=o.margin;
-  document.getElementById('eMV').textContent=o.margin+'pt';
-  document.getElementById('eSpot').value=o.spotName;
-  setPos(o.pos,false);
-  ['x','y','w','h'].forEach(k=>document.getElementById('n'+k.toUpperCase()).textContent=Math.round(o['n'+k]||0));
-  updOList();
-}
-function updObj(){
-  const o=getSel();if(!o)return;
-  o.shape=document.getElementById('eShape').value;
-  o.radius=parseInt(document.getElementById('eRad').value);
-  document.getElementById('eRadRow').classList.toggle('hidden',o.shape!=='rounded');
-  o.color=document.getElementById('eCol').value;
-  o.lineWidth=parseFloat(document.getElementById('eW').value);
-  o.margin=parseInt(document.getElementById('eM').value);
-  o.spotName=document.getElementById('eSpot').value;
-  redraw();
-}
-function setPos(m,upd=true){
-  ['I','C','O'].forEach(d=>document.getElementById('p'+d).classList.remove('on'));
-  const map={'inside':'I','center':'C','outside':'O'};
-  document.getElementById('p'+map[m])?.classList.add('on');
-  if(upd){const o=getSel();if(o){o.pos=m;redraw();}}
-}
-function nudge(ax,val){
-  const o=getSel();if(!o)return;
-  o['n'+ax]=(o['n'+ax]||0)+val;
-  document.getElementById('n'+ax.toUpperCase()).textContent=Math.round(o['n'+ax]);
-  redraw();
-}
-function delObj(id){
-  const obs=getObjs();const i=obs.findIndex(o=>o.id===id);if(i>=0)obs.splice(i,1);
-  if(selId===id){selId=null;document.getElementById('ep').className='ep';}
-  updOList();redraw();
-}
-function updOList(){
-  const el=document.getElementById('olist');const obs=getObjs();
-  if(!obs.length){el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Ei kohteita</div>';return;}
-  el.innerHTML=obs.map(o=>'<div class="obj-row'+(o.id===selId?' sel':'')+'" onclick="selObj('+o.id+')"><div class="obj-dot" style="color:'+o.color+'"></div><span style="flex:1;font-weight:500">'+o.name+'</span><span style="font-size:10px;color:var(--ink3);font-family:monospace">'+o.spotName+'</span><span class="obj-del" onclick="event.stopPropagation();delObj('+o.id+')">×</span></div>').join('');
-}
-
-// Cut rect
-function getCR(o){const off=o.pos==='inside'?o.margin:o.pos==='outside'?-o.margin:o.margin/2;return{x:o.x+off+(o.nx||0),y:o.y+off+(o.ny||0),w:o.w-off*2+(o.nw||0),h:o.h-off*2+(o.nh||0)};}
-
-// Drawing
-function applyDash(ctx,d){if(d==='dashed')ctx.setLineDash([8,5]);else if(d==='dotted')ctx.setLineDash([2,4]);else ctx.setLineDash([]);}
-function handles(x,y,w,h){const mx=x+w/2,my=y+h/2;return[{x,y,n:'nw'},{x:mx,y,n:'n'},{x:x+w,y,n:'ne'},{x:x+w,y:my,n:'e'},{x:x+w,y:y+h,n:'se'},{x:mx,y:y+h,n:'s'},{x,y:y+h,n:'sw'},{x,y:my,n:'w'}];}
-
-function drawObj(ctx,o,sel){
-  if(o.points&&o.points.length>1){
-    ctx.strokeStyle=o.color;ctx.lineWidth=o.lineWidth*RS;applyDash(ctx,o.dash);
-    ctx.beginPath();ctx.moveTo(o.points[0].x,o.points[0].y);
-    for(let i=1;i<o.points.length;i++)ctx.lineTo(o.points[i].x,o.points[i].y);
-    if(o.closed)ctx.closePath();ctx.stroke();
-    return;
-  }
-  const{x,y,w,h}=getCR(o);
-  if(o.filled){ctx.fillStyle=o.color;ctx.beginPath();if(o.shape==='circle')ctx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);else ctx.rect(x,y,w,h);ctx.fill();return;}
-  if(sel){
-    ctx.strokeStyle='rgba(37,99,235,.3)';ctx.lineWidth=1;ctx.setLineDash([4,3]);ctx.strokeRect(x-6,y-6,w+12,h+12);ctx.setLineDash([]);
-    handles(x,y,w,h).forEach(hh=>{ctx.fillStyle='#fff';ctx.strokeStyle=o.color;ctx.lineWidth=1.5;ctx.setLineDash([]);ctx.beginPath();ctx.rect(hh.x-4,hh.y-4,8,8);ctx.fill();ctx.stroke();});
-  }
-  ctx.strokeStyle=o.color;ctx.lineWidth=o.lineWidth*RS;applyDash(ctx,o.dash);
-  ctx.beginPath();
-  if(o.shape==='circle')ctx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);
-  else if(o.shape==='rounded'){const r=Math.min(o.radius,w/2,h/2);ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();}
-  else ctx.rect(x,y,w,h);
-  ctx.stroke();
-}
-
-function drawTab1(ctx){
-  Object.values(detectedPaths).filter(g=>g.selected).forEach(g=>{
-    ctx.strokeStyle=g.previewColor||'#FF0099';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
-    g.paths.forEach(p=>{ctx.beginPath();ctx.rect(p.x0*RS,p.y0*RS,p.w*RS,p.h*RS);ctx.stroke();});
-    ctx.setLineDash([]);
-  });
-}
-
-function drawImpOverlay(ctx){
-  if(!impData)return;
-  const{rows,cols,cW,cH,oX,oY,gX,gY,bPx,shape,rPx,c1,c2,useCCD,cSz,cOff}=impData;
-  const vp=pageVps[curPage];if(!vp)return;
-  const sc=vp.width/impData.sheetW;
-  function sh(ctx,x,y,w,h,r){ctx.beginPath();if(shape==='circle')ctx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);else if(shape==='rounded'){const rv=Math.min(r,w/2,h/2);ctx.moveTo(x+rv,y);ctx.lineTo(x+w-rv,y);ctx.arcTo(x+w,y,x+w,y+rv,rv);ctx.lineTo(x+w,y+h-rv);ctx.arcTo(x+w,y+h,x+w-rv,y+h,rv);ctx.lineTo(x+rv,y+h);ctx.arcTo(x,y+h,x,y+h-rv,rv);ctx.lineTo(x,y+rv);ctx.arcTo(x,y,x+rv,y,rv);ctx.closePath();}else ctx.rect(x,y,w,h);}
-  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
-    const x=oX+c*(cW+gX),y=oY+r*(cH+gY);
-    if(bPx>0){ctx.strokeStyle=c2;ctx.lineWidth=1;ctx.setLineDash([5,3]);sh(ctx,x-bPx,y-bPx,cW+bPx*2,cH+bPx*2,rPx+bPx);ctx.stroke();}
-    ctx.strokeStyle=c1;ctx.lineWidth=1.5;ctx.setLineDash([]);sh(ctx,x,y,cW,cH,rPx);ctx.stroke();
-  }
-  if(useCCD&&cSz>0){
-    const cpx=cSz*sc,cofx=cOff*sc;const W=vp.width,H=vp.height;
-    ctx.fillStyle='#000';ctx.setLineDash([]);
-    [[cofx,cofx],[W-cofx-cpx,cofx],[W-cofx-cpx,H-cofx-cpx],[cofx,H-cofx-cpx]].forEach(([cx,cy])=>{ctx.beginPath();ctx.ellipse(cx+cpx/2,cy+cpx/2,cpx/2,cpx/2,0,0,Math.PI*2);ctx.fill();});
-  }
-}
-
-function redraw(){
-  oCtx.clearRect(0,0,oc.width,oc.height);
-  if(activeTab===1){drawTab1(oCtx);return;}
-  if(activeTab===3){drawImpOverlay(oCtx);return;}
-  getObjs().forEach(o=>drawObj(oCtx,o,o.id===selId));
-  if(penPts.length>0){
-    oCtx.strokeStyle='#FF0099';oCtx.lineWidth=1.5;oCtx.setLineDash([4,3]);
-    oCtx.beginPath();oCtx.moveTo(penPts[0].x,penPts[0].y);
-    for(let i=1;i<penPts.length;i++)oCtx.lineTo(penPts[i].x,penPts[i].y);
-    if(penPrev)oCtx.lineTo(penPrev.x,penPrev.y);
-    oCtx.stroke();oCtx.setLineDash([]);
-  }
-  if(dragSt&&(dragSt.type==='dR'||dragSt.type==='dC')){
-    const{sx,sy,cx,cy}=dragSt;const x=Math.min(sx,cx),y=Math.min(sy,cy),w=Math.abs(cx-sx),h=Math.abs(cy-sy);
-    oCtx.strokeStyle='#FF0099';oCtx.lineWidth=1.5;oCtx.setLineDash([4,3]);
-    oCtx.beginPath();if(dragSt.type==='dC')oCtx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);else oCtx.rect(x,y,w,h);
-    oCtx.stroke();oCtx.setLineDash([]);
-  }
-}
-
-// Tool
-function setTool(t){tool=t;penPts=[];penPrev=null;['Sel','Pen','Rect','Circ'].forEach(n=>document.getElementById('t'+n).classList.toggle('on',n.toLowerCase().startsWith(t.substring(0,3))));oc.style.cursor=t==='select'?'default':'crosshair';redraw();}
-document.getElementById('tSel').addEventListener('click',()=>setTool('select'));
-document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;if(activeTab!==2)return;if(e.key==='v')setTool('select');if(e.key==='p')setTool('pen');if(e.key==='r')setTool('rect');if(e.key==='e')setTool('circle');if(e.key==='Escape'){penPts=[];penPrev=null;redraw();}if((e.key==='Delete'||e.key==='Backspace')&&selId)delObj(selId);});
-
-// Mouse
-function cXY(e){const r=oc.getBoundingClientRect();return{x:(e.clientX-r.left)*(oc.width/r.width)/zoom,y:(e.clientY-r.top)*(oc.height/r.height)/zoom};}
-function hitH(o,mx,my){const{x,y,w,h}=getCR(o);for(const hh of handles(x,y,w,h)){if(Math.abs(mx-hh.x)<7&&Math.abs(my-hh.y)<7)return hh.n;}return null;}
-function hitO(mx,my){const obs=getObjs();for(let i=obs.length-1;i>=0;i--){const o=obs[i];if(o.points){for(let j=1;j<o.points.length;j++){const p1=o.points[j-1],p2=o.points[j];const dx=p2.x-p1.x,dy=p2.y-p1.y,t=Math.max(0,Math.min(1,((mx-p1.x)*dx+(my-p1.y)*dy)/(dx*dx+dy*dy||1)));if(Math.hypot(mx-(p1.x+t*dx),my-(p1.y+t*dy))<8)return o;}continue;}const{x,y,w,h}=getCR(o);if(mx>=x-4&&mx<=x+w+4&&my>=y-4&&my<=y+h+4)return o;}return null;}
-function curH(n){if(n==='n'||n==='s')return 'n-resize';if(n==='e'||n==='w')return 'e-resize';if(n==='nw'||n==='se')return 'nw-resize';return 'ne-resize';}
-
-oc.addEventListener('mousemove',e=>{
-  if(activeTab!==2)return;
-  const{x,y}=cXY(e);
-  if(tool==='pen'&&penPts.length>0){penPrev={x,y};redraw();return;}
-  if(dragSt){
-    const ds=dragSt;
-    if(ds.type==='move'){const o=getObjs().find(o=>o.id===ds.id);if(o){o.x=ds.ox+(x-ds.sx);o.y=ds.oy+(y-ds.sy);}redraw();}
-    else if(ds.type==='resize'){const o=getObjs().find(o=>o.id===ds.id);if(!o)return;const dx=x-ds.sx,dy=y-ds.sy;let nx=ds.ox,ny=ds.oy,nw=ds.ow,nh=ds.oh;if(ds.h.includes('e'))nw=Math.max(10,ds.ow+dx);if(ds.h.includes('s'))nh=Math.max(10,ds.oh+dy);if(ds.h.includes('w')){nx=ds.ox+dx;nw=Math.max(10,ds.ow-dx);}if(ds.h.includes('n')){ny=ds.oy+dy;nh=Math.max(10,ds.oh-dy);}o.x=nx;o.y=ny;o.w=nw;o.h=nh;redraw();}
-    else if(ds.type==='dR'||ds.type==='dC'){ds.cx=x;ds.cy=y;redraw();}
-    return;
-  }
-  if(tool==='select'){const o=getSel();if(o&&!o.points){const hh=hitH(o,x,y);if(hh){oc.style.cursor=curH(hh);return;}}oc.style.cursor=hitO(x,y)?'move':'default';}
-});
-oc.addEventListener('mousedown',e=>{
-  if(activeTab!==2)return;
-  const{x,y}=cXY(e);
-  if(tool==='pen'){if(penPts.length>2&&Math.hypot(x-penPts[0].x,y-penPts[0].y)<10){addObj({type:'pen',shape:'pen',points:[...penPts],closed:true,x:0,y:0,w:0,h:0});penPts=[];penPrev=null;redraw();return;}penPts.push({x,y});redraw();return;}
-  if(tool==='rect'||tool==='circle'){dragSt={type:tool==='rect'?'dR':'dC',sx:x,sy:y,cx:x,cy:y};return;}
-  const o=getSel();if(o&&!o.points){const hh=hitH(o,x,y);if(hh){dragSt={type:'resize',id:o.id,h:hh,sx:x,sy:y,ox:o.x,oy:o.y,ow:o.w,oh:o.h};return;}}
-  const hit=hitO(x,y);
-  if(hit){selObj(hit.id);if(!hit.points)dragSt={type:'move',id:hit.id,sx:x,sy:y,ox:hit.x,oy:hit.y};}
-  else{selId=null;document.getElementById('ep').className='ep';updOList();redraw();}
-});
-oc.addEventListener('mouseup',e=>{
-  if(activeTab!==2)return;
-  const{x,y}=cXY(e);
-  if(dragSt&&(dragSt.type==='dR'||dragSt.type==='dC')){const{sx,sy}=dragSt;const rx=Math.min(sx,x),ry=Math.min(sy,y),rw=Math.abs(x-sx),rh=Math.abs(y-sy);if(rw>5&&rh>5)addObj({shape:dragSt.type==='dC'?'circle':'rect',x:rx,y:ry,w:rw,h:rh});dragSt=null;redraw();return;}
-  dragSt=null;
-});
-oc.addEventListener('dblclick',e=>{if(activeTab!==2)return;if(tool==='pen'&&penPts.length>=2){addObj({type:'pen',shape:'pen',points:[...penPts],closed:false,x:0,y:0,w:0,h:0});penPts=[];penPrev=null;redraw();}});
 
 // AI
 async function runAI(){
