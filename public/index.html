@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+.map((p,i)=>'<div class="path-item">'+(i+1)+'. '+p.w.toFixed(1)+'×'+p.h.toFixed(1)+'pt @ ('+p.x0.toFixed(1)+','+p.y0.toFixed(1)+') lw='+p.lineWidth.toFixed(2)+'</div>').join('')}<!DOCTYPE html>
 <html lang="fi">
 <head>
 <meta charset="UTF-8">
@@ -238,22 +238,30 @@ input[type=color]{width:100%;height:28px;border:1px solid var(--paper3);border-r
     </div>
 
     <div class="sec">
-      <div class="sec-lbl">Spot-värin asetukset</div>
-      <div style="margin-bottom:8px">
-        <label class="lbl">Spot-värin nimi</label>
-        <input type="text" id="t1SpotName" value="Die Cut">
-      </div>
-      <div style="margin-bottom:8px">
-        <label class="lbl">Väri (esikatselu)</label>
-        <input type="color" id="t1Color" value="#FF0099">
-      </div>
+      <div class="sec-lbl">Nimeä spot-värit</div>
+      <p style="font-size:11px;color:var(--ink2);margin-bottom:10px">Valitse viivaryhmät yllä ja anna jokaiselle spot-värinimi. Useammalle ryhmälle voi antaa saman nimen jos ne kuuluvat samaan leikkaustapaan.</p>
+      <div id="spotMappings" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px"></div>
       <div style="margin-bottom:8px">
         <label class="lbl">Viivan paksuus (pt)</label>
         <input type="number" id="t1LineWidth" value="0.5" min="0.1" max="5" step="0.1">
       </div>
-      <button class="btn pink" style="width:100%;justify-content:center;margin-top:4px" onclick="convertToSpot()">
+      <div style="margin-bottom:12px">
+        <label class="lbl">Lisää CCD-kohdistusmerkit</label>
+        <div class="tgl">
+          <button id="ccdOff" class="on" onclick="setCCD(false)">Ei</button>
+          <button id="ccdOn" onclick="setCCD(true)">Kyllä — 4 kulmaan</button>
+        </div>
+        <p style="font-size:11px;color:var(--ink2);margin-top:4px">Mustat täytetyt pallot spot-värillä "CCD" neljään kulmaan. Leikkauslaite käyttää kohdistukseen.</p>
+      </div>
+      <div id="ccdSizeRow" style="display:none;margin-bottom:12px">
+        <label class="lbl">CCD-merkin koko (mm) <span class="pval" id="ccdSizeVal">5</span></label>
+        <input type="range" id="ccdSize" min="2" max="15" value="5" oninput="document.getElementById('ccdSizeVal').textContent=this.value;redraw()">
+        <label class="lbl" style="margin-top:8px">Etäisyys kulmasta (mm) <span class="pval" id="ccdOffVal">5</span></label>
+        <input type="range" id="ccdOff2" min="1" max="20" value="5" oninput="document.getElementById('ccdOffVal').textContent=this.value;redraw()">
+      </div>
+      <button class="btn pink" style="width:100%;justify-content:center" onclick="convertToSpot()">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
-        Muunna spot-väriksi
+        Muunna spot-väreiksi + lisää CCD
       </button>
     </div>
   </div>
@@ -360,13 +368,9 @@ input[type=color]{width:100%;height:28px;border:1px solid var(--paper3);border-r
         ✦ Tunnista mitat automaattisesti
       </button>
       <div id="aiMeasRes"></div>
-      <div style="margin-bottom:8px">
-        <label class="lbl">Leveys (mm)</label>
-        <input type="number" id="sW" value="50" min="1" oninput="calcImp()">
-      </div>
-      <div style="margin-bottom:8px">
-        <label class="lbl">Korkeus (mm)</label>
-        <input type="number" id="sH" value="50" min="1" oninput="calcImp()">
+      <div class="row2" style="margin-bottom:8px">
+        <div><label class="lbl">Leveys (mm)</label><input type="number" id="sW" value="125" min="1" oninput="calcImp()"></div>
+        <div><label class="lbl">Korkeus (mm)</label><input type="number" id="sH" value="35" min="1" oninput="calcImp()"></div>
       </div>
       <div style="margin-bottom:8px">
         <label class="lbl">Muoto</label>
@@ -389,39 +393,76 @@ input[type=color]{width:100%;height:28px;border:1px solid var(--paper3);border-r
         <select id="sheetSz" onchange="onSheetChange()">
           <option value="210x297">A4 (210×297mm)</option>
           <option value="297x420">A3 (297×420mm)</option>
-          <option value="320x450">SRA3 (320×450mm)</option>
+          <option value="320x450" selected>SRA3 (320×450mm)</option>
           <option value="320x480">320×480mm</option>
           <option value="custom">Mukautettu</option>
         </select>
       </div>
       <div id="customSheet" class="row2 hidden" style="margin-bottom:8px">
-        <div><label class="lbl">Leveys (mm)</label><input type="number" id="shW" value="210" min="50" oninput="calcImp()"></div>
-        <div><label class="lbl">Korkeus (mm)</label><input type="number" id="shH" value="297" min="50" oninput="calcImp()"></div>
+        <div><label class="lbl">Leveys (mm)</label><input type="number" id="shW" value="320" min="50" oninput="calcImp()"></div>
+        <div><label class="lbl">Korkeus (mm)</label><input type="number" id="shH" value="450" min="50" oninput="calcImp()"></div>
       </div>
       <div style="margin-bottom:8px">
         <label class="lbl">Arkkireunus (mm)</label>
-        <input type="number" id="shMargin" value="5" min="0" max="30" oninput="calcImp()">
+        <input type="number" id="shMargin" value="23" min="0" max="50" oninput="calcImp()">
       </div>
       <div style="margin-bottom:8px">
-        <label class="lbl">Bleed tarrojen välillä (mm)</label>
-        <input type="number" id="bleed" value="3" min="0" max="20" oninput="calcImp()">
+        <label class="lbl">DK1→DK2 bleed (mm) <span style="font-size:10px;color:var(--ink3)">raja tarran ympärillä</span></label>
+        <input type="number" id="bleed" value="1.5" min="0" max="20" step="0.5" oninput="calcImp()">
+      </div>
+      <div style="margin-bottom:8px">
+        <label class="lbl">Väli tarrojen välillä (mm)</label>
+        <input type="number" id="impGap" value="13.8" min="0" max="50" step="0.1" oninput="calcImp()">
       </div>
       <div class="row2" style="margin-bottom:8px">
         <div><label class="lbl">Rivejä</label><input type="number" id="impR" value="4" min="1" max="50" oninput="drawImp()"></div>
-        <div><label class="lbl">Sarakkeita</label><input type="number" id="impC" value="4" min="1" max="50" oninput="drawImp()"></div>
+        <div><label class="lbl">Sarakkeita</label><input type="number" id="impC" value="2" min="1" max="50" oninput="drawImp()"></div>
       </div>
       <div class="imp-result" id="impResult"></div>
     </div>
 
     <div class="sec">
-      <div class="sec-lbl">Spot-väri</div>
+      <div class="sec-lbl">Leikkausrajat</div>
       <div style="margin-bottom:8px">
-        <label class="lbl">Spot-värin nimi</label>
-        <input type="text" id="impSpot" value="Die Cut">
+        <label class="lbl">DK1 spot-nimi <span style="font-size:10px;color:var(--ink3)">tarkka tarran raja</span></label>
+        <input type="text" id="impDK1" value="DK1">
       </div>
-      <div>
-        <label class="lbl">Väri (esikatselu)</label>
+      <div style="margin-bottom:8px">
+        <label class="lbl">DK2 spot-nimi <span style="font-size:10px;color:var(--ink3)">ulompi bleed-raja</span></label>
+        <input type="text" id="impDK2" value="DK2">
+      </div>
+      <div style="margin-bottom:8px">
+        <label class="lbl">Esikatselu DK1-väri</label>
         <input type="color" id="impColor" value="#FF0099" oninput="drawImp()">
+      </div>
+      <div style="margin-bottom:8px">
+        <label class="lbl">Esikatselu DK2-väri</label>
+        <input type="color" id="impColor2" value="#0055CC" oninput="drawImp()">
+      </div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-lbl">CCD-kohdistusmerkit</div>
+      <div style="margin-bottom:8px">
+        <label class="lbl">Lisää CCD-merkit</label>
+        <div class="tgl">
+          <button id="impCcdOff" class="on" onclick="setImpCCD(false)">Ei</button>
+          <button id="impCcdOn" onclick="setImpCCD(true)">Kyllä</button>
+        </div>
+      </div>
+      <div id="impCcdSettings" class="hidden">
+        <div style="margin-bottom:8px">
+          <label class="lbl">CCD spot-nimi</label>
+          <input type="text" id="impCcdName" value="ccd">
+        </div>
+        <div style="margin-bottom:8px">
+          <label class="lbl">Merkin halkaisija (mm) <span class="pval" id="impCcdSzVal">5</span></label>
+          <input type="range" id="impCcdSz" min="2" max="15" value="5" oninput="document.getElementById('impCcdSzVal').textContent=this.value;drawImp()">
+        </div>
+        <div>
+          <label class="lbl">Etäisyys kulmasta (mm) <span class="pval" id="impCcdOffVal">10</span></label>
+          <input type="range" id="impCcdOff3" min="3" max="30" value="10" oninput="document.getElementById('impCcdOffVal').textContent=this.value;drawImp()">
+        </div>
       </div>
     </div>
   </div>
@@ -494,6 +535,7 @@ let selId=null, objCtr=0, tool='select', activeTab=1;
 let dragSt=null, penPts=[], penPrev=null, renderTask=null;
 let zoomLevel=1.0;
 let impData=null;
+let addCCD=false;
 let detectedPaths=[]; // tab1: vector paths grouped by color
 
 const pdfCan=document.getElementById('pdfCanvas');
@@ -506,6 +548,21 @@ function getObjs(){return pageData[curPage]||(pageData[curPage]=[])}
 function getSel(){return selId?getObjs().find(o=>o.id===selId)||null:null}
 function ss(msg,t=''){const e=document.getElementById('sbar');e.textContent=msg;e.className='sbar'+(t?' '+t:'')}
 function mmToPt(mm){return mm*2.8346}
+
+function setImpCCD(v){
+  document.getElementById('impCcdOff').classList.toggle('on',!v);
+  document.getElementById('impCcdOn').classList.toggle('on',v);
+  document.getElementById('impCcdSettings').classList.toggle('hidden',!v);
+  drawImp();
+}
+
+function setCCD(v){
+  addCCD=v;
+  document.getElementById('ccdOff').classList.toggle('on',!v);
+  document.getElementById('ccdOn').classList.toggle('on',v);
+  document.getElementById('ccdSizeRow').style.display=v?'':'none';
+  redraw();
+}
 function ptToMm(pt){return pt/2.8346}
 
 // ─── Tab switching ─────────────────────────────────────────────────────────
@@ -600,190 +657,85 @@ async function checkResolution(){
 async function analyzeVectorPaths(){
   if(!pdfDoc) return;
   document.getElementById('pathGroups').innerHTML='<div class="obj-empty"><div class="spin dark" style="display:inline-block;margin-right:6px"></div>Analysoidaan...</div>';
-  
+
   const pg=await pdfDoc.getPage(curPage);
   const ops=await pg.getOperatorList();
   const vp=pg.getViewport({scale:1});
   const pH=vp.height;
-  
-  // Parse operator list to extract paths with colors
+
   const fnArray=ops.fnArray;
   const argsArray=ops.argsArray;
-  
-  let currentStrokeColor=[0,0,0]; // RGB
-  let currentFillColor=[0,0,0];
-  let currentLineWidth=1;
-  let groups={};
-  let pathCount=0;
-  
-  // Current path points
-  let currentPath=[];
-  let pathBbox={x0:Infinity,y0:Infinity,x1:-Infinity,y1:-Infinity};
-  
   const OPS=pdfjsLib.OPS;
-  
-  function colorKey(rgb){
-    if(typeof rgb==='string') return rgb; // spot color hex string
-    if(!Array.isArray(rgb)) return '0,0,0';
-    return rgb.map(v=>Math.round(v*255)).join(',');
+
+  let groups={};
+  let currentStrokeCS='default';
+  let currentFillCS='default';
+  let currentStrokeColor=[0];
+  let currentFillColor=[0];
+  let currentLineWidth=1;
+  let currentPath=[];
+
+  // Spot color palette — assign colors by colorspace name
+  const spotPalette=['#CC0000','#0055CC','#00AA44','#FF6600','#9900CC','#CC6600','#006666'];
+  let csColorMap={};
+  let csIdx=0;
+  function csToHex(csName){
+    if(!csColorMap[csName]){
+      csColorMap[csName]=spotPalette[csIdx%spotPalette.length];
+      csIdx++;
+    }
+    return csColorMap[csName];
   }
-  function colorToHex(rgb){
-    if(typeof rgb==='string') return rgb; // already hex
-    if(!Array.isArray(rgb)||!rgb.length) return '#000000';
-    if(rgb.length===1){
-      const v=Math.round((1-rgb[0])*255);
-      return '#'+[v,v,v].map(x=>x.toString(16).padStart(2,'0')).join('');
-    }
-    if(rgb.length===3){
-      return '#'+rgb.map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('');
-    }
-    if(rgb.length===4){ // CMYK
-      const c=rgb[0],m=rgb[1],y=rgb[2],k=rgb[3];
-      const r=Math.round(255*(1-c)*(1-k));
-      const g=Math.round(255*(1-m)*(1-k));
-      const b=Math.round(255*(1-y)*(1-k));
-      return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');
-    }
+  function colorKey(cs, vals){
+    return cs+':'+vals.join(',');
+  }
+  function colorToHex(cs, vals){
+    if(cs!=='default') return csToHex(cs);
+    if(vals.length===1){const v=Math.round((1-vals[0])*255);return '#'+[v,v,v].map(x=>x.toString(16).padStart(2,'0')).join('');}
+    if(vals.length===3) return '#'+vals.map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('');
+    if(vals.length===4){const[c,m,y,k]=vals;const r=Math.round(255*(1-c)*(1-k));const g=Math.round(255*(1-m)*(1-k));const b=Math.round(255*(1-y)*(1-k));return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');}
     return '#000000';
   }
-  function isBlackOrWhite(rgb){
-    const hex=colorToHex(rgb);
-    return hex==='#000000'||hex==='#ffffff'||hex==='#fefefe'||hex==='#010101'||hex==='#1a1917';
-  }
-  
-  function recordPath(stroke){
-    if(currentPath.length<2) return;
-    const color=stroke?currentStrokeColor:currentFillColor;
-    // Skip if no meaningful color info
-    if(!color) return;
-    const key=colorKey(color);
-    const hex=colorToHex(color);
-    if(!groups[key]){
-      groups[key]={hex,paths:[],color,selected:false};
-    }
-    // Compute bbox from path points
-    let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
-    currentPath.forEach(([x,y])=>{
-      x0=Math.min(x0,x); y0=Math.min(y0,y);
-      x1=Math.max(x1,x); y1=Math.max(y1,y);
-    });
-    groups[key].paths.push({
-      points:[...currentPath], x0,y0,x1,y1,
-      w:x1-x0, h:y1-y0,
-      lineWidth:currentLineWidth,
-      stroke
-    });
-    pathCount++;
-  }
-  
-  // Get colorspace names from page resources for spot color identification
-  let csStroke='default', csFill='default';
-  const csNames={}; // CS alias -> name
-  try{
-    const resources=await pg.getOperatorList(); // already have ops
-    // We'll track CS names via dependency loading
-  }catch(e){}
 
-  // Assign distinct colors to spot color slots
-  const spotPalette=['#CC0000','#0055CC','#00AA44','#FF6600','#9900CC','#006666'];
-  let spotColorMap={}; // csName -> hex
-  let spotIdx=0;
-  function getSpotColor(name){
-    if(!spotColorMap[name]){
-      spotColorMap[name]=spotPalette[spotIdx%spotPalette.length];
-      spotIdx++;
-    }
-    return spotColorMap[name];
+  function recordPath(useStroke){
+    if(currentPath.length<2) return;
+    const cs=useStroke?currentStrokeCS:currentFillCS;
+    const vals=useStroke?currentStrokeColor:currentFillColor;
+    const key=colorKey(cs,vals);
+    const hex=colorToHex(cs,vals);
+    if(!groups[key]) groups[key]={hex,cs,vals,paths:[],selected:false};
+    let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
+    currentPath.forEach(([x,y])=>{x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);});
+    groups[key].paths.push({points:[...currentPath],x0,y0,x1,y1,w:x1-x0,h:y1-y0,lineWidth:currentLineWidth,stroke:useStroke});
+    currentPath=[];
   }
 
   for(let i=0;i<fnArray.length;i++){
     const fn=fnArray[i];
-    const args=argsArray[i];
-    
-    // Color setting operators
-    if(fn===OPS.setStrokeRGBColor) currentStrokeColor=[...args];
-    else if(fn===OPS.setFillRGBColor) currentFillColor=[...args];
-    else if(fn===OPS.setStrokeGray) currentStrokeColor=[args[0]];
-    else if(fn===OPS.setFillGray) currentFillColor=[args[0]];
-    else if(fn===OPS.setStrokeCMYKColor) currentStrokeColor=[...args];
-    else if(fn===OPS.setFillCMYKColor) currentFillColor=[...args];
-    else if(fn===OPS.setLineWidth) currentLineWidth=args[0];
-    // Spot colors / SCN operator — setStrokeColorN / setFillColorN
-    else if(fn===OPS.setStrokeColorN){
-      // args is array of values; last may be spot name string
-      const spotName=args[args.length-1];
-      if(typeof spotName==='string'){
-        const hex=getSpotColor(spotName);
-        currentStrokeColor=hex; // store as string
-      } else {
-        // No name, use args as CMYK or grayscale
-        currentStrokeColor=args.length>=4?[args[0],args[1],args[2],args[3]]:[args[0]||0];
-      }
-    }
-    else if(fn===OPS.setFillColorN){
-      const spotName=args[args.length-1];
-      if(typeof spotName==='string'){
-        const hex=getSpotColor(spotName);
-        currentFillColor=hex;
-      } else {
-        currentFillColor=args.length>=4?[args[0],args[1],args[2],args[3]]:[args[0]||0];
-      }
-    }
-    
-    // Path construction
-    else if(fn===OPS.moveTo){
-      currentPath=[[args[0], pH-args[1]]];
-    }
-    else if(fn===OPS.lineTo){
-      currentPath.push([args[0], pH-args[1]]);
-    }
-    else if(fn===OPS.curveTo||fn===OPS.curveTo2||fn===OPS.curveTo3){
-      // Add endpoint of bezier
-      const pts=args;
-      currentPath.push([pts[pts.length-2], pH-pts[pts.length-1]]);
-    }
-    else if(fn===OPS.rectangle){
-      const[x,y,w,h]=args;
-      const py=pH-y;
-      currentPath=[[x,py],[x+w,py],[x+w,py-h],[x,py-h],[x,py]];
-    }
-    else if(fn===OPS.stroke){
-      recordPath(true);
-      currentPath=[];
-    }
-    else if(fn===OPS.fill||fn===OPS.eoFill){
-      currentPath=[];
-    }
-    else if(fn===OPS.fillStroke||fn===OPS.eoFillStroke){
-      recordPath(true);
-      currentPath=[];
-    }
-    else if(fn===OPS.endPath||fn===OPS.closePath){
-      currentPath=[];
-    }
-  }
-  
-  // Debug: show what we found
-  const groupCount=Object.keys(groups).length;
-  const totalPaths=Object.values(groups).reduce((s,g)=>s+g.paths.length,0);
-  console.log('Groups found:', groupCount, 'Total paths:', totalPaths, groups);
-  
-  // Also log all OPS used
-  const opsUsed=new Set(fnArray);
-  const OPS_names=Object.entries(OPS).filter(([k,v])=>opsUsed.has(v)).map(([k])=>k);
-  console.log('OPS used:', OPS_names.join(', '));
+    const args=argsArray[i]||[];
 
-  if(groupCount===0){
-    // Show debug info on screen
-    document.getElementById('pathGroups').innerHTML=
-      '<div style="font-size:10px;font-family:monospace;padding:8px;background:#f0f0f0;border-radius:6px;line-height:1.6">'
-      +'<b>Debug:</b> '+fnArray.length+' operaattoria<br>'
-      +'OPS löydetty: setStrokeRGBColor='+fnArray.includes(OPS.setStrokeRGBColor)
-      +' setStrokeCMYKColor='+fnArray.includes(OPS.setStrokeCMYKColor)
-      +' setStrokeColorN='+fnArray.includes(OPS.setStrokeColorN)
-      +'<br>stroke ops: '+[OPS.stroke,OPS.fillStroke,OPS.eoFillStroke].map(op=>fnArray.includes(op)).join(',')
-      +'</div>';
-    return;
+    if(fn===OPS.setLineWidth) currentLineWidth=args[0]||1;
+    else if(fn===OPS.setStrokeColorSpace) currentStrokeCS=args[0]||'default';
+    else if(fn===OPS.setFillColorSpace) currentFillCS=args[0]||'default';
+    else if(fn===OPS.setStrokeRGBColor){currentStrokeCS='rgb';currentStrokeColor=[...args];}
+    else if(fn===OPS.setFillRGBColor){currentFillCS='rgb';currentFillColor=[...args];}
+    else if(fn===OPS.setStrokeGray){currentStrokeCS='gray';currentStrokeColor=[args[0]];}
+    else if(fn===OPS.setFillGray){currentFillCS='gray';currentFillColor=[args[0]];}
+    else if(fn===OPS.setStrokeCMYKColor){currentStrokeCS='cmyk';currentStrokeColor=[...args];}
+    else if(fn===OPS.setFillCMYKColor){currentFillCS='cmyk';currentFillColor=[...args];}
+    else if(fn===OPS.setStrokeColor) currentStrokeColor=[...args];
+    else if(fn===OPS.setFillColor) currentFillColor=[...args];
+    else if(fn===OPS.setStrokeColorN) currentStrokeColor=[...args];
+    else if(fn===OPS.setFillColorN) currentFillColor=[...args];
+    else if(fn===OPS.moveTo) currentPath=[[args[0],pH-args[1]]];
+    else if(fn===OPS.lineTo) currentPath.push([args[0],pH-args[1]]);
+    else if(fn===OPS.curveTo||fn===OPS.curveTo2||fn===OPS.curveTo3) currentPath.push([args[args.length-2],pH-args[args.length-1]]);
+    else if(fn===OPS.rectangle){const[x,y,w,h]=args;const py=pH-y;currentPath=[[x,py],[x+w,py],[x+w,py-h],[x,py-h],[x,py]];}
+    else if(fn===OPS.stroke){recordPath(true);}
+    else if(fn===OPS.fill||fn===OPS.eoFill){currentPath=[];}
+    else if(fn===OPS.fillStroke||fn===OPS.eoFillStroke){recordPath(true);currentPath=[];}
+    else if(fn===OPS.endPath||fn===OPS.closePath){currentPath=[];}
+    else if(fn===OPS.restore) currentPath=[];
   }
 
   detectedPaths=groups;
@@ -807,39 +759,68 @@ function renderPathGroups(groups, vp){
   
   container.innerHTML='<p style="font-size:11px;color:var(--ink2);margin-bottom:8px">Valitse checkbox-merkinnällä mitkä viivat ovat leikkausrajoja.</p>';
   
-  entries.forEach(([key,group])=>{
+  const SPOT_PRESETS=['DK1','DK2','CREASE','Kiss Cut','CUT1','Die Cut','Perf'];
+
+  entries.forEach(([key,group],idx)=>{
     const totalPaths=group.paths.length;
     const lw=avgLW(group.paths).toFixed(2);
-    const isSpot=typeof group.color==='string'; // spot color
-    const spotLabel=isSpot?' · spot':'';
-    
-    // Size info: min/max bbox
     const widths=group.paths.map(p=>p.w).filter(w=>w>1);
-    const heights=group.paths.map(p=>p.h).filter(h=>h>1);
-    const sizeInfo=widths.length?
-      ` · ${Math.min(...widths).toFixed(0)}–${Math.max(...widths).toFixed(0)}pt leveys`:'';
-    
+    const sizeInfo=widths.length?` · ${Math.min(...widths).toFixed(0)}–${Math.max(...widths).toFixed(0)}pt`:'';
+
     const div=document.createElement('div');
     div.className='path-group';
     div.innerHTML=`
       <div class="path-group-header" onclick="toggleGroup('${key}')">
         <div class="color-swatch" style="background:${group.hex};outline:1px solid rgba(0,0,0,.15)"></div>
         <div class="path-group-info">
-          <div class="path-group-name" style="font-size:11px">${group.hex}${spotLabel}</div>
+          <div class="path-group-name" style="font-size:11px">${group.hex}</div>
           <div class="path-group-meta">${totalPaths} viivaa · lw ${lw}pt${sizeInfo}</div>
         </div>
         <input type="checkbox" class="path-group-check" id="chk_${key}"
-          onclick="event.stopPropagation();toggleGroupSel('${key}',this.checked);redraw()">
+          onclick="event.stopPropagation();toggleGroupSel('${key}',this.checked);updateSpotMappings()">
       </div>
       <div class="path-group-body" id="body_${key}">
-        ${group.paths.slice(0,10).map((p,i)=>`<div class="path-item">${i+1}. ${p.w.toFixed(1)}×${p.h.toFixed(1)}pt @ (${p.x0.toFixed(1)},${p.y0.toFixed(1)}) lw=${p.lineWidth.toFixed(2)}</div>`).join('')}
-        ${group.paths.length>10?`<div class="path-item" style="color:var(--ink3)">... ja ${group.paths.length-10} lisää</div>`:''}
+        ${group.paths.slice(0,10).map((p,i)=>'<div class="path-item">'+(i+1)+'. '+p.w.toFixed(1)+'\u00d7'+p.h.toFixed(1)+'pt @ ('+p.x0.toFixed(1)+','+p.y0.toFixed(1)+') lw='+p.lineWidth.toFixed(2)+'</div>').join('')}
+        ${group.paths.length>10?('<div class="path-item" style="color:var(--ink3)">... ja '+(group.paths.length-10)+' lisää</div>'):''}
       </div>`;
     container.appendChild(div);
     group.selected=false;
+    group.spotName=SPOT_PRESETS[idx]||'Die Cut';
+    group.previewColor='#FF0099';
   });
-  
+
+  updateSpotMappings();
   redraw();
+}
+
+function updateSpotMappings(){
+  const mappings=document.getElementById('spotMappings');
+  if(!mappings) return;
+  const selected=Object.entries(detectedPaths).filter(([k])=>{
+    const el=document.getElementById('chk_'+k);
+    return el&&el.checked;
+  });
+  if(!selected.length){
+    mappings.innerHTML='<p style="font-size:11px;color:var(--ink3)">Valitse ensin viivaryhmät yllä.</p>';
+    return;
+  }
+  const SPOT_PRESETS=['DK1','DK2','CREASE','Kiss Cut','CUT1','Die Cut','Perf'];
+  const presetOpts=SPOT_PRESETS.map(n=>`<option value="${n}">${n}</option>`).join('');
+  mappings.innerHTML=selected.map(([key,group],i)=>`
+    <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--paper2);border-radius:var(--r);border:1px solid var(--paper3)">
+      <div style="width:12px;height:12px;border-radius:2px;background:${group.hex};flex-shrink:0;outline:1px solid rgba(0,0,0,.15)"></div>
+      <span style="font-size:10px;font-family:monospace;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">${group.paths.length} viivaa</span>
+      <select id="smap_${key}" style="width:110px;font-size:11px;padding:3px 5px" onchange="detectedPaths['${key}'].spotName=this.value">
+        ${presetOpts}
+        <option value="custom_${i}">Mukautettu...</option>
+      </select>
+      <input type="color" id="smcol_${key}" value="${group.previewColor||'#FF0099'}" style="width:28px;height:24px;padding:1px;border:1px solid var(--paper3);border-radius:3px;cursor:pointer" oninput="detectedPaths['${key}'].previewColor=this.value;redraw()">
+    </div>`).join('');
+  // Restore saved values
+  selected.forEach(([key,group])=>{
+    const sel=document.getElementById('smap_'+key);
+    if(sel&&group.spotName) sel.value=SPOT_PRESETS.includes(group.spotName)?group.spotName:sel.value;
+  });
 }
 
 function isBlackOrWhiteHex(hex){
@@ -880,34 +861,81 @@ function colorToHex2(rgb){
 
 // ─── Convert to spot color ────────────────────────────────────────────────
 function convertToSpot(){
-  const selectedGroups=Object.values(detectedPaths).filter(g=>g.selected);
-  if(!selectedGroups.length){ss('Valitse ensin viivat checkbox-merkinnällä','warn');return;}
-  
-  const spotColor=document.getElementById('t1Color').value;
-  const spotName=document.getElementById('t1SpotName').value;
-  const lineWidth=parseFloat(document.getElementById('t1LineWidth').value)||0.5;
   const vp=pageVps[curPage];
   if(!vp){ss('Lataa PDF ensin','warn');return;}
-  
-  // Convert selected paths to cut objects
-  selectedGroups.forEach(group=>{
-    group.paths.forEach((path,i)=>{
-      if(path.w<2&&path.h<2) return; // skip tiny
-      // Scale from PDF pt (at scale=1) to canvas coords (at RS)
-      const x=path.x0*RS;
-      const y=path.y0*RS;
-      const w=path.w*RS;
-      const h=path.h*RS;
+
+  // Get selected groups with their spot name mappings
+  const selectedGroups=Object.entries(detectedPaths).filter(([key,g])=>{
+    const el=document.getElementById('chk_'+key);
+    return el&&el.checked;
+  }).map(([key,g])=>{
+    const sel=document.getElementById('smap_'+key);
+    const col=document.getElementById('smcol_'+key);
+    return{
+      group:g,
+      spotName:sel?sel.value:g.spotName||'Die Cut',
+      previewColor:col?col.value:g.previewColor||'#FF0099'
+    };
+  });
+
+  if(!selectedGroups.length){ss('Valitse ensin viivaryhmät checkbox-merkinnällä','warn');return;}
+
+  const lineWidth=parseFloat(document.getElementById('t1LineWidth').value)||0.5;
+  let totalPaths=0;
+
+  selectedGroups.forEach(({group,spotName,previewColor})=>{
+    group.paths.forEach(path=>{
+      if(path.w<2&&path.h<2) return;
+      const x=path.x0*RS, y=path.y0*RS;
+      const w=path.w*RS, h=path.h*RS;
+      // Detect shape: if w≈h it might be circle (rough check)
+      const isCircleish=Math.abs(path.w-path.h)<path.w*0.05&&path.w>10;
       addObjDirect({
-        name:'Leikkausraja '+(++objCtr),
-        shape:'rect', x, y, w, h,
-        color:spotColor, lineWidth, spotName, dash:'solid',
+        name:spotName+' '+(++objCtr),
+        shape:isCircleish?'circle':'rect',
+        x, y, w, h,
+        color:previewColor,
+        lineWidth,
+        spotName,
+        dash:'solid',
         margin:0, pos:'center', regMarks:false
       });
+      totalPaths++;
     });
   });
-  
-  ss('Muunnettu spot-väriksi: '+selectedGroups.reduce((s,g)=>s+g.paths.length,0)+' polkua','ok');
+
+  // Add CCD registration marks
+  if(addCCD){
+    const ccdSizeMM=parseFloat(document.getElementById('ccdSize').value)||5;
+    const ccdOffMM=parseFloat(document.getElementById('ccdOff2').value)||5;
+    const pg=pageVps[curPage];
+    const pageWpt=pg.width/RS, pageHpt=pg.height/RS;
+    const ccdPt=mmToPt(ccdSizeMM)*RS;
+    const offPt=mmToPt(ccdOffMM)*RS;
+    // 4 corners: top-left, top-right, bottom-right, bottom-left
+    const corners=[
+      {x:offPt, y:offPt, name:'CCD-TL'},
+      {x:pg.width-offPt-ccdPt, y:offPt, name:'CCD-TR'},
+      {x:pg.width-offPt-ccdPt, y:pg.height-offPt-ccdPt, name:'CCD-BR'},
+      {x:offPt, y:pg.height-offPt-ccdPt, name:'CCD-BL'},
+    ];
+    corners.forEach(({x,y,name})=>{
+      addObjDirect({
+        name, shape:'circle',
+        x, y, w:ccdPt, h:ccdPt,
+        color:'#000000',
+        lineWidth:0,
+        spotName:'CCD',
+        dash:'solid',
+        margin:0, pos:'center', regMarks:false,
+        filled:true
+      });
+    });
+    ss(`Muunnettu: ${totalPaths} viivaa + 4 CCD-merkkiä`,'ok');
+  } else {
+    ss(`Muunnettu: ${totalPaths} viivaa spot-väreiksi`,'ok');
+  }
+
   switchTab(2);
   redraw();
 }
@@ -1075,6 +1103,15 @@ function drawObj(ctx,o,sel){
     ctx.strokeStyle='rgba(37,99,235,.3)';ctx.lineWidth=1;ctx.setLineDash([4,3]);ctx.strokeRect(x-6,y-6,w+12,h+12);ctx.setLineDash([]);
     getHandles(x,y,w,h).forEach(hh=>{ctx.fillStyle='#fff';ctx.strokeStyle=o.color;ctx.lineWidth=1.5;ctx.setLineDash([]);ctx.beginPath();ctx.rect(hh.x-4,hh.y-4,8,8);ctx.fill();ctx.stroke();});
   }
+  // Filled objects (CCD marks)
+  if(o.filled){
+    ctx.fillStyle=o.color;
+    ctx.beginPath();
+    if(o.shape==='circle'){ctx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);}
+    else{ctx.rect(x,y,w,h);}
+    ctx.fill();
+    return;
+  }
   ctx.strokeStyle=o.color;ctx.lineWidth=o.lineWidth*RS;applyDash(ctx,o.dash);
   ctx.beginPath();
   if(o.shape==='circle'){ctx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);}
@@ -1105,17 +1142,52 @@ function drawTab1Overlay(ctx){
 
 function drawImpOverlay(ctx){
   if(!impData) return;
-  const{rows,cols,cellW,cellH,offX,offY,gapX,gapY,shape,radPx,color}=impData;
-  ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.setLineDash([]);
+  const{rows,cols,cellW,cellH,offX,offY,gapX,gapY,bleedPx,shape,radPx,
+        dk1Color,dk2Color,useCCD,ccdSizeMM,ccdOffMM}=impData;
+  const vp=pageVps[curPage];if(!vp)return;
+  const scale=vp.width/impData.sheetW;
+
+  function drawShape(ctx,x,y,w,h,r){
+    ctx.beginPath();
+    if(shape==='circle'){ctx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);}
+    else if(shape==='rounded'){const rv=Math.min(r,w/2,h/2);ctx.moveTo(x+rv,y);ctx.lineTo(x+w-rv,y);ctx.arcTo(x+w,y,x+w,y+rv,rv);ctx.lineTo(x+w,y+h-rv);ctx.arcTo(x+w,y+h,x+w-rv,y+h,rv);ctx.lineTo(x+rv,y+h);ctx.arcTo(x,y+h,x,y+h-rv,rv);ctx.lineTo(x,y+rv);ctx.arcTo(x,y,x+rv,y,rv);ctx.closePath();}
+    else{ctx.rect(x,y,w,h);}
+  }
+
   for(let r=0;r<rows;r++){
     for(let c=0;c<cols;c++){
-      const x=offX+c*(cellW+gapX);const y=offY+r*(cellH+gapY);
-      ctx.beginPath();
-      if(shape==='circle'){ctx.ellipse(x+cellW/2,y+cellH/2,cellW/2,cellH/2,0,0,Math.PI*2);}
-      else if(shape==='rounded'){const rv=Math.min(radPx,cellW/2,cellH/2);ctx.moveTo(x+rv,y);ctx.lineTo(x+cellW-rv,y);ctx.arcTo(x+cellW,y,x+cellW,y+rv,rv);ctx.lineTo(x+cellW,y+cellH-rv);ctx.arcTo(x+cellW,y+cellH,x+cellW-rv,y+cellH,rv);ctx.lineTo(x+rv,y+cellH);ctx.arcTo(x,y+cellH,x,y+cellH-rv,rv);ctx.lineTo(x,y+rv);ctx.arcTo(x,y,x+rv,y,rv);ctx.closePath();}
-      else{ctx.rect(x,y,cellW,cellH);}
+      const x=offX+c*(cellW+gapX);
+      const y=offY+r*(cellH+gapY);
+
+      // DK2 — outer bleed rect (dashed blue)
+      if(bleedPx>0){
+        ctx.strokeStyle=dk2Color;ctx.lineWidth=1;ctx.setLineDash([5,3]);
+        drawShape(ctx,x-bleedPx,y-bleedPx,cellW+bleedPx*2,cellH+bleedPx*2,radPx+bleedPx);
+        ctx.stroke();
+      }
+
+      // DK1 — exact sticker (solid pink)
+      ctx.strokeStyle=dk1Color;ctx.lineWidth=1.5;ctx.setLineDash([]);
+      drawShape(ctx,x,y,cellW,cellH,radPx);
       ctx.stroke();
     }
+  }
+
+  // CCD marks — filled black circles at 4 corners
+  if(useCCD&&ccdSizeMM>0){
+    const ccdPx=ccdSizeMM*scale;
+    const ccdOff=ccdOffMM*scale;
+    const W=vp.width, H=vp.height;
+    ctx.fillStyle='#000000';ctx.setLineDash([]);
+    [
+      [ccdOff, ccdOff],
+      [W-ccdOff-ccdPx, ccdOff],
+      [W-ccdOff-ccdPx, H-ccdOff-ccdPx],
+      [ccdOff, H-ccdOff-ccdPx]
+    ].forEach(([cx,cy])=>{
+      ctx.beginPath();ctx.ellipse(cx+ccdPx/2,cy+ccdPx/2,ccdPx/2,ccdPx/2,0,0,Math.PI*2);
+      ctx.fill();
+    });
   }
 }
 
@@ -1281,57 +1353,88 @@ function calcImp(){
   if(!pdfDoc)return;
   const sw=parseFloat(document.getElementById('sW').value)||50;
   const sh=parseFloat(document.getElementById('sH').value)||50;
-  const bleed=parseFloat(document.getElementById('bleed').value)||3;
-  const margin=parseFloat(document.getElementById('shMargin').value)||5;
+  const gap=parseFloat(document.getElementById('impGap').value)||3;
+  const margin=parseFloat(document.getElementById('shMargin').value)||23;
   const sheet=getSheetMM();
-  const cols=Math.max(1,Math.floor((sheet.w-margin*2+bleed)/(sw+bleed)));
-  const rows=Math.max(1,Math.floor((sheet.h-margin*2+bleed)/(sh+bleed)));
+  const usableW=sheet.w-margin*2;
+  const usableH=sheet.h-margin*2;
+  const cols=Math.max(1,Math.floor((usableW+gap)/(sw+gap)));
+  const rows=Math.max(1,Math.floor((usableH+gap)/(sh+gap)));
   document.getElementById('impR').value=rows;
   document.getElementById('impC').value=cols;
   drawImp();
 }
+
 function drawImp(){
   if(!pdfDoc)return;
   const sw=parseFloat(document.getElementById('sW').value)||50;
   const sh=parseFloat(document.getElementById('sH').value)||50;
-  const bleed=parseFloat(document.getElementById('bleed').value)||3;
-  const margin=parseFloat(document.getElementById('shMargin').value)||5;
+  const bleed=parseFloat(document.getElementById('bleed').value)||1.5;
+  const gap=parseFloat(document.getElementById('impGap').value)||13.8;
+  const margin=parseFloat(document.getElementById('shMargin').value)||23;
   const rows=parseInt(document.getElementById('impR').value)||1;
   const cols=parseInt(document.getElementById('impC').value)||1;
   const sheet=getSheetMM();
   const shape=document.getElementById('sShape').value;
   const radMM=parseFloat(document.getElementById('sRad').value)||0;
-  const color=document.getElementById('impColor').value;
+  const dk1Color=document.getElementById('impColor').value;
+  const dk2Color=document.getElementById('impColor2').value;
   const vp=pageVps[curPage];if(!vp)return;
-  const scale=vp.width/sheet.w; // canvas px per mm
-  const totalW=cols*sw+(cols-1)*bleed+margin*2;
-  const totalH=rows*sh+(rows-1)*bleed+margin*2;
+  const scale=vp.width/sheet.w;
+
+  const totalW=cols*sw+(cols-1)*gap+margin*2;
+  const totalH=rows*sh+(rows-1)*gap+margin*2;
   const fits=totalW<=sheet.w&&totalH<=sheet.h;
-  impData={rows,cols,shape,color,
-    cellW:sw*scale,cellH:sh*scale,
-    offX:margin*scale,offY:margin*scale,
-    gapX:bleed*scale,gapY:bleed*scale,
+
+  // CCD settings
+  const useCCD=document.getElementById('impCcdOn').classList.contains('on');
+  const ccdSizeMM=useCCD?parseFloat(document.getElementById('impCcdSz').value)||5:0;
+  const ccdOffMM=useCCD?parseFloat(document.getElementById('impCcdOff3').value)||10:0;
+  const ccdName=document.getElementById('impCcdName')?.value||'ccd';
+
+  impData={
+    rows,cols,shape,
+    dk1Color,dk2Color,
+    dk1Name:document.getElementById('impDK1').value||'DK1',
+    dk2Name:document.getElementById('impDK2').value||'DK2',
+    cellW:sw*scale, cellH:sh*scale,
+    offX:margin*scale, offY:margin*scale,
+    gapX:gap*scale, gapY:gap*scale,
+    bleedPx:bleed*scale,
     radPx:radMM*scale,
-    swMM:sw,shMM:sh,bleedMM:bleed,marginMM:margin,
-    radiusMM:radMM,sheetW:sheet.w,sheetH:sheet.h,
-    spotName:document.getElementById('impSpot').value};
+    swMM:sw, shMM:sh, bleedMM:bleed, gapMM:gap, marginMM:margin,
+    radiusMM:radMM, sheetW:sheet.w, sheetH:sheet.h,
+    useCCD, ccdSizeMM, ccdOffMM, ccdName
+  };
+
   const res=document.getElementById('impResult');
   res.classList.add('visible');
-  res.innerHTML=`<strong>${rows*cols} tarraa</strong> (${rows}×${cols})<br>
-    Käytetty: ${totalW.toFixed(1)}×${totalH.toFixed(1)}mm / ${sheet.w}×${sheet.h}mm<br>
-    ${fits?'✓ Mahtuu arkille':'⚠️ Ylittää arkin — säädä asetuksia'}`;
+  const ccdLine=useCCD?('CCD-merkit: ⌀'+ccdSizeMM+'mm neljässä kulmassa<br>'):'';
+  res.innerHTML='<strong>'+rows*cols+' tarraa</strong> ('+rows+'×'+cols+')<br>'
+    +'DK1 '+sw+'×'+sh+'mm · DK2 '+(sw+bleed*2).toFixed(1)+'×'+(sh+bleed*2).toFixed(1)+'mm<br>'
+    +'Käytetty: '+totalW.toFixed(1)+'×'+totalH.toFixed(1)+'mm / '+sheet.w+'×'+sheet.h+'mm<br>'
+    +ccdLine
+    +(fits?'✓ Mahtuu arkille':'⚠️ Ylittää arkin');
   res.style.borderColor=fits?'#fcd34d':'#fecaca';
   if(activeTab===3)redraw();
 }
 
 // ─── Export ───────────────────────────────────────────────────────────────
+function colorToRGBOps(hex){
+  const r=parseInt(hex.slice(1,3),16)/255;
+  const g=parseInt(hex.slice(3,5),16)/255;
+  const b=parseInt(hex.slice(5,7),16)/255;
+  return`${r.toFixed(3)} ${g.toFixed(3)} ${b.toFixed(3)}`;
+}
+
 function buildOps(o,pW,pH,vp){
   const sx=pW/(vp.width/RS),sy=pH/(vp.height/RS);
+  const rgb=colorToRGBOps(o.color||'#FF0099');
   if(o.points&&o.points.length>1){
     const pts=o.points.map(p=>({x:(p.x/RS)*sx,y:pH-(p.y/RS)*sy*(pH/(vp.height/RS))}));
     let d=`${pts[0].x} ${pts[0].y} m`;for(let i=1;i<pts.length;i++)d+=` ${pts[i].x} ${pts[i].y} l`;if(o.closed)d+=' h';
     const dash=o.dash==='dashed'?'[6 4] 0 d ':o.dash==='dotted'?'[2 3] 0 d ':'';
-    return `q 1 0 1 RG [] 0 d ${o.lineWidth} w ${dash}${d} S Q`;
+    return `q ${rgb} RG [] 0 d ${o.lineWidth} w ${dash}${d} S Q`;
   }
   const{x,y,w,h}=getCR(o);
   const rx=(x/RS)*sx,ry2=(y/RS)*sy,rw=(w/RS)*sx,rh=(h/RS)*sy,pdfY=pH-ry2-rh;
@@ -1340,7 +1443,11 @@ function buildOps(o,pW,pH,vp){
   else if(o.shape==='rounded'){const r=Math.min(o.radius*sx,rw/2,rh/2);const x0=rx,y0=pdfY,x1=rx+rw,y1=pdfY+rh;path=`${x0+r} ${y0} m ${x1-r} ${y0} l ${x1} ${y0} ${x1} ${y0+r} v ${x1} ${y1-r} l ${x1} ${y1} ${x1-r} ${y1} v ${x0+r} ${y1} l ${x0} ${y1} ${x0} ${y1-r} v ${x0} ${y0+r} l ${x0} ${y0} ${x0+r} ${y0} v`;}
   else{path=`${rx} ${pdfY} m ${rx+rw} ${pdfY} l ${rx+rw} ${pdfY+rh} l ${rx} ${pdfY+rh} l h`;}
   const dash=o.dash==='dashed'?'[6 4] 0 d ':o.dash==='dotted'?'[2 3] 0 d ':'';
-  return `q 1 0 1 RG [] 0 d ${o.lineWidth} w ${dash}${path} S Q`;
+  // Filled objects (CCD marks) — use fill operator
+  if(o.filled){
+    return `q ${rgb} rg ${path} f Q`;
+  }
+  return `q ${rgb} RG [] 0 d ${o.lineWidth} w ${dash}${path} S Q`;
 }
 
 // Tab1: build ops from detected paths directly (100% accurate)
@@ -1370,27 +1477,64 @@ function buildTab1Ops(pW,pH,pageVp){
   return ops;
 }
 
+function rectPath(x,y,w,h){return `${x} ${y} m ${x+w} ${y} l ${x+w} ${y+h} l ${x} ${y+h} l h`;}
+function circlePath(cx,cy,rx,ry){const k=.5523,a=rx,b=ry;return `${cx} ${cy+b} m ${cx+a*k} ${cy+b} ${cx+a} ${cy+b*k} ${cx+a} ${cy} c ${cx+a} ${cy-b*k} ${cx+a*k} ${cy-b} ${cx} ${cy-b} c ${cx-a*k} ${cy-b} ${cx-a} ${cy-b*k} ${cx-a} ${cy} c ${cx-a} ${cy+b*k} ${cx-a*k} ${cy+b} ${cx} ${cy+b} c`;}
+function roundedPath(x,y,w,h,r){const x0=x,y0=y,x1=x+w,y1=y+h;return `${x0+r} ${y0} m ${x1-r} ${y0} l ${x1} ${y0} ${x1} ${y0+r} v ${x1} ${y1-r} l ${x1} ${y1} ${x1-r} ${y1} v ${x0+r} ${y1} l ${x0} ${y1} ${x0} ${y1-r} v ${x0} ${y0+r} l ${x0} ${y0} ${x0+r} ${y0} v`;}
+function shapePath(shape,x,y,w,h,r){if(shape==='circle')return circlePath(x+w/2,y+h/2,w/2,h/2);if(shape==='rounded')return roundedPath(x,y,w,h,Math.min(r,w/2,h/2));return rectPath(x,y,w,h);}
+
 function buildImpOps(d,pW,pH){
-  const{rows,cols,swMM,shMM,bleedMM,marginMM,shape,radiusMM,sheetW,sheetH}=d;
+  const{rows,cols,swMM,shMM,bleedMM,gapMM,marginMM,shape,radiusMM,sheetW,sheetH,
+        dk1Color,dk2Color,useCCD,ccdSizeMM,ccdOffMM}=d;
   const scX=pW/mmToPt(sheetW),scY=pH/mmToPt(sheetH);
   const swPt=mmToPt(swMM)*scX,shPt=mmToPt(shMM)*scY;
-  const blX=mmToPt(bleedMM)*scX,blY=mmToPt(bleedMM)*scY;
+  const gapX=mmToPt(gapMM||3)*scX,gapY=mmToPt(gapMM||3)*scY;
+  const blX=mmToPt(bleedMM||0)*scX,blY=mmToPt(bleedMM||0)*scY;
   const offX=mmToPt(marginMM)*scX,offY=mmToPt(marginMM)*scY;
-  const radPt=mmToPt(radiusMM)*Math.min(scX,scY);
-  let ops='q 1 0 1 RG [] 0 d 0.5 w\n';
-  for(let r=0;r<rows;r++){
-    for(let c=0;c<cols;c++){
-      const x=offX+c*(swPt+blX);
-      const y2=offY+r*(shPt+blY);
-      const pdfY=pH-y2-shPt;
-      let path='';
-      if(shape==='circle'){const cx=x+swPt/2,cy=pdfY+shPt/2,a=swPt/2,b=shPt/2,k=.5523;path=`${cx} ${cy+b} m ${cx+a*k} ${cy+b} ${cx+a} ${cy+b*k} ${cx+a} ${cy} c ${cx+a} ${cy-b*k} ${cx+a*k} ${cy-b} ${cx} ${cy-b} c ${cx-a*k} ${cy-b} ${cx-a} ${cy-b*k} ${cx-a} ${cy} c ${cx-a} ${cy+b*k} ${cx-a*k} ${cy+b} ${cx} ${cy+b} c`;}
-      else if(shape==='rounded'){const rv=Math.min(radPt,swPt/2,shPt/2);const x0=x,y0=pdfY,x1=x+swPt,y1=pdfY+shPt;path=`${x0+rv} ${y0} m ${x1-rv} ${y0} l ${x1} ${y0} ${x1} ${y0+rv} v ${x1} ${y1-rv} l ${x1} ${y1} ${x1-rv} ${y1} v ${x0+rv} ${y1} l ${x0} ${y1} ${x0} ${y1-rv} v ${x0} ${y0+rv} l ${x0} ${y0} ${x0+rv} ${y0} v`;}
-      else{path=`${x} ${pdfY} m ${x+swPt} ${pdfY} l ${x+swPt} ${pdfY+shPt} l ${x} ${pdfY+shPt} l h`;}
-      ops+=path+' S\n';
+  const radPt=mmToPt(radiusMM||0)*Math.min(scX,scY);
+  const dk1rgb=colorToRGBOps(dk1Color||'#FF0099');
+  const dk2rgb=colorToRGBOps(dk2Color||'#0055CC');
+  let ops='';
+
+  // DK2 — outer bleed
+  if(bleedMM>0){
+    ops+=`q ${dk2rgb} RG [] 0 d 0.25 w
+`;
+    for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+      const x=offX+c*(swPt+gapX)-blX;
+      const y2=offY+r*(shPt+gapY)-blY;
+      const pY=pH-y2-shPt-blY*2;
+      ops+=shapePath(shape,x,pY,swPt+blX*2,shPt+blY*2,radPt+blX)+' S
+';
     }
+    ops+='Q
+';
   }
-  ops+='Q';
+
+  // DK1 — exact sticker
+  ops+=`q ${dk1rgb} RG [] 0 d 0.25 w
+`;
+  for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+    const x=offX+c*(swPt+gapX);
+    const y2=offY+r*(shPt+gapY);
+    const pY=pH-y2-shPt;
+    ops+=shapePath(shape,x,pY,swPt,shPt,radPt)+' S
+';
+  }
+  ops+='Q
+';
+
+  // CCD — filled circles at 4 corners
+  if(useCCD&&ccdSizeMM>0){
+    const ccdPt=mmToPt(ccdSizeMM)*Math.min(scX,scY);
+    const ccdOff=mmToPt(ccdOffMM||10)*Math.min(scX,scY);
+    ops+=`q 0 0 0 rg
+`;
+    [[ccdOff,pH-ccdOff-ccdPt],[pW-ccdOff-ccdPt,pH-ccdOff-ccdPt],[pW-ccdOff-ccdPt,ccdOff],[ccdOff,ccdOff]]
+      .forEach(([cx,cy])=>{ops+=circlePath(cx+ccdPt/2,cy+ccdPt/2,ccdPt/2,ccdPt/2)+' f
+';});
+    ops+='Q
+';
+  }
   return ops;
 }
 
@@ -1472,7 +1616,7 @@ function expScript(type){
   if(type==='ai'){
     L.push('// Leikkausraja — Illustrator\n// File > Scripts > Other Script');
     L.push(`var doc=app.activeDocument;var layer;try{layer=doc.layers.getByName("${sn}");}catch(e){layer=doc.layers.add();layer.name="${sn}";}var spot;try{spot=doc.spots.getByName("${sn}");}catch(e){spot=doc.spots.add();spot.name="${sn}";var c=new CMYKColor();c.cyan=0;c.magenta=100;c.yellow=100;c.black=0;spot.color=c;spot.colorType=ColorModel.SPOT;}var sc=new SpotColor();sc.spot=spot;`);
-    all.forEach(({obj:o},i)=>{const vp=pageVps[curPage]||{width:595*RS,height:842*RS};const pH=vp.height/RS;if(o.points&&o.points.length>1){const pts=o.points.map(p=>({x:p.x/RS,y:pH-p.y/RS}));L.push(`var p${i}=doc.pathItems.add();p${i}.setEntirePath([${pts.map(p=>`[${p.x.toFixed(2)},${p.y.toFixed(2)}]`).join(',')}]);${o.closed?`p${i}.closed=true;`:''}p${i}.filled=false;p${i}.stroked=true;p${i}.strokeColor=sc;p${i}.strokeWidth=${o.lineWidth};layer.pathItems.move(p${i},ElementPlacement.PLACEATEND);`);}else{const{x,y,w,h}=getCR(o);const rx=x/RS,ry=pH-(y/RS+h/RS),rw=w/RS,rh=h/RS;if(o.shape==='circle')L.push(`var e${i}=doc.pathItems.ellipse(${ry.toFixed(2)},${rx.toFixed(2)},${rw.toFixed(2)},${rh.toFixed(2)});`);else if(o.shape==='rounded'){const r=Math.min(o.radius,rw/2,rh/2);L.push(`var e${i}=doc.pathItems.roundedRectangle(${ry.toFixed(2)},${rx.toFixed(2)},${rw.toFixed(2)},${rh.toFixed(2)},${r.toFixed(1)},${r.toFixed(1)});`);}else L.push(`var e${i}=doc.pathItems.rectangle(${ry.toFixed(2)},${rx.toFixed(2)},${rw.toFixed(2)},${rh.toFixed(2)});`);L.push(`e${i}.filled=false;e${i}.stroked=true;e${i}.strokeColor=sc;e${i}.strokeWidth=${o.lineWidth};layer.pathItems.move(e${i},ElementPlacement.PLACEATEND);`);}});
+    all.forEach(({obj:o},i)=>{const vp=pageVps[curPage]||{width:595*RS,height:842*RS};const pH=vp.height/RS;if(o.points&&o.points.length>1){const pts=o.points.map(p=>({x:p.x/RS,y:pH-p.y/RS}));L.push(`var p${i}=doc.pathItems.add();p${i}.setEntirePath([${pts.map(p=>'['+p.x.toFixed(2)+','+p.y.toFixed(2)+']').join(',')}]);'+( o.closed?('p'+i+'.closed=true;'):'' )+'p${i}.filled=false;p${i}.stroked=true;p${i}.strokeColor=sc;p${i}.strokeWidth=${o.lineWidth};layer.pathItems.move(p${i},ElementPlacement.PLACEATEND);`);}else{const{x,y,w,h}=getCR(o);const rx=x/RS,ry=pH-(y/RS+h/RS),rw=w/RS,rh=h/RS;if(o.shape==='circle')L.push(`var e${i}=doc.pathItems.ellipse(${ry.toFixed(2)},${rx.toFixed(2)},${rw.toFixed(2)},${rh.toFixed(2)});`);else if(o.shape==='rounded'){const r=Math.min(o.radius,rw/2,rh/2);L.push(`var e${i}=doc.pathItems.roundedRectangle(${ry.toFixed(2)},${rx.toFixed(2)},${rw.toFixed(2)},${rh.toFixed(2)},${r.toFixed(1)},${r.toFixed(1)});`);}else L.push(`var e${i}=doc.pathItems.rectangle(${ry.toFixed(2)},${rx.toFixed(2)},${rw.toFixed(2)},${rh.toFixed(2)});`);L.push(`e${i}.filled=false;e${i}.stroked=true;e${i}.strokeColor=sc;e${i}.strokeWidth=${o.lineWidth};layer.pathItems.move(e${i},ElementPlacement.PLACEATEND);`);}});
     L.push(`alert("Leikkausrajat lisätty: ${sn}");`);
   } else {
     L.push(`// Leikkausraja — InDesign\nvar doc=app.activeDocument;var layer;try{layer=doc.layers.item("${sn}");if(!layer.isValid)throw 0;}catch(e){layer=doc.layers.add({name:"${sn}"});}var sw;try{sw=doc.swatches.item("${sn}");if(!sw.isValid)throw 0;}catch(e){sw=doc.colors.add();sw.name="${sn}";sw.model=ColorModel.SPOT;sw.colorValue=[0,100,100,0];sw.space=ColorSpace.CMYK;}`);
