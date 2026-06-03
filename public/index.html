@@ -8,17 +8,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --ink:#1c1917;--ink2:#57534e;--ink3:#a8a29e;
-  --paper:#fafaf9;--paper2:#f5f5f4;--paper3:#e7e5e4;
-  --pink:#FF0099;--blue:#2563eb;--blue-bg:#eff6ff;
-  --green:#16a34a;--green-bg:#f0fdf4;
-  --red:#dc2626;--red-bg:#fef2f2;
-  --amber:#d97706;--amber-bg:#fffbeb;
-  --r:6px;
-}
+:root{--ink:#1c1917;--ink2:#57534e;--ink3:#a8a29e;--paper:#fafaf9;--paper2:#f5f5f4;--paper3:#e7e5e4;--pink:#FF0099;--blue:#2563eb;--blue-bg:#eff6ff;--green:#16a34a;--green-bg:#f0fdf4;--red:#dc2626;--red-bg:#fef2f2;--amber:#d97706;--amber-bg:#fffbeb;--r:6px}
 html,body{height:100%;overflow:hidden}
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--paper2);color:var(--ink);font-size:14px}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:var(--paper2);color:var(--ink);font-size:14px}
 .app{display:grid;grid-template-columns:300px 1fr;grid-template-rows:48px 1fr;height:100vh}
 .topbar{grid-column:1/-1;background:var(--ink);display:flex;align-items:center;padding:0 16px;gap:12px}
 .logo{font-size:13px;color:#fff;font-weight:600;letter-spacing:.05em}
@@ -111,7 +103,6 @@ input[type=range]{width:100%;height:3px}
 .spin{width:12px;height:12px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:none}
 .spin.dk{border-color:rgba(0,0,0,.15);border-top-color:var(--ink2)}
 @keyframes spin{to{transform:rotate(360deg)}}
-select.esm{width:110px;font-size:11px;padding:3px 5px}
 .hidden{display:none!important}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-thumb{background:var(--paper3);border-radius:2px}
 </style>
@@ -130,7 +121,6 @@ select.esm{width:110px;font-size:11px;padding:3px 5px}
     <button class="tab" id="t2" onclick="switchTab(2)">2 · Piirrä</button>
     <button class="tab" id="t3" onclick="switchTab(3)">3 · Monista</button>
   </div>
-  <!-- TAB 1 -->
   <div class="tc on" id="tc1">
     <div class="sec">
       <div class="slbl">Aineisto</div>
@@ -161,35 +151,25 @@ select.esm{width:110px;font-size:11px;padding:3px 5px}
       <label class="lbl">Viivan paksuus (pt)</label>
       <input type="number" id="t1lw" value="0.5" min="0.1" max="5" step="0.1">
       <label class="lbl" style="margin-top:12px">Lisää CCD-kohdistusmerkit</label>
-      <div class="tgl">
-        <button id="ccdOff" class="on" onclick="setCCD(false)">Ei</button>
-        <button id="ccdOn" onclick="setCCD(true)">Kyllä — 4 kulmaan</button>
-      </div>
+      <div class="tgl"><button id="ccdOff" class="on" onclick="setCCD(false)">Ei</button><button id="ccdOn" onclick="setCCD(true)">Kyllä — 4 kulmaan</button></div>
       <div id="ccdSet" class="hidden" style="margin-top:8px">
         <label class="lbl">Halkaisija (mm) <span id="ccdSzV">5</span></label>
         <input type="range" id="ccdSz" min="2" max="15" value="5" oninput="document.getElementById('ccdSzV').textContent=this.value">
         <label class="lbl">Etäisyys kulmasta (mm) <span id="ccdOV">10</span></label>
         <input type="range" id="ccdOf" min="3" max="30" value="10" oninput="document.getElementById('ccdOV').textContent=this.value">
       </div>
-      <button class="btn pink" style="width:100%;justify-content:center;margin-top:12px" onclick="convertToSpot()">
-        ✦ Muunna spot-väreiksi
-      </button>
+      <button class="btn pink" style="width:100%;justify-content:center;margin-top:12px" onclick="convertToSpot()">✦ Muunna spot-väreiksi</button>
     </div>
   </div>
-  <!-- TAB 2 -->
   <div class="tc" id="tc2">
     <div class="sec">
       <div class="slbl">Leikkausrajat</div>
       <div class="brow">
         <button class="btn sm" onclick="addObj()">+ Lisää</button>
-        <button class="btn sm blue" id="aiBtn" onclick="runAI()" disabled>
-          <div class="spin" id="aiSpin"></div>✦ AI ehdottaa
-        </button>
+        <button class="btn sm blue" id="aiBtn" onclick="runAI()" disabled><div class="spin" id="aiSpin"></div>✦ AI ehdottaa</button>
         <button class="btn sm" onclick="delAllObjs()" style="color:var(--red)">✕ Tyhjennä</button>
       </div>
-      <div id="olist" style="display:flex;flex-direction:column;gap:4px">
-        <div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Ei kohteita</div>
-      </div>
+      <div id="olist" style="display:flex;flex-direction:column;gap:4px"><div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Ei kohteita</div></div>
       <div id="aiRes"></div>
     </div>
     <div class="sec">
@@ -197,14 +177,9 @@ select.esm{width:110px;font-size:11px;padding:3px 5px}
       <div class="ep" id="ep">
         <label class="lbl">Muoto</label>
         <select id="eShape" onchange="updObj()"><option value="rect">Suorakulmio</option><option value="rounded">Pyöristetty</option><option value="circle">Ellipsi</option></select>
-        <div id="eRadRow" class="hidden">
-          <label class="lbl">Pyöristys <span id="eRadV">0</span></label>
-          <input type="range" id="eRad" min="0" max="300" value="0" oninput="document.getElementById('eRadV').textContent=this.value;updObj()">
-        </div>
-        <label class="lbl">Spot-nimi</label>
-        <input type="text" id="eSpot" value="DK1" oninput="updObj()">
-        <label class="lbl">Väri</label>
-        <input type="color" id="eCol" value="#FF0099" oninput="updObj()">
+        <div id="eRadRow" class="hidden"><label class="lbl">Pyöristys <span id="eRadV">0</span></label><input type="range" id="eRad" min="0" max="300" value="0" oninput="document.getElementById('eRadV').textContent=this.value;updObj()"></div>
+        <label class="lbl">Spot-nimi</label><input type="text" id="eSpot" value="DK1" oninput="updObj()">
+        <label class="lbl">Väri</label><input type="color" id="eCol" value="#FF0099" oninput="updObj()">
         <label class="lbl">Paksuus <span id="eWV">0.5pt</span></label>
         <input type="range" id="eW" min="0.25" max="5" step="0.25" value="0.5" oninput="document.getElementById('eWV').textContent=this.value+'pt';updObj()">
         <label class="lbl">Marginaali <span id="eMV">0pt</span></label>
@@ -221,107 +196,58 @@ select.esm{width:110px;font-size:11px;padding:3px 5px}
       </div>
     </div>
   </div>
-  <!-- TAB 3 -->
   <div class="tc" id="tc3">
     <div class="sec">
       <div class="slbl">Tarran tiedot</div>
-      <button class="btn blue" style="width:100%;justify-content:center;margin-bottom:10px" id="aiMBtn" onclick="runAIMeas()" disabled>
-        <div class="spin dk" id="aiMS"></div>✦ Tunnista mitat
-      </button>
+      <button class="btn blue" style="width:100%;justify-content:center;margin-bottom:10px" id="aiMBtn" onclick="runAIMeas()" disabled><div class="spin dk" id="aiMS"></div>✦ Tunnista mitat</button>
       <div id="aiMR"></div>
-      <div class="r2">
-        <div><label class="lbl">Leveys (mm)</label><input type="number" id="sW" value="125" min="1" oninput="calcImp()"></div>
-        <div><label class="lbl">Korkeus (mm)</label><input type="number" id="sH" value="35" min="1" oninput="calcImp()"></div>
-      </div>
+      <div class="r2"><div><label class="lbl">Leveys (mm)</label><input type="number" id="sW" value="125" min="1" oninput="calcImp()"></div><div><label class="lbl">Korkeus (mm)</label><input type="number" id="sH" value="35" min="1" oninput="calcImp()"></div></div>
       <label class="lbl">Muoto</label>
       <select id="sShape" onchange="onSShape()"><option value="rect">Suorakulmio</option><option value="rounded">Pyöristetty</option><option value="circle">Ellipsi</option></select>
-      <div id="sRadRow" class="hidden">
-        <label class="lbl">Pyöristys (mm) <span id="sRadV">5</span></label>
-        <input type="range" id="sRad" min="0" max="50" value="5" oninput="document.getElementById('sRadV').textContent=this.value;calcImp()">
-      </div>
+      <div id="sRadRow" class="hidden"><label class="lbl">Pyöristys (mm) <span id="sRadV">5</span></label><input type="range" id="sRad" min="0" max="50" value="5" oninput="document.getElementById('sRadV').textContent=this.value;calcImp()"></div>
     </div>
     <div class="sec">
       <div class="slbl">Arkkiasemointi</div>
       <label class="lbl">Arkkikoko</label>
       <select id="shSz" onchange="onSheet()"><option value="210x297">A4 (210×297mm)</option><option value="297x420">A3 (297×420mm)</option><option value="320x450" selected>SRA3 (320×450mm)</option><option value="custom">Mukautettu</option></select>
-      <div id="shCust" class="r2 hidden">
-        <div><label class="lbl">Leveys</label><input type="number" id="shW" value="320" oninput="calcImp()"></div>
-        <div><label class="lbl">Korkeus</label><input type="number" id="shH" value="450" oninput="calcImp()"></div>
-      </div>
-      <label class="lbl">Reunus (mm)</label>
-      <input type="number" id="shM" value="23" min="0" oninput="calcImp()">
-      <label class="lbl">DK1→DK2 bleed (mm)</label>
-      <input type="number" id="shBl" value="1.5" min="0" step="0.5" oninput="calcImp()">
-      <label class="lbl">Väli tarrojen välillä (mm)</label>
-      <input type="number" id="shGap" value="13.8" min="0" step="0.1" oninput="calcImp()">
-      <div class="r2" style="margin-top:8px">
-        <div><label class="lbl">Rivejä</label><input type="number" id="iR" value="4" min="1" oninput="drawImp()"></div>
-        <div><label class="lbl">Sarakkeita</label><input type="number" id="iC" value="2" min="1" oninput="drawImp()"></div>
-      </div>
+      <div id="shCust" class="r2 hidden"><div><label class="lbl">Leveys</label><input type="number" id="shW" value="320" oninput="calcImp()"></div><div><label class="lbl">Korkeus</label><input type="number" id="shH" value="450" oninput="calcImp()"></div></div>
+      <label class="lbl">Reunus (mm)</label><input type="number" id="shM" value="23" min="0" oninput="calcImp()">
+      <label class="lbl">DK1→DK2 bleed (mm)</label><input type="number" id="shBl" value="1.5" min="0" step="0.5" oninput="calcImp()">
+      <label class="lbl">Väli tarrojen välillä (mm)</label><input type="number" id="shGap" value="13.8" min="0" step="0.1" oninput="calcImp()">
+      <div class="r2" style="margin-top:8px"><div><label class="lbl">Rivejä</label><input type="number" id="iR" value="4" min="1" oninput="drawImp()"></div><div><label class="lbl">Sarakkeita</label><input type="number" id="iC" value="2" min="1" oninput="drawImp()"></div></div>
       <div id="iRes" class="imp-res"></div>
     </div>
     <div class="sec">
       <div class="slbl">Leikkausrajat</div>
-      <div class="r2">
-        <div><label class="lbl">DK1 spot-nimi</label><input type="text" id="iDK1" value="DK1"></div>
-        <div><label class="lbl">DK2 spot-nimi</label><input type="text" id="iDK2" value="DK2"></div>
-      </div>
-      <div class="r2" style="margin-top:8px">
-        <div><label class="lbl">DK1 väri</label><input type="color" id="iC1" value="#FF0099" oninput="drawImp()"></div>
-        <div><label class="lbl">DK2 väri</label><input type="color" id="iC2" value="#0055CC" oninput="drawImp()"></div>
-      </div>
+      <div class="r2"><div><label class="lbl">DK1 spot-nimi</label><input type="text" id="iDK1" value="DK1"></div><div><label class="lbl">DK2 spot-nimi</label><input type="text" id="iDK2" value="DK2"></div></div>
+      <div class="r2" style="margin-top:8px"><div><label class="lbl">DK1 väri</label><input type="color" id="iC1" value="#FF0099" oninput="drawImp()"></div><div><label class="lbl">DK2 väri</label><input type="color" id="iC2" value="#0055CC" oninput="drawImp()"></div></div>
     </div>
     <div class="sec">
       <div class="slbl">CCD-kohdistusmerkit</div>
-      <div class="tgl">
-        <button id="iCCDOff" class="on" onclick="setICCD(false)">Ei</button>
-        <button id="iCCDOn" onclick="setICCD(true)">Kyllä</button>
-      </div>
+      <div class="tgl"><button id="iCCDOff" class="on" onclick="setICCD(false)">Ei</button><button id="iCCDOn" onclick="setICCD(true)">Kyllä</button></div>
       <div id="iCCDSet" class="hidden" style="margin-top:8px">
         <label class="lbl">Spot-nimi</label><input type="text" id="iCCDN" value="ccd">
-        <label class="lbl">Halkaisija (mm) <span id="iCSV">5</span></label>
-        <input type="range" id="iCS" min="2" max="15" value="5" oninput="document.getElementById('iCSV').textContent=this.value;drawImp()">
-        <label class="lbl">Etäisyys (mm) <span id="iCOV">10</span></label>
-        <input type="range" id="iCO" min="3" max="30" value="10" oninput="document.getElementById('iCOV').textContent=this.value;drawImp()">
+        <label class="lbl">Halkaisija (mm) <span id="iCSV">5</span></label><input type="range" id="iCS" min="2" max="15" value="5" oninput="document.getElementById('iCSV').textContent=this.value;drawImp()">
+        <label class="lbl">Etäisyys (mm) <span id="iCOV">10</span></label><input type="range" id="iCO" min="3" max="30" value="10" oninput="document.getElementById('iCOV').textContent=this.value;drawImp()">
       </div>
     </div>
   </div>
 </div>
-<!-- MAIN -->
 <div class="main">
   <div class="toolbar">
     <div class="pnav"><button onclick="chPage(-1)">‹</button><span id="plbl">– / –</span><button onclick="chPage(1)">›</button></div>
     <div class="sep"></div>
-    <div class="zc">
-      <button onclick="doZoom(-0.25)">−</button>
-      <span class="zlbl" id="zlbl">100%</span>
-      <button onclick="doZoom(0.25)">+</button>
-      <button class="zfit" onclick="doZoom(0)">Sovita</button>
-    </div>
+    <div class="zc"><button onclick="doZoom(-0.25)">−</button><span class="zlbl" id="zlbl">100%</span><button onclick="doZoom(0.25)">+</button><button class="zfit" onclick="doZoom(0)">Sovita</button></div>
     <div class="sep"></div>
     <div class="tg" id="dtg">
-      <button class="tb on" id="tSel" onclick="setTool('select')" title="V">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3l14 9-7 1-3 7z"/></svg>Valitse
-      </button>
-      <button class="tb" id="tPen" onclick="setTool('pen')" title="P">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>Pen
-      </button>
-      <button class="tb" id="tRect" onclick="setTool('rect')" title="R">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Rect
-      </button>
-      <button class="tb" id="tCirc" onclick="setTool('circle')" title="E">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Ellipsi
-      </button>
+      <button class="tb on" id="tSel" onclick="setTool('select')"><svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3l14 9-7 1-3 7z"/></svg>Valitse</button>
+      <button class="tb" id="tPen" onclick="setTool('pen')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>Pen</button>
+      <button class="tb" id="tRect" onclick="setTool('rect')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>Rect</button>
+      <button class="tb" id="tCirc" onclick="setTool('circle')"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>Ellipsi</button>
     </div>
     <div class="sep"></div>
-    <select id="expMode" style="padding:5px 8px;border:1px solid var(--paper3);border-radius:var(--r);font-size:12px;background:var(--paper);font-family:inherit">
-      <option value="combo">Yhdistetty PDF</option>
-      <option value="split">Erilliset PDF:t</option>
-      <option value="cutonly">Vain leikkaus</option>
-    </select>
-    <button class="btn green" onclick="doExport()" id="expBtn" disabled>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Vie PDF
-    </button>
+    <select id="expMode" style="padding:5px 8px;border:1px solid var(--paper3);border-radius:var(--r);font-size:12px;background:var(--paper);font-family:inherit"><option value="combo">Yhdistetty PDF</option><option value="split">Erilliset PDF:t</option><option value="cutonly">Vain leikkaus</option></select>
+    <button class="btn green" onclick="doExport()" id="expBtn" disabled><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Vie PDF</button>
     <button class="btn sm" onclick="expScript('ai')" id="aiScr" disabled>Ai .jsx</button>
     <button class="btn sm" onclick="expScript('id')" id="idScr" disabled>Id .jsx</button>
   </div>
@@ -330,28 +256,24 @@ select.esm{width:110px;font-size:11px;padding:3px 5px}
 </div>
 <script>
 pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-
+const BACKEND='https://leikkausraja-backend.onrender.com';
 let pdfDoc=null,pdfBytes=null,curPage=1,totalPages=0,RS=1.8,zoom=1;
 let pageData={},pageVps={},selId=null,objCtr=0,tool='select',activeTab=1;
 let dragSt=null,penPts=[],penPrev=null,renderTask=null;
 let detectedPaths={},impData=null,addCCD_=false;
-
 const pc=document.getElementById('pc'),oc=document.getElementById('oc');
 const pCtx=pc.getContext('2d'),oCtx=oc.getContext('2d');
-
 function getObjs(){return pageData[curPage]||(pageData[curPage]=[])}
 function getSel(){return selId?getObjs().find(o=>o.id===selId)||null:null}
 function ss(m,t=''){const e=document.getElementById('sb');e.textContent=m;e.className='sbar'+(t?' '+t:'')}
 function pt2mm(pt){return pt/2.8346}
 function mm2pt(mm){return mm*2.8346}
-
 // Upload
 const uz=document.getElementById('uz');
 uz.addEventListener('dragover',e=>{e.preventDefault();uz.style.borderColor='var(--blue)'});
 uz.addEventListener('dragleave',()=>{uz.style.borderColor=''});
 uz.addEventListener('drop',e=>{e.preventDefault();uz.style.borderColor='';const f=e.dataTransfer.files[0];if(f)loadPDF(f)});
 document.getElementById('fi').addEventListener('change',function(){if(this.files[0])loadPDF(this.files[0])});
-
 async function loadPDF(file){
   ss('Ladataan...','info');
   try{
@@ -369,12 +291,8 @@ async function loadPDF(file){
     analyzeVectorPaths();
     checkRes();
     calcImp();
-  }catch(e){
-    ss('Virhe: '+e.message,'err');
-    console.error(e);
-  }
+  }catch(e){ss('Virhe: '+e.message,'err');console.error(e);}
 }
-
 async function buildThumbs(){
   const row=document.getElementById('thumbs');row.innerHTML='';
   for(let i=1;i<=Math.min(totalPages,12);i++){
@@ -387,7 +305,6 @@ async function buildThumbs(){
   }
 }
 function updThumbs(){document.querySelectorAll('.thumb').forEach(t=>t.classList.toggle('on',parseInt(t.dataset.p)===curPage))}
-
 async function renderPage(n){
   if(!pdfDoc)return;
   if(renderTask){try{renderTask.cancel()}catch(e){}}
@@ -403,24 +320,18 @@ async function renderPage(n){
   redraw();updOList();
 }
 function chPage(d){const n=curPage+d;if(n<1||n>totalPages)return;renderPage(n);updThumbs();analyzeVectorPaths();checkRes()}
-
-// Zoom
 function doZoom(d){
   if(d===0){const a=document.getElementById('co').parentElement;const vp=pageVps[curPage];if(!vp)return;zoom=Math.min((a.clientWidth-48)/vp.width,(a.clientHeight-48)/vp.height,1.5);}
   else zoom=Math.max(0.25,Math.min(4,zoom+d));
   document.getElementById('zlbl').textContent=Math.round(zoom*100)+'%';
   document.getElementById('co').style.transform='scale('+zoom+')';
 }
-
-// Tabs
 function switchTab(n){
   activeTab=n;
   [1,2,3].forEach(i=>{document.getElementById('t'+i).classList.toggle('on',i===n);document.getElementById('tc'+i).classList.toggle('on',i===n)});
   document.getElementById('dtg').classList.toggle('hidden',n!==2);
   redraw();
 }
-
-// Resolution check
 async function checkRes(){
   if(!pdfDoc)return;
   try{
@@ -430,125 +341,250 @@ async function checkRes(){
     const ops=await pg.getOperatorList();
     const OPS=pdfjsLib.OPS;
     const hasRaster=ops.fnArray.some(f=>f===OPS.paintImageXObject||f===OPS.paintInlineImageXObject);
-    const sz=wMM.toFixed(1)+'×'+hMM.toFixed(1)+'mm';
-    const el=document.getElementById('resBadge');
-    el.innerHTML=hasRaster
-      ?'<span class="res-badge warn">⚠ Rastereita — tarkista DPI — '+sz+'</span>'
-      :'<span class="res-badge ok">✓ Vektori — '+sz+'</span>';
-  }catch(e){console.error('checkRes',e)}
+    const sz=wMM.toFixed(1)+'x'+hMM.toFixed(1)+'mm';
+    document.getElementById('resBadge').innerHTML=hasRaster
+      ?'<span class="res-badge warn">Rastereita — tarkista DPI — '+sz+'</span>'
+      :'<span class="res-badge ok">Vektori — '+sz+'</span>';
+  }catch(e){}
 }
-
-// Vector path analysis — calls Python backend on Render
-const BACKEND = 'https://leikkausraja-backend.onrender.com';
-
 async function analyzeVectorPaths(){
   if(!pdfDoc||!pdfBytes)return;
-  const pg_el=document.getElementById('pgroups');
-  pg_el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Analysoidaan...<br><span style="font-size:10px">(ensimmäinen kutsu voi kestää ~15s)</span></div>';
+  const el=document.getElementById('pgroups');
+  el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Analysoidaan...<br><small>(ensimmäinen kutsu voi kestää 15s)</small></div>';
   try{
-    // Convert PDF to base64
     const b64=btoa(String.fromCharCode(...new Uint8Array(pdfBytes)));
-    const resp=await fetch(BACKEND+'/analyze',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({pdf:b64})
-    });
-    if(!resp.ok) throw new Error('Backend vastasi: '+resp.status);
+    const resp=await fetch(BACKEND+'/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pdf:b64})});
+    if(!resp.ok)throw new Error('Backend: '+resp.status);
     const data=await resp.json();
-    if(data.error) throw new Error(data.error);
-
+    if(data.error)throw new Error(data.error);
     const pal=['#CC0000','#0055CC','#00AA44','#FF6600','#9900CC','#CC6600','#008888'];
     const groups={};
-
     data.groups.forEach((g,i)=>{
       const hex=pal[i%pal.length];
-      // Convert mm coords to canvas px (RS=1.8, 1pt=1px at RS, 1mm=2.8346pt)
-      groups[g.key]={
-        hex, name:g.name,
-        paths:g.paths.map(p=>({
-          x0:p.x*2.8346*RS, y0:p.y*2.8346*RS,
-          w:p.w*2.8346*RS, h:p.h*2.8346*RS, lw:p.lw
-        })),
-        selected:false, previewColor:hex, spotName:g.name
-      };
+      groups[g.key]={hex,name:g.name,paths:g.paths.map(p=>({x0:p.x*2.8346*RS,y0:p.y*2.8346*RS,w:p.w*2.8346*RS,h:p.h*2.8346*RS,lw:p.lw})),selected:false,previewColor:hex,spotName:g.name};
     });
-
-    if(!Object.keys(groups).length){
-      pg_el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Ei vektoripolkuja löydetty</div>';
-      document.getElementById('smaps').innerHTML='';
-      return;
-    }
+    if(!Object.keys(groups).length){el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Ei vektoripolkuja löydetty</div>';document.getElementById('smaps').innerHTML='';return;}
     detectedPaths=groups;
     renderPathGroups(groups);
   }catch(e){
-    console.error('analyzeVectorPaths',e);
-    pg_el.innerHTML='<div style="font-size:12px;color:var(--red);padding:8px">Analyysi epäonnistui: '+e.message+'<br><small>Tarkista internet-yhteys</small></div>';
+    el.innerHTML='<div style="font-size:12px;color:var(--red);padding:8px">Analyysi epäonnistui:<br>'+e.message+'</div>';
   }
 }
-
-
-// Fallback: PDF.js operator list parsing
-async function analyzeVectorPathsFallback(){
-  const pg_el=document.getElementById('pgroups');
-  try{
-    const pg=await pdfDoc.getPage(curPage);
-    const ops=await pg.getOperatorList();
-    const vp=pg.getViewport({scale:1});
-    const pH=vp.height;
-    const OPS=pdfjsLib.OPS;
-    const fns=ops.fnArray,args2=ops.argsArray;
-    let sCS='default',sVals=[0],lw=1,pts=[],groups={};
-    const pal=['#CC0000','#0055CC','#00AA44','#FF6600','#9900CC'];
-    const csMap={};let csI=0;
-    function csHex(cs){if(!csMap[cs]){csMap[cs]=pal[csI%pal.length];csI++;}return csMap[cs];}
-    function getHex(cs,v){
-      if(cs!=='default'&&cs!=='rgb'&&cs!=='cmyk'&&cs!=='gray')return csHex(cs);
-      if(cs==='gray'){const x=Math.round((1-(v[0]||0))*255);return'#'+[x,x,x].map(c=>c.toString(16).padStart(2,'0')).join('');}
-      if(cs==='rgb')return'#'+v.slice(0,3).map(c=>Math.round(c*255).toString(16).padStart(2,'0')).join('');
-      if(cs==='cmyk'){const[c,m,y,k]=v;return'#'+[Math.round(255*(1-c)*(1-k)),Math.round(255*(1-m)*(1-k)),Math.round(255*(1-y)*(1-k))].map(x=>x.toString(16).padStart(2,'0')).join('');}
-      return'#000000';
-    }
-    function cKey(cs,v){return cs+':'+v.map(x=>Math.round(x*100)).join(',');}
-    function flush(stroke){
-      if(pts.length<2)return;
-      const cs=sCS,v=sVals;
-      const key=cKey(cs,v),hex=getHex(cs,v);
-      if(!groups[key])groups[key]={hex,name:cs,paths:[],selected:false,previewColor:hex,spotName:'DK1'};
-      let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
-      pts.forEach(([px,py])=>{x0=Math.min(x0,px);y0=Math.min(y0,py);x1=Math.max(x1,px);y1=Math.max(y1,py);});
-      groups[key].paths.push({x0,y0,x1,y1,w:x1-x0,h:y1-y0,lw});
-      pts=[];
-    }
-    for(let i=0;i<fns.length;i++){
-      const fn=fns[i],a=args2[i]||[];
-      if(fn===OPS.setLineWidth)lw=a[0]||1;
-      else if(fn===OPS.setStrokeColorSpace)sCS=String(a[0]||'default');
-      else if(fn===OPS.setStrokeRGBColor){sCS='rgb';sVals=[...a];}
-      else if(fn===OPS.setStrokeGray){sCS='gray';sVals=[a[0]];}
-      else if(fn===OPS.setStrokeCMYKColor){sCS='cmyk';sVals=[...a];}
-      else if(fn===OPS.setStrokeColor)sVals=[...a];
-      else if(fn===OPS.setStrokeColorN)sVals=[...a];
-      else if(fn===OPS.moveTo)pts=[[a[0],pH-a[1]]];
-      else if(fn===OPS.lineTo)pts.push([a[0],pH-a[1]]);
-      else if(fn===OPS.curveTo||fn===OPS.curveTo2||fn===OPS.curveTo3)pts.push([a[a.length-2],pH-a[a.length-1]]);
-      else if(fn===OPS.rectangle){flush(true);const[x,y,w,h]=a;pts=[[x,pH-y-h],[x+w,pH-y-h],[x+w,pH-y],[x,pH-y]];}
-      else if(fn===OPS.stroke)flush(true);
-      else if(fn===OPS.fill||fn===OPS.eoFill)pts=[];
-      else if(fn===OPS.fillStroke||fn===OPS.eoFillStroke)flush(true);
-      else if(fn===OPS.endPath||fn===OPS.closePath||fn===OPS.restore)pts=[];
-    }
-    Object.keys(groups).forEach(k=>{groups[k].paths=groups[k].paths.filter(p=>p.w>2*RS||p.h>2*RS);if(!groups[k].paths.length)delete groups[k];});
-    if(!Object.keys(groups).length){pg_el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Ei vektoripolkuja löydetty</div>';return;}
-    detectedPaths=groups;
-    renderPathGroups(groups);
-  }catch(e){
-    console.error('fallback',e);
-    pg_el.innerHTML='<div style="font-size:12px;color:var(--red)">Analyysi epäonnistui: '+e.message+'</div>';
+const SPOTS=['DK1','DK2','CREASE','Kiss Cut','CUT1','Die Cut','Perf'];
+function renderPathGroups(groups){
+  const el=document.getElementById('pgroups');
+  const entries=Object.entries(groups);
+  if(!entries.length){el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Ei vektoripolkuja löydetty</div>';document.getElementById('smaps').innerHTML='';return;}
+  entries.sort(([,a],[,b])=>b.paths.length-a.paths.length);
+  el.innerHTML='';
+  entries.forEach(([key,g],i)=>{
+    const avgLW=(g.paths.reduce((s,p)=>s+p.lw,0)/g.paths.length).toFixed(2);
+    const div=document.createElement('div');div.className='pg-group';
+    div.innerHTML='<div class="pg-hdr" onclick="togglePG(\''+key+'\')"><div class="swatch" style="background:'+g.hex+'"></div><div class="pg-info"><div class="pg-name">'+g.name+'</div><div class="pg-meta">'+g.paths.length+' viivaa · lw '+avgLW+'pt</div></div><input type="checkbox" class="pg-chk" id="chk_'+key+'" onclick="event.stopPropagation();toggleSel(\''+key+'\',this.checked);updSmaps();redraw()"></div><div class="pg-body" id="body_'+key+'">'+g.paths.slice(0,6).map((p,j)=>'<div class="pg-item">'+(j+1)+'. '+(p.w/RS/2.8346).toFixed(1)+'x'+(p.h/RS/2.8346).toFixed(1)+'mm @ ('+(p.x0/RS/2.8346).toFixed(1)+','+(p.y0/RS/2.8346).toFixed(1)+')</div>').join('')+(g.paths.length>6?'<div class="pg-item">... ja '+(g.paths.length-6)+' lisää</div>':'')+'</div>';
+    el.appendChild(div);
+    g.selected=false;g.spotName=SPOTS[i]||g.name;g.previewColor=g.hex;
+  });
+  updSmaps();redraw();
+}
+function togglePG(key){const b=document.getElementById('body_'+key);if(b)b.classList.toggle('open');}
+function toggleSel(key,val){if(detectedPaths[key])detectedPaths[key].selected=val;}
+function updSmaps(){
+  const el=document.getElementById('smaps');
+  const sel=Object.entries(detectedPaths).filter(([k])=>{const c=document.getElementById('chk_'+k);return c&&c.checked;});
+  if(!sel.length){el.innerHTML='<p style="font-size:11px;color:var(--ink3)">Valitse viivaryhmät yllä.</p>';return;}
+  const opts=SPOTS.map(n=>'<option value="'+n+'">'+n+'</option>').join('');
+  el.innerHTML=sel.map(([key,g])=>'<div class="smap-row"><div class="swatch" style="background:'+g.hex+'"></div><span style="font-size:10px;flex:1;font-family:monospace">'+g.name+' ('+g.paths.length+')</span><select style="width:100px;font-size:11px;padding:3px" id="sm_'+key+'" onchange="detectedPaths[\''+key+'\'].spotName=this.value">'+opts+'</select><input type="color" value="'+g.previewColor+'" style="width:26px;height:22px;padding:1px;border:1px solid var(--paper3);border-radius:3px;cursor:pointer" oninput="detectedPaths[\''+key+'\'].previewColor=this.value;redraw()"></div>').join('');
+  sel.forEach(([key,g])=>{const s=document.getElementById('sm_'+key);if(s&&SPOTS.includes(g.spotName))s.value=g.spotName;});
+}
+function setCCD(v){addCCD_=v;document.getElementById('ccdOff').classList.toggle('on',!v);document.getElementById('ccdOn').classList.toggle('on',v);document.getElementById('ccdSet').classList.toggle('hidden',!v);}
+function setICCD(v){document.getElementById('iCCDOff').classList.toggle('on',!v);document.getElementById('iCCDOn').classList.toggle('on',v);document.getElementById('iCCDSet').classList.toggle('hidden',!v);drawImp();}
+function convertToSpot(){
+  const vp=pageVps[curPage];if(!vp){ss('Lataa PDF ensin','warn');return;}
+  const sel=Object.entries(detectedPaths).filter(([k])=>{const c=document.getElementById('chk_'+k);return c&&c.checked;});
+  if(!sel.length){ss('Valitse viivaryhmät ensin','warn');return;}
+  const lw=parseFloat(document.getElementById('t1lw').value)||0.5;
+  let n=0;
+  sel.forEach(([key,g])=>{
+    const smEl=document.getElementById('sm_'+key);
+    const spotName=smEl?smEl.value:g.spotName||'DK1';
+    const col=g.previewColor||'#FF0099';
+    g.paths.forEach(p=>{
+      if(p.w<2*RS&&p.h<2*RS)return;
+      addObjDirect({name:spotName+' '+(++objCtr),shape:'rect',x:p.x0,y:p.y0,w:p.w,h:p.h,color:col,lineWidth:lw,spotName,dash:'solid',margin:0,pos:'center',regMarks:false,filled:false,nx:0,ny:0,nw:0,nh:0});
+      n++;
+    });
+  });
+  if(addCCD_){
+    const sz=parseFloat(document.getElementById('ccdSz').value)||5;
+    const off=parseFloat(document.getElementById('ccdOf').value)||10;
+    const szPx=mm2pt(sz)*RS,offPx=mm2pt(off)*RS;
+    const W=vp.width,H=vp.height;
+    [[offPx,offPx],[W-offPx-szPx,offPx],[W-offPx-szPx,H-offPx-szPx],[offPx,H-offPx-szPx]].forEach(([x,y],i)=>{
+      addObjDirect({name:'CCD-'+(i+1),shape:'circle',x,y,w:szPx,h:szPx,color:'#000000',lineWidth:0,spotName:'ccd',dash:'solid',margin:0,pos:'center',regMarks:false,filled:true,nx:0,ny:0,nw:0,nh:0});
+    });
+  }
+  ss('Muunnettu: '+n+' viivaa'+(addCCD_?' + 4 CCD':''),'ok');
+  switchTab(2);redraw();
+}
+function mkObj(p={}){
+  const vp=pageVps[curPage]||{width:400,height:400};const id=++objCtr;
+  return{id,name:p.name||('Kohde '+id),shape:p.shape||'rect',x:p.x!==undefined?p.x:vp.width*.1,y:p.y!==undefined?p.y:vp.height*.1,w:p.w!==undefined?p.w:vp.width*.8,h:p.h!==undefined?p.h:vp.height*.8,points:p.points||null,closed:p.closed||false,radius:p.radius||0,color:p.color||'#FF0099',lineWidth:p.lineWidth||0.5,spotName:p.spotName||'DK1',dash:p.dash||'solid',margin:p.margin||0,pos:p.pos||'center',regMarks:false,filled:p.filled||false,nx:0,ny:0,nw:0,nh:0};
+}
+function addObj(p={}){if(!pdfDoc){ss('Lataa PDF ensin','warn');return;}const o=mkObj(p);getObjs().push(o);selObj(o.id);updOList();redraw();return o;}
+function addObjDirect(p){const o=Object.assign({},mkObj({}),p,{id:++objCtr});getObjs().push(o);updOList();redraw();return o;}
+function delAllObjs(){pageData[curPage]=[];selId=null;document.getElementById('ep').className='ep';updOList();redraw();}
+function selObj(id){
+  selId=id;const o=getSel();
+  document.getElementById('ep').className='ep'+(o?' on':'');
+  if(!o){updOList();return;}
+  document.getElementById('elbl').textContent=o.name;
+  document.getElementById('eShape').value=o.shape;
+  document.getElementById('eRad').value=o.radius;document.getElementById('eRadV').textContent=o.radius;
+  document.getElementById('eRadRow').classList.toggle('hidden',o.shape!=='rounded');
+  document.getElementById('eCol').value=o.color;
+  document.getElementById('eW').value=o.lineWidth;document.getElementById('eWV').textContent=o.lineWidth+'pt';
+  document.getElementById('eM').value=o.margin;document.getElementById('eMV').textContent=o.margin+'pt';
+  document.getElementById('eSpot').value=o.spotName;
+  setPos(o.pos,false);
+  ['x','y','w','h'].forEach(k=>document.getElementById('n'+k.toUpperCase()).textContent=Math.round(o['n'+k]||0));
+  updOList();
+}
+function updObj(){
+  const o=getSel();if(!o)return;
+  o.shape=document.getElementById('eShape').value;
+  o.radius=parseInt(document.getElementById('eRad').value);
+  document.getElementById('eRadRow').classList.toggle('hidden',o.shape!=='rounded');
+  o.color=document.getElementById('eCol').value;
+  o.lineWidth=parseFloat(document.getElementById('eW').value);
+  o.margin=parseInt(document.getElementById('eM').value);
+  o.spotName=document.getElementById('eSpot').value;
+  redraw();
+}
+function setPos(m,upd=true){
+  ['I','C','O'].forEach(d=>document.getElementById('p'+d).classList.remove('on'));
+  const map={inside:'I',center:'C',outside:'O'};
+  document.getElementById('p'+(map[m]||'C'))?.classList.add('on');
+  if(upd){const o=getSel();if(o){o.pos=m;redraw();}}
+}
+function nudge(ax,val){const o=getSel();if(!o)return;o['n'+ax]=(o['n'+ax]||0)+val;document.getElementById('n'+ax.toUpperCase()).textContent=Math.round(o['n'+ax]);redraw();}
+function delObj(id){
+  const obs=getObjs();const i=obs.findIndex(o=>o.id===id);if(i>=0)obs.splice(i,1);
+  if(selId===id){selId=null;document.getElementById('ep').className='ep';}
+  updOList();redraw();
+}
+function updOList(){
+  const el=document.getElementById('olist');const obs=getObjs();
+  if(!obs.length){el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Ei kohteita</div>';return;}
+  el.innerHTML=obs.map(o=>'<div class="obj-row'+(o.id===selId?' sel':'')+'" onclick="selObj('+o.id+')"><div class="obj-dot" style="color:'+o.color+'"></div><span style="flex:1;font-weight:500">'+o.name+'</span><span style="font-size:10px;color:var(--ink3);font-family:monospace">'+o.spotName+'</span><span class="obj-del" onclick="event.stopPropagation();delObj('+o.id+')">×</span></div>').join('');
+}
+function getCR(o){const off=o.pos==='inside'?o.margin:o.pos==='outside'?-o.margin:o.margin/2;return{x:o.x+off+(o.nx||0),y:o.y+off+(o.ny||0),w:o.w-off*2+(o.nw||0),h:o.h-off*2+(o.nh||0)};}
+function applyDash(ctx,d){if(d==='dashed')ctx.setLineDash([8,5]);else if(d==='dotted')ctx.setLineDash([2,4]);else ctx.setLineDash([]);}
+function handles(x,y,w,h){const mx=x+w/2,my=y+h/2;return[{x,y,n:'nw'},{x:mx,y,n:'n'},{x:x+w,y,n:'ne'},{x:x+w,y:my,n:'e'},{x:x+w,y:y+h,n:'se'},{x:mx,y:y+h,n:'s'},{x,y:y+h,n:'sw'},{x,y:my,n:'w'}];}
+function drawObj(ctx,o,sel){
+  if(o.points&&o.points.length>1){
+    ctx.strokeStyle=o.color;ctx.lineWidth=o.lineWidth*RS;applyDash(ctx,o.dash);
+    ctx.beginPath();ctx.moveTo(o.points[0].x,o.points[0].y);
+    for(let i=1;i<o.points.length;i++)ctx.lineTo(o.points[i].x,o.points[i].y);
+    if(o.closed)ctx.closePath();ctx.stroke();return;
+  }
+  const{x,y,w,h}=getCR(o);
+  if(o.filled){ctx.fillStyle=o.color;ctx.beginPath();if(o.shape==='circle')ctx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);else ctx.rect(x,y,w,h);ctx.fill();return;}
+  if(sel){
+    ctx.strokeStyle='rgba(37,99,235,.3)';ctx.lineWidth=1;ctx.setLineDash([4,3]);ctx.strokeRect(x-6,y-6,w+12,h+12);ctx.setLineDash([]);
+    handles(x,y,w,h).forEach(hh=>{ctx.fillStyle='#fff';ctx.strokeStyle=o.color;ctx.lineWidth=1.5;ctx.setLineDash([]);ctx.beginPath();ctx.rect(hh.x-4,hh.y-4,8,8);ctx.fill();ctx.stroke();});
+  }
+  ctx.strokeStyle=o.color;ctx.lineWidth=o.lineWidth*RS;applyDash(ctx,o.dash);
+  ctx.beginPath();
+  if(o.shape==='circle')ctx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);
+  else if(o.shape==='rounded'){const r=Math.min(o.radius,w/2,h/2);ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();}
+  else ctx.rect(x,y,w,h);
+  ctx.stroke();
+}
+function drawTab1(ctx){
+  Object.values(detectedPaths).filter(g=>g.selected).forEach(g=>{
+    ctx.strokeStyle=g.previewColor||'#FF0099';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
+    g.paths.forEach(p=>{ctx.beginPath();ctx.rect(p.x0,p.y0,p.w,p.h);ctx.stroke();});
+    ctx.setLineDash([]);
+  });
+}
+function drawImpOverlay(ctx){
+  if(!impData)return;
+  const{rows,cols,cW,cH,oX,oY,gX,gY,bPx,shape,rPx,c1,c2,useCCD,cSz,cOff}=impData;
+  const vp=pageVps[curPage];if(!vp)return;
+  const sc=vp.width/impData.sheetW;
+  function sh(x,y,w,h,r){ctx.beginPath();if(shape==='circle')ctx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);else if(shape==='rounded'){const rv=Math.min(r,w/2,h/2);ctx.moveTo(x+rv,y);ctx.lineTo(x+w-rv,y);ctx.arcTo(x+w,y,x+w,y+rv,rv);ctx.lineTo(x+w,y+h-rv);ctx.arcTo(x+w,y+h,x+w-rv,y+h,rv);ctx.lineTo(x+rv,y+h);ctx.arcTo(x,y+h,x,y+h-rv,rv);ctx.lineTo(x,y+rv);ctx.arcTo(x,y,x+rv,y,rv);ctx.closePath();}else ctx.rect(x,y,w,h);}
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
+    const x=oX+c*(cW+gX),y=oY+r*(cH+gY);
+    if(bPx>0){ctx.strokeStyle=c2;ctx.lineWidth=1;ctx.setLineDash([5,3]);sh(x-bPx,y-bPx,cW+bPx*2,cH+bPx*2,rPx+bPx);ctx.stroke();}
+    ctx.strokeStyle=c1;ctx.lineWidth=1.5;ctx.setLineDash([]);sh(x,y,cW,cH,rPx);ctx.stroke();
+  }
+  if(useCCD&&cSz>0){
+    const cpx=cSz*sc,cofx=cOff*sc;const W=vp.width,H=vp.height;
+    ctx.fillStyle='#000';ctx.setLineDash([]);
+    [[cofx,cofx],[W-cofx-cpx,cofx],[W-cofx-cpx,H-cofx-cpx],[cofx,H-cofx-cpx]].forEach(([cx,cy])=>{ctx.beginPath();ctx.ellipse(cx+cpx/2,cy+cpx/2,cpx/2,cpx/2,0,0,Math.PI*2);ctx.fill();});
   }
 }
-
-
-// AI
+function redraw(){
+  oCtx.clearRect(0,0,oc.width,oc.height);
+  if(activeTab===1){drawTab1(oCtx);return;}
+  if(activeTab===3){drawImpOverlay(oCtx);return;}
+  getObjs().forEach(o=>drawObj(oCtx,o,o.id===selId));
+  if(penPts.length>0){
+    oCtx.strokeStyle='#FF0099';oCtx.lineWidth=1.5;oCtx.setLineDash([4,3]);
+    oCtx.beginPath();oCtx.moveTo(penPts[0].x,penPts[0].y);
+    for(let i=1;i<penPts.length;i++)oCtx.lineTo(penPts[i].x,penPts[i].y);
+    if(penPrev)oCtx.lineTo(penPrev.x,penPrev.y);
+    oCtx.stroke();oCtx.setLineDash([]);
+  }
+  if(dragSt&&(dragSt.type==='dR'||dragSt.type==='dC')){
+    const{sx,sy,cx,cy}=dragSt;const x=Math.min(sx,cx),y=Math.min(sy,cy),w=Math.abs(cx-sx),h=Math.abs(cy-sy);
+    oCtx.strokeStyle='#FF0099';oCtx.lineWidth=1.5;oCtx.setLineDash([4,3]);
+    oCtx.beginPath();if(dragSt.type==='dC')oCtx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);else oCtx.rect(x,y,w,h);
+    oCtx.stroke();oCtx.setLineDash([]);
+  }
+}
+function setTool(t){
+  tool=t;penPts=[];penPrev=null;
+  ['Sel','Pen','Rect','Circ'].forEach(n=>{const el=document.getElementById('t'+n);if(el)el.classList.remove('on');});
+  const map={select:'Sel',pen:'Pen',rect:'Rect',circle:'Circ'};
+  const el=document.getElementById('t'+(map[t]||'Sel'));if(el)el.classList.add('on');
+  oc.style.cursor=t==='select'?'default':'crosshair';redraw();
+}
+document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;if(activeTab!==2)return;if(e.key==='v')setTool('select');if(e.key==='p')setTool('pen');if(e.key==='r')setTool('rect');if(e.key==='e')setTool('circle');if(e.key==='Escape'){penPts=[];penPrev=null;redraw();}if((e.key==='Delete'||e.key==='Backspace')&&selId)delObj(selId);});
+function cXY(e){const r=oc.getBoundingClientRect();return{x:(e.clientX-r.left)*(oc.width/r.width)/zoom,y:(e.clientY-r.top)*(oc.height/r.height)/zoom};}
+function hitH(o,mx,my){const{x,y,w,h}=getCR(o);for(const hh of handles(x,y,w,h)){if(Math.abs(mx-hh.x)<7&&Math.abs(my-hh.y)<7)return hh.n;}return null;}
+function hitO(mx,my){const obs=getObjs();for(let i=obs.length-1;i>=0;i--){const o=obs[i];if(o.points){for(let j=1;j<o.points.length;j++){const p1=o.points[j-1],p2=o.points[j];const dx=p2.x-p1.x,dy=p2.y-p1.y,t=Math.max(0,Math.min(1,((mx-p1.x)*dx+(my-p1.y)*dy)/(dx*dx+dy*dy||1)));if(Math.hypot(mx-(p1.x+t*dx),my-(p1.y+t*dy))<8)return o;}continue;}const{x,y,w,h}=getCR(o);if(mx>=x-4&&mx<=x+w+4&&my>=y-4&&my<=y+h+4)return o;}return null;}
+function curH(n){if(n==='n'||n==='s')return 'n-resize';if(n==='e'||n==='w')return 'e-resize';if(n==='nw'||n==='se')return 'nw-resize';return 'ne-resize';}
+oc.addEventListener('mousemove',e=>{
+  if(activeTab!==2)return;
+  const{x,y}=cXY(e);
+  if(tool==='pen'&&penPts.length>0){penPrev={x,y};redraw();return;}
+  if(dragSt){
+    const ds=dragSt;
+    if(ds.type==='move'){const o=getObjs().find(o=>o.id===ds.id);if(o){o.x=ds.ox+(x-ds.sx);o.y=ds.oy+(y-ds.sy);}redraw();}
+    else if(ds.type==='resize'){const o=getObjs().find(o=>o.id===ds.id);if(!o)return;const dx=x-ds.sx,dy=y-ds.sy;let nx=ds.ox,ny=ds.oy,nw=ds.ow,nh=ds.oh;if(ds.h.includes('e'))nw=Math.max(10,ds.ow+dx);if(ds.h.includes('s'))nh=Math.max(10,ds.oh+dy);if(ds.h.includes('w')){nx=ds.ox+dx;nw=Math.max(10,ds.ow-dx);}if(ds.h.includes('n')){ny=ds.oy+dy;nh=Math.max(10,ds.oh-dy);}o.x=nx;o.y=ny;o.w=nw;o.h=nh;redraw();}
+    else if(ds.type==='dR'||ds.type==='dC'){ds.cx=x;ds.cy=y;redraw();}
+    return;
+  }
+  if(tool==='select'){const o=getSel();if(o&&!o.points){const hh=hitH(o,x,y);if(hh){oc.style.cursor=curH(hh);return;}}oc.style.cursor=hitO(x,y)?'move':'default';}
+});
+oc.addEventListener('mousedown',e=>{
+  if(activeTab!==2)return;
+  const{x,y}=cXY(e);
+  if(tool==='pen'){if(penPts.length>2&&Math.hypot(x-penPts[0].x,y-penPts[0].y)<10){addObj({type:'pen',shape:'pen',points:[...penPts],closed:true,x:0,y:0,w:0,h:0});penPts=[];penPrev=null;redraw();return;}penPts.push({x,y});redraw();return;}
+  if(tool==='rect'||tool==='circle'){dragSt={type:tool==='rect'?'dR':'dC',sx:x,sy:y,cx:x,cy:y};return;}
+  const o=getSel();if(o&&!o.points){const hh=hitH(o,x,y);if(hh){dragSt={type:'resize',id:o.id,h:hh,sx:x,sy:y,ox:o.x,oy:o.y,ow:o.w,oh:o.h};return;}}
+  const hit=hitO(x,y);
+  if(hit){selObj(hit.id);if(!hit.points)dragSt={type:'move',id:hit.id,sx:x,sy:y,ox:hit.x,oy:hit.y};}
+  else{selId=null;document.getElementById('ep').className='ep';updOList();redraw();}
+});
+oc.addEventListener('mouseup',e=>{
+  if(activeTab!==2)return;
+  const{x,y}=cXY(e);
+  if(dragSt&&(dragSt.type==='dR'||dragSt.type==='dC')){const{sx,sy}=dragSt;const rx=Math.min(sx,x),ry=Math.min(sy,y),rw=Math.abs(x-sx),rh=Math.abs(y-sy);if(rw>5&&rh>5)addObj({shape:dragSt.type==='dC'?'circle':'rect',x:rx,y:ry,w:rw,h:rh});dragSt=null;redraw();return;}
+  dragSt=null;
+});
+oc.addEventListener('dblclick',e=>{if(activeTab!==2)return;if(tool==='pen'&&penPts.length>=2){addObj({type:'pen',shape:'pen',points:[...penPts],closed:false,x:0,y:0,w:0,h:0});penPts=[];penPrev=null;redraw();}});
 async function runAI(){
   if(!pdfDoc)return;
   const btn=document.getElementById('aiBtn'),sp=document.getElementById('aiSpin');
@@ -558,14 +594,13 @@ async function runAI(){
     const tc=document.createElement('canvas');tc.width=vp.width;tc.height=vp.height;
     await pg.render({canvasContext:tc.getContext('2d'),viewport:vp}).promise;
     const b64=tc.toDataURL('image/jpeg',.85).split(',')[1];
-    const resp=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:200,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},{type:'text',text:'Analysoi tarra-aineisto. Vastaa VAIN JSON: {"shape":"rect","note":"lyhyt selitys suomeksi"}'}]}]})});
+    const resp=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:200,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},{type:'text',text:'Analysoi tarra. Vastaa VAIN JSON: {"shape":"rect","note":"lyhyt selitys"}'}]}]})});
     const data=await resp.json();
     const txt=data.content?.filter(b=>b.type==='text').map(b=>b.text).join('');
-    if(txt){const p=JSON.parse(txt.replace(/```json|```/g,'').trim());document.getElementById('aiRes').innerHTML='<div class="info">Muotosuositus: <strong>'+p.shape+'</strong><br>'+p.note+'</div>';ss('AI ehdottaa: '+p.shape,'ok');}
+    if(txt){const p=JSON.parse(txt.replace(/```json|```/g,'').trim());document.getElementById('aiRes').innerHTML='<div class="info">Muotosuositus: <strong>'+p.shape+'</strong><br>'+p.note+'</div>';ss('AI: '+p.shape,'ok');}
   }catch(e){ss('AI ei vastannut','warn');}
   btn.disabled=false;sp.style.display='none';
 }
-
 async function runAIMeas(){
   if(!pdfDoc)return;
   const btn=document.getElementById('aiMBtn'),sp=document.getElementById('aiMS');
@@ -577,19 +612,16 @@ async function runAIMeas(){
     const tc=document.createElement('canvas');tc.width=vp.width;tc.height=vp.height;
     await pg.render({canvasContext:tc.getContext('2d'),viewport:vp}).promise;
     const b64=tc.toDataURL('image/jpeg',.85).split(',')[1];
-    const resp=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:150,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},{type:'text',text:'Tämä on tarra. Sivu: '+wMM.toFixed(1)+'x'+hMM.toFixed(1)+'mm. Vastaa VAIN JSON: {"widthMM":50,"heightMM":50,"shape":"circle"}'}]}]})});
+    const resp=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-haiku-4-5-20251001',max_tokens:150,messages:[{role:'user',content:[{type:'image',source:{type:'base64',media_type:'image/jpeg',data:b64}},{type:'text',text:'Sivu: '+wMM.toFixed(1)+'x'+hMM.toFixed(1)+'mm. Vastaa VAIN JSON: {"widthMM":50,"heightMM":50,"shape":"rect"}'}]}]})});
     const data=await resp.json();
     const txt=data.content?.filter(b=>b.type==='text').map(b=>b.text).join('');
-    if(txt){const p=JSON.parse(txt.replace(/```json|```/g,'').trim());document.getElementById('sW').value=p.widthMM.toFixed(1);document.getElementById('sH').value=p.heightMM.toFixed(1);document.getElementById('sShape').value=p.shape||'rect';document.getElementById('aiMR').innerHTML='<div class="info">'+p.widthMM.toFixed(1)+'×'+p.heightMM.toFixed(1)+'mm · '+p.shape+'</div>';calcImp();ss('Mitat tunnistettu','ok');}
+    if(txt){const p=JSON.parse(txt.replace(/```json|```/g,'').trim());document.getElementById('sW').value=p.widthMM.toFixed(1);document.getElementById('sH').value=p.heightMM.toFixed(1);document.getElementById('sShape').value=p.shape||'rect';document.getElementById('aiMR').innerHTML='<div class="info">'+p.widthMM.toFixed(1)+'x'+p.heightMM.toFixed(1)+'mm · '+p.shape+'</div>';calcImp();ss('Mitat tunnistettu','ok');}
   }catch(e){ss('Mittaus epäonnistui','warn');}
   btn.disabled=false;sp.style.display='none';
 }
-
-// Imposition
 function onSShape(){document.getElementById('sRadRow').classList.toggle('hidden',document.getElementById('sShape').value!=='rounded');calcImp();}
 function onSheet(){document.getElementById('shCust').classList.toggle('hidden',document.getElementById('shSz').value!=='custom');calcImp();}
 function getShMM(){const v=document.getElementById('shSz').value;if(v==='custom')return{w:parseFloat(document.getElementById('shW').value)||320,h:parseFloat(document.getElementById('shH').value)||450};const[a,b]=v.split('x').map(Number);return{w:a,h:b};}
-
 function calcImp(){
   if(!pdfDoc)return;
   const sw=parseFloat(document.getElementById('sW').value)||50;
@@ -603,7 +635,6 @@ function calcImp(){
   document.getElementById('iC').value=cols;
   drawImp();
 }
-
 function drawImp(){
   if(!pdfDoc)return;
   const sw=parseFloat(document.getElementById('sW').value)||50;
@@ -626,17 +657,14 @@ function drawImp(){
   const totalW=cols*sw+(cols-1)*gap+margin*2;
   const totalH=rows*sh+(rows-1)*gap+margin*2;
   const fits=totalW<=sheet.w&&totalH<=sheet.h;
-  impData={rows,cols,shape,c1,c2,cW:sw*sc,cH:sh*sc,oX:margin*sc,oY:margin*sc,gX:gap*sc,gY:gap*sc,bPx:bl*sc,rPx:radMM*sc,swMM:sw,shMM:sh,blMM:bl,gapMM:gap,marMM:margin,radMM,sheetW:sheet.w,sheetH:sheet.h,useCCD,cSz,cOff,dk1:document.getElementById('iDK1').value||'DK1',dk2:document.getElementById('iDK2').value||'DK2',ccdN:document.getElementById('iCCDN')?.value||'ccd'};
+  impData={rows,cols,shape,c1,c2,cW:sw*sc,cH:sh*sc,oX:margin*sc,oY:margin*sc,gX:gap*sc,gY:gap*sc,bPx:bl*sc,rPx:radMM*sc,swMM:sw,shMM:sh,blMM:bl,gapMM:gap,marMM:margin,radMM,sheetW:sheet.w,sheetH:sheet.h,useCCD,cSz,cOff};
   const res=document.getElementById('iRes');
   res.classList.add('on');
-  res.innerHTML='<strong>'+(rows*cols)+' tarraa</strong> ('+rows+'×'+cols+')<br>DK1 '+sw+'×'+sh+'mm · DK2 '+(sw+bl*2).toFixed(1)+'×'+(sh+bl*2).toFixed(1)+'mm<br>Käytetty: '+totalW.toFixed(1)+'×'+totalH.toFixed(1)+'mm / '+sheet.w+'×'+sheet.h+'mm<br>'+(useCCD?'CCD: ⌀'+cSz+'mm neljässä kulmassa<br>':'')+(fits?'✓ Mahtuu arkille':'⚠ Ylittää arkin');
+  res.innerHTML='<strong>'+(rows*cols)+' tarraa</strong> ('+rows+'x'+cols+')<br>DK1 '+sw+'x'+sh+'mm · DK2 '+(sw+bl*2).toFixed(1)+'x'+(sh+bl*2).toFixed(1)+'mm<br>Käytetty: '+totalW.toFixed(1)+'x'+totalH.toFixed(1)+'mm / '+sheet.w+'x'+sheet.h+'mm<br>'+(useCCD?'CCD x4<br>':'')+(fits?'Mahtuu arkille':'Ylittää arkin');
   res.style.borderColor=fits?'#fcd34d':'#fecaca';
   if(activeTab===3)redraw();
 }
-
-// Export
 function rgb(hex){const r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255;return r.toFixed(3)+' '+g.toFixed(3)+' '+b.toFixed(3);}
-
 function buildOps(o,pW,pH,vp){
   const sx=pW/(vp.width/RS),sy=pH/(vp.height/RS);
   const c=rgb(o.color||'#FF0099');
@@ -647,15 +675,14 @@ function buildOps(o,pW,pH,vp){
   }
   const{x,y,w,h}=getCR(o);
   const rx=(x/RS)*sx,ry2=(y/RS)*sy,rw=(w/RS)*sx,rh=(h/RS)*sy,pY=pH-ry2-rh;
-  if(o.filled){return 'q '+c+' rg '+rx+' '+pY+' '+rw+' '+rh+' re f Q';}
+  if(o.filled)return 'q '+c+' rg '+rx+' '+pY+' '+rw+' '+rh+' re f Q';
   let path='';
-  if(o.shape==='circle'){const cx=rx+rw/2,cy=pY+rh/2,a=rw/2,b=rh/2,k=.5523;path=cx+' '+(cy+b)+' m '+(cx+a*k)+' '+(cy+b)+' '+(cx+a)+' '+(cy+b*k)+' '+(cx+a)+' '+cy+' c '+(cx+a)+' '+(cy-b*k)+' '+(cx+a*k)+' '+(cy-b)+' '+cx+' '+(cy-b)+' c '+(cx-a*k)+' '+(cy-b)+' '+(cx-a)+' '+(cy-b*k)+' '+(cx-a)+' '+cy+' c '+(cx-a)+' '+(cy+b*k)+' '+(cx-a*k)+' '+(cy+b)+' '+cx+' '+(cy+b)+' c';}
+  if(o.shape==='circle'){const cx=rx+rw/2,cy=pY+rh/2,a=rw/2,b2=rh/2,k=.5523;path=cx+' '+(cy+b2)+' m '+(cx+a*k)+' '+(cy+b2)+' '+(cx+a)+' '+(cy+b2*k)+' '+(cx+a)+' '+cy+' c '+(cx+a)+' '+(cy-b2*k)+' '+(cx+a*k)+' '+(cy-b2)+' '+cx+' '+(cy-b2)+' c '+(cx-a*k)+' '+(cy-b2)+' '+(cx-a)+' '+(cy-b2*k)+' '+(cx-a)+' '+cy+' c '+(cx-a)+' '+(cy+b2*k)+' '+(cx-a*k)+' '+(cy+b2)+' '+cx+' '+(cy+b2)+' c';}
   else if(o.shape==='rounded'){const r=Math.min(o.radius*sx,rw/2,rh/2);const x0=rx,y0=pY,x1=rx+rw,y1=pY+rh;path=(x0+r)+' '+y0+' m '+(x1-r)+' '+y0+' l '+x1+' '+y0+' '+x1+' '+(y0+r)+' v '+x1+' '+(y1-r)+' l '+x1+' '+y1+' '+(x1-r)+' '+y1+' v '+(x0+r)+' '+y1+' l '+x0+' '+y1+' '+x0+' '+(y1-r)+' v '+x0+' '+(y0+r)+' l '+x0+' '+y0+' '+(x0+r)+' '+y0+' v';}
-  else{path=rx+' '+pY+' m '+(rx+rw)+' '+pY+' l '+(rx+rw)+' '+(pY+rh)+' l '+rx+' '+(pY+rh)+' l h';}
+  else path=rx+' '+pY+' m '+(rx+rw)+' '+pY+' l '+(rx+rw)+' '+(pY+rh)+' l '+rx+' '+(pY+rh)+' l h';
   const dash=o.dash==='dashed'?'[6 4] 0 d ':o.dash==='dotted'?'[2 3] 0 d ':'';
   return 'q '+c+' RG [] 0 d '+o.lineWidth+' w '+dash+path+' S Q';
 }
-
 function buildImpOps(d,pW,pH){
   const{rows,cols,swMM,shMM,blMM,gapMM,marMM,shape,radMM,sheetW,sheetH,c1,c2,useCCD,cSz,cOff}=d;
   const scX=pW/mm2pt(sheetW),scY=pH/mm2pt(sheetH);
@@ -664,19 +691,19 @@ function buildImpOps(d,pW,pH){
   const blX=mm2pt(blMM||0)*scX,blY=mm2pt(blMM||0)*scY;
   const oX=mm2pt(marMM)*scX,oY=mm2pt(marMM)*scY;
   const rPt=mm2pt(radMM||0)*Math.min(scX,scY);
-  function sp(sh,x,y,w,h,r){
-    if(sh==='circle'){const cx=x+w/2,cy=y+h/2,a=w/2,b=h/2,k=.5523;return cx+' '+(cy+b)+' m '+(cx+a*k)+' '+(cy+b)+' '+(cx+a)+' '+(cy+b*k)+' '+(cx+a)+' '+cy+' c '+(cx+a)+' '+(cy-b*k)+' '+(cx+a*k)+' '+(cy-b)+' '+cx+' '+(cy-b)+' c '+(cx-a*k)+' '+(cy-b)+' '+(cx-a)+' '+(cy-b*k)+' '+(cx-a)+' '+cy+' c '+(cx-a)+' '+(cy+b*k)+' '+(cx-a*k)+' '+(cy+b)+' '+cx+' '+(cy+b)+' c';}
-    if(sh==='rounded'){r=Math.min(r,w/2,h/2);return(x+r)+' '+y+' m '+(x+w-r)+' '+y+' l '+(x+w)+' '+y+' '+(x+w)+' '+(y+r)+' v '+(x+w)+' '+(y+h-r)+' l '+(x+w)+' '+(y+h)+' '+(x+w-r)+' '+(y+h)+' v '+(x+r)+' '+(y+h)+' l '+x+' '+(y+h)+' '+x+' '+(y+h-r)+' v '+x+' '+(y+r)+' l '+x+' '+y+' '+(x+r)+' '+y+' v';}
+  function sp(x,y,w,h,r){
+    if(shape==='circle'){const cx=x+w/2,cy=y+h/2,a=w/2,b=h/2,k=.5523;return cx+' '+(cy+b)+' m '+(cx+a*k)+' '+(cy+b)+' '+(cx+a)+' '+(cy+b*k)+' '+(cx+a)+' '+cy+' c '+(cx+a)+' '+(cy-b*k)+' '+(cx+a*k)+' '+(cy-b)+' '+cx+' '+(cy-b)+' c '+(cx-a*k)+' '+(cy-b)+' '+(cx-a)+' '+(cy-b*k)+' '+(cx-a)+' '+cy+' c '+(cx-a)+' '+(cy+b*k)+' '+(cx-a*k)+' '+(cy+b)+' '+cx+' '+(cy+b)+' c';}
+    if(shape==='rounded'){r=Math.min(r,w/2,h/2);return(x+r)+' '+y+' m '+(x+w-r)+' '+y+' l '+(x+w)+' '+y+' '+(x+w)+' '+(y+r)+' v '+(x+w)+' '+(y+h-r)+' l '+(x+w)+' '+(y+h)+' '+(x+w-r)+' '+(y+h)+' v '+(x+r)+' '+(y+h)+' l '+x+' '+(y+h)+' '+x+' '+(y+h-r)+' v '+x+' '+(y+r)+' l '+x+' '+y+' '+(x+r)+' '+y+' v';}
     return x+' '+y+' m '+(x+w)+' '+y+' l '+(x+w)+' '+(y+h)+' l '+x+' '+(y+h)+' l h';
   }
   let ops='';
   if(blMM>0){
     ops+='q '+rgb(c2)+' RG [] 0 d 0.25 w\n';
-    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=oX+c*(swPt+gX)-blX,y2=oY+r*(shPt+gY)-blY,pY=pH-y2-shPt-blY*2;ops+=sp(shape,x,pY,swPt+blX*2,shPt+blY*2,rPt+blX)+' S\n';}
+    for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=oX+c*(swPt+gX)-blX,y2=oY+r*(shPt+gY)-blY,pY=pH-y2-shPt-blY*2;ops+=sp(x,pY,swPt+blX*2,shPt+blY*2,rPt+blX)+' S\n';}
     ops+='Q\n';
   }
   ops+='q '+rgb(c1)+' RG [] 0 d 0.25 w\n';
-  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=oX+c*(swPt+gX),y2=oY+r*(shPt+gY),pY=pH-y2-shPt;ops+=sp(shape,x,pY,swPt,shPt,rPt)+' S\n';}
+  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=oX+c*(swPt+gX),y2=oY+r*(shPt+gY),pY=pH-y2-shPt;ops+=sp(x,pY,swPt,shPt,rPt)+' S\n';}
   ops+='Q\n';
   if(useCCD&&cSz>0){
     const cPt=mm2pt(cSz)*Math.min(scX,scY),coP=mm2pt(cOff||10)*Math.min(scX,scY);
@@ -686,9 +713,7 @@ function buildImpOps(d,pW,pH){
   }
   return ops;
 }
-
 function drawCutsOn(page,obs,vp){const{width:pW,height:pH}=page.getSize();page.drawRectangle({x:0,y:0,width:0,height:0,opacity:0});obs.forEach(o=>page.pushOperators({toString:()=>'\n'+buildOps(o,pW,pH,vp)}));}
-
 async function doExport(){
   if(!pdfDoc){alert('Lataa PDF ensin');return;}
   ss('Generoidaan...','info');
@@ -704,13 +729,11 @@ async function doExport(){
       const lw=parseFloat(document.getElementById('t1lw').value)||0.5;
       let ops='';
       sel.forEach(g=>{
-        const smEl=document.getElementById('sm_'+Object.keys(detectedPaths).find(k=>detectedPaths[k]===g));
-        const c=g.previewColor||'#FF0099';
-        ops+='q '+rgb(c)+' RG [] 0 d '+lw+' w\n';
+        ops+='q '+rgb(g.previewColor||'#FF0099')+' RG [] 0 d '+lw+' w\n';
         g.paths.forEach(p=>{
           const pageHpt=vp.height/RS;
-          const x=p.x0,y=pageHpt-p.y0-p.h,w=p.w,h=p.h;
-          ops+=x.toFixed(3)+' '+y.toFixed(3)+' '+w.toFixed(3)+' '+h.toFixed(3)+' re S\n';
+          const x=p.x0/RS,y=pageHpt-p.y0/RS-p.h/RS,w2=p.w/RS,h2=p.h/RS;
+          ops+=x.toFixed(3)+' '+y.toFixed(3)+' '+w2.toFixed(3)+' '+h2.toFixed(3)+' re S\n';
         });
         ops+='Q\n';
       });
@@ -737,7 +760,7 @@ async function doExport(){
         const docC=await PDFLib.PDFDocument.create();
         const srcPgs=src.getPages();
         for(let i=0;i<srcPgs.length;i++){const pgN=i+1,blank=docC.addPage([srcPgs[i].getSize().width,srcPgs[i].getSize().height]);const obs=pageData[pgN]||[];if(obs.length){const vp=pageVps[pgN]||{width:srcPgs[i].getSize().width*RS,height:srcPgs[i].getSize().height*RS};drawCutsOn(blank,obs,vp);}}
-        dlPDF(await docC.save(),'leikkausrajat.pdf');ss('Leikkaus-PDF ladattu','ok');
+        dlPDF(await docC.save(),'leikkausrajat.pdf');ss('PDF ladattu','ok');
       }
     } else {
       if(!impData){ss('Aseta tarran tiedot ensin','warn');return;}
@@ -745,7 +768,7 @@ async function doExport(){
       const pW=mm2pt(sheetW),pH=mm2pt(sheetH);
       if(mode==='combo'){
         const docO=await PDFLib.PDFDocument.create();const pg=docO.addPage([pW,pH]);
-        if(pdfBytes){const src=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));const[emb]=await docO.embedPages([src.getPages()[curPage-1]]);const{rows,cols,swMM,shMM,blMM,gapMM,marMM}=impData;const oX=mm2pt(marMM),swPt=mm2pt(swMM),shPt=mm2pt(shMM),gPt=mm2pt(gapMM);for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=oX+c*(swPt+gPt),y=pH-mm2pt(marMM)-shPt-r*(shPt+gPt);pg.drawPage(emb,{x,y,width:swPt,height:shPt});}}
+        if(pdfBytes){const src=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));const[emb]=await docO.embedPages([src.getPages()[curPage-1]]);const{rows,cols,swMM,shMM,gapMM,marMM}=impData;const oX=mm2pt(marMM),swPt=mm2pt(swMM),shPt=mm2pt(shMM),gPt=mm2pt(gapMM);for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=oX+c*(swPt+gPt),y=pH-mm2pt(marMM)-shPt-r*(shPt+gPt);pg.drawPage(emb,{x,y,width:swPt,height:shPt});}}
         pg.drawRectangle({x:0,y:0,width:0,height:0,opacity:0});pg.pushOperators({toString:()=>buildImpOps(impData,pW,pH)});
         dlPDF(await docO.save(),'arkki_leikkausraja.pdf');ss('Arkki ladattu','ok');
       } else {
@@ -759,13 +782,12 @@ async function doExport(){
   }catch(e){console.error(e);ss('Vienti epäonnistui: '+e.message,'err');}
 }
 function dlPDF(bytes,name){const a=document.createElement('a');a.download=name;a.href=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));a.click();}
-
 function expScript(type){
   const all=[];Object.entries(pageData).forEach(([pg,obs])=>obs.forEach(o=>all.push({page:parseInt(pg),obj:o})));
   if(!all.length){alert('Lisää leikkausrajoja (välilehti 2)');return;}
   const sn=all[0].obj.spotName||'DK1';const L=[];
   if(type==='ai'){
-    L.push('// Leikkausraja — Illustrator\n// File > Scripts > Other Script');
+    L.push('// Leikkausraja — Illustrator');
     L.push('var doc=app.activeDocument;var layer;try{layer=doc.layers.getByName("'+sn+'");}catch(e){layer=doc.layers.add();layer.name="'+sn+'";}var spot;try{spot=doc.spots.getByName("'+sn+'");}catch(e){spot=doc.spots.add();spot.name="'+sn+'";var c=new CMYKColor();c.cyan=0;c.magenta=100;c.yellow=100;c.black=0;spot.color=c;spot.colorType=ColorModel.SPOT;}var sc=new SpotColor();sc.spot=spot;');
     all.forEach(({obj:o},i)=>{const vp=pageVps[curPage]||{width:595*RS,height:842*RS};const pH=vp.height/RS;const{x,y,w,h}=getCR(o);const rx=x/RS,ry=pH-(y/RS+h/RS),rw=w/RS,rh=h/RS;if(o.shape==='circle')L.push('var e'+i+'=doc.pathItems.ellipse('+ry.toFixed(2)+','+rx.toFixed(2)+','+rw.toFixed(2)+','+rh.toFixed(2)+');');else L.push('var e'+i+'=doc.pathItems.rectangle('+ry.toFixed(2)+','+rx.toFixed(2)+','+rw.toFixed(2)+','+rh.toFixed(2)+');');L.push('e'+i+'.filled=false;e'+i+'.stroked=true;e'+i+'.strokeColor=sc;e'+i+'.strokeWidth='+o.lineWidth+';layer.pathItems.move(e'+i+',ElementPlacement.PLACEATEND);');});
     L.push('alert("Leikkausrajat lisätty: '+sn+'");');
