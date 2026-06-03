@@ -260,7 +260,7 @@ const BACKEND='https://leikkausraja-backend.onrender.com';
 let pdfDoc=null,pdfBytes=null,curPage=1,totalPages=0,RS=1.8,zoom=1;
 let pageData={},pageVps={},selId=null,objCtr=0,tool='select',activeTab=1;
 let dragSt=null,penPts=[],penPrev=null,renderTask=null;
-let detectedPaths={},impData=null,addCCD_=false;
+let detectedPaths={},impData=null,addCCD_=false,pdfB64=null;
 const pc=document.getElementById('pc'),oc=document.getElementById('oc');
 const pCtx=pc.getContext('2d'),oCtx=oc.getContext('2d');
 function getObjs(){return pageData[curPage]||(pageData[curPage]=[])}
@@ -278,8 +278,13 @@ async function loadPDF(file){
   ss('Ladataan...','info');
   try{
     const buf=await file.arrayBuffer();
-    pdfBytes=buf.slice(0); // copy before pdfjs detaches it
-    pdfDoc=await pdfjsLib.getDocument({data:new Uint8Array(pdfBytes)}).promise;
+    // Convert to base64 BEFORE pdfjs detaches the buffer
+    const u8orig=new Uint8Array(buf);
+    let _bin='';
+    for(let i=0;i<u8orig.length;i+=8192) _bin+=String.fromCharCode(...u8orig.subarray(i,i+8192));
+    pdfB64=btoa(_bin);
+    pdfBytes=buf.slice(0);
+    pdfDoc=await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
     totalPages=pdfDoc.numPages;curPage=1;pageData={};
     document.getElementById('fn').textContent=file.name;
     document.getElementById('fm').textContent=totalPages+' sivu'+(totalPages!==1?'a':'');
@@ -352,14 +357,7 @@ async function analyzeVectorPaths(){
   const el=document.getElementById('pgroups');
   el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Analysoidaan...<br><small>(ensimmäinen kutsu voi kestää 15s)</small></div>';
   try{
-    // Safe base64 for large files
-    const u8=new Uint8Array(pdfBytes);
-    let bin='';
-    const chunk=8192;
-    for(let i=0;i<u8.length;i+=chunk){
-      bin+=String.fromCharCode(...u8.subarray(i,i+chunk));
-    }
-    const b64=btoa(bin);
+    const b64=pdfB64;
     const resp=await fetch(BACKEND+'/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pdf:b64})});
     if(!resp.ok)throw new Error('Backend: '+resp.status);
     const data=await resp.json();
