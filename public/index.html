@@ -445,9 +445,9 @@ async function analyzeVectorPaths(){
   pg_el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Analysoidaan...</div>';
   try{
     // Send PDF to server-side function for accurate spot color parsing
-    const formData=new FormData();
-    formData.append('pdf',new Blob([pdfBytes],{type:'application/pdf'}),'file.pdf');
-    const resp=await fetch('/api/pdf-layers',{method:'POST',body:formData});
+    // Convert to base64 for JSON transport
+    const b64=btoa(String.fromCharCode(...new Uint8Array(pdfBytes)));
+    const resp=await fetch('/api/pdf-layers',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pdf:b64})});
     const data=await resp.json();
     
     if(data.error) throw new Error(data.error);
