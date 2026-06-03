@@ -605,9 +605,9 @@ async function loadPDF(file){
 
   await buildThumbs();
   await renderPage(1);
-  analyzeVectorPaths();
-  checkResolution();
-  calcImp();
+  try { analyzeVectorPaths(); } catch(e) { console.error('analyzeVectorPaths error:', e); }
+  try { checkResolution(); } catch(e) { console.error('checkResolution error:', e); }
+  try { calcImp(); } catch(e) { console.error('calcImp error:', e); }
   ss('Valmis','ok');
 }
 
@@ -933,7 +933,7 @@ function drawImp(){
   const shape=document.getElementById('sShape').value;
   const radMM=parseFloat(document.getElementById('sRad').value)||0;
   const dk1Color=document.getElementById('impColor').value;
-  const dk2Color=document.getElementById('impColor2').value;
+  const dk2Color=(document.getElementById('impColor2')||{value:'#0055CC'}).value;
   const vp=pageVps[curPage];if(!vp)return;
   const scale=vp.width/sheet.w;
 
@@ -942,7 +942,7 @@ function drawImp(){
   const fits=totalW<=sheet.w&&totalH<=sheet.h;
 
   // CCD settings
-  const useCCD=document.getElementById('impCcdOn').classList.contains('on');
+  const useCCD=(document.getElementById('impCcdOn')||{classList:{contains:()=>false}}).classList.contains('on');
   const ccdSizeMM=useCCD?parseFloat(document.getElementById('impCcdSz').value)||5:0;
   const ccdOffMM=useCCD?parseFloat(document.getElementById('impCcdOff3').value)||10:0;
   const ccdName=document.getElementById('impCcdName')?.value||'ccd';
