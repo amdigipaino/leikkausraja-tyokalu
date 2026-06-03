@@ -1,4 +1,4 @@
-.map((p,i)=>'<div class="path-item">'+(i+1)+'. '+p.w.toFixed(1)+'×'+p.h.toFixed(1)+'pt @ ('+p.x0.toFixed(1)+','+p.y0.toFixed(1)+') lw='+p.lineWidth.toFixed(2)+'</div>').join('')}<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="fi">
 <head>
 <meta charset="UTF-8">
@@ -1503,11 +1503,9 @@ function buildImpOps(d,pW,pH){
       const x=offX+c*(swPt+gapX)-blX;
       const y2=offY+r*(shPt+gapY)-blY;
       const pY=pH-y2-shPt-blY*2;
-      ops+=shapePath(shape,x,pY,swPt+blX*2,shPt+blY*2,radPt+blX)+' S
-';
+      ops+=shapePath(shape,x,pY,swPt+blX*2,shPt+blY*2,radPt+blX)+'  S\n';
     }
-    ops+='Q
-';
+    ops+='Q\n';
   }
 
   // DK1 — exact sticker
@@ -1517,11 +1515,9 @@ function buildImpOps(d,pW,pH){
     const x=offX+c*(swPt+gapX);
     const y2=offY+r*(shPt+gapY);
     const pY=pH-y2-shPt;
-    ops+=shapePath(shape,x,pY,swPt,shPt,radPt)+' S
-';
+    ops+=shapePath(shape,x,pY,swPt,shPt,radPt)+'  S\n';
   }
-  ops+='Q
-';
+  ops+='Q\n';
 
   // CCD — filled circles at 4 corners
   if(useCCD&&ccdSizeMM>0){
@@ -1530,10 +1526,8 @@ function buildImpOps(d,pW,pH){
     ops+=`q 0 0 0 rg
 `;
     [[ccdOff,pH-ccdOff-ccdPt],[pW-ccdOff-ccdPt,pH-ccdOff-ccdPt],[pW-ccdOff-ccdPt,ccdOff],[ccdOff,ccdOff]]
-      .forEach(([cx,cy])=>{ops+=circlePath(cx+ccdPt/2,cy+ccdPt/2,ccdPt/2,ccdPt/2)+' f
-';});
-    ops+='Q
-';
+      .forEach(([cx,cy])=>{ops+=circlePath(cx+ccdPt/2,cy+ccdPt/2,ccdPt/2,ccdPt/2)+' f\n';});
+    ops+='Q\n';
   }
   return ops;
 }
