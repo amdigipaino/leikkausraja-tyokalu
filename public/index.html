@@ -278,8 +278,8 @@ async function loadPDF(file){
   ss('Ladataan...','info');
   try{
     const buf=await file.arrayBuffer();
-    pdfBytes=buf;
-    pdfDoc=await pdfjsLib.getDocument({data:new Uint8Array(buf)}).promise;
+    pdfBytes=buf.slice(0); // copy before pdfjs detaches it
+    pdfDoc=await pdfjsLib.getDocument({data:new Uint8Array(pdfBytes)}).promise;
     totalPages=pdfDoc.numPages;curPage=1;pageData={};
     document.getElementById('fn').textContent=file.name;
     document.getElementById('fm').textContent=totalPages+' sivu'+(totalPages!==1?'a':'');
