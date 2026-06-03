@@ -785,6 +785,44 @@ async function analyzeVectorPaths(){
     if(!groups[key].paths.length) delete groups[key];
   });
 
+  // Debug: show what we found on screen
+  const groupCount = Object.keys(groups).length;
+  const totalFound = Object.values(groups).reduce((s,g)=>s+g.paths.length,0);
+  
+  if(groupCount === 0){
+    // Show detailed debug
+    const opsUsed = new Set(fnArray);
+    // Check which color OPS fired
+    const colorOpsFound = [];
+    if(fnArray.includes(OPS.setStrokeColorSpace)) colorOpsFound.push('setStrokeColorSpace');
+    if(fnArray.includes(OPS.setStrokeRGBColor)) colorOpsFound.push('setStrokeRGBColor');
+    if(fnArray.includes(OPS.setStrokeColorN)) colorOpsFound.push('setStrokeColorN');
+    if(fnArray.includes(OPS.setStrokeColor)) colorOpsFound.push('setStrokeColor');
+    if(fnArray.includes(OPS.rectangle)) colorOpsFound.push('rectangle');
+    if(fnArray.includes(OPS.stroke)) colorOpsFound.push('stroke');
+    
+    // Count rectangles and strokes
+    const rectCount = fnArray.filter(f=>f===OPS.rectangle).length;
+    const strokeCount = fnArray.filter(f=>f===OPS.stroke).length;
+    const csCount = fnArray.filter(f=>f===OPS.setStrokeColorSpace).length;
+    const scnCount = fnArray.filter(f=>f===OPS.setStrokeColorN).length;
+    
+    document.getElementById('pathGroups').innerHTML = 
+      '<div style="font-size:10px;font-family:monospace;background:#1c1917;color:#a8e6cf;padding:10px;border-radius:6px;line-height:1.8">'
+      +'<b>Debug:</b><br>'
+      +'Ops löydetty: '+colorOpsFound.join(', ')+'<br>'
+      +'rectangle: '+rectCount+' stroke: '+strokeCount+'<br>'
+      +'setStrokeColorSpace: '+csCount+' setStrokeColorN: '+scnCount+'<br>'
+      +'strokeCS arvo: "'+strokeCS+'"<br>'
+      +'strokeVals: '+JSON.stringify(strokeVals)+'<br>'
+      +'OPS.setStrokeColorSpace = '+OPS.setStrokeColorSpace+'<br>'
+      +'OPS.rectangle = '+OPS.rectangle+'<br>'
+      +'OPS.stroke = '+OPS.stroke+'<br>'
+      +'fnArray sample: '+fnArray.slice(0,20).join(',')
+      +'</div>';
+    return;
+  }
+
   detectedPaths = groups;
   renderPathGroups(groups, vp);
 }
