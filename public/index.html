@@ -658,622 +658,139 @@ async function analyzeVectorPaths(){
   if(!pdfDoc) return;
   document.getElementById('pathGroups').innerHTML='<div class="obj-empty"><div class="spin dark" style="display:inline-block;margin-right:6px"></div>Analysoidaan...</div>';
 
-  const pg=await pdfDoc.getPage(curPage);
-  const ops=await pg.getOperatorList();
-  const vp=pg.getViewport({scale:1});
-  const pH=vp.height;
+  const pg = await pdfDoc.getPage(curPage);
+  const ops = await pg.getOperatorList();
+  const vp = pg.getViewport({scale:1});
+  const pH = vp.height;
+  const OPS = pdfjsLib.OPS;
+  const fnArray = ops.fnArray;
+  const argsArray = ops.argsArray;
 
-  const fnArray=ops.fnArray;
-  const argsArray=ops.argsArray;
-  const OPS=pdfjsLib.OPS;
+  // Color tracking
+  let strokeCS = 'default';
+  let fillCS = 'default';
+  let strokeVals = [0];
+  let fillVals = [0];
+  let lineWidth = 1;
 
-  let groups={};
-  let currentStrokeCS='default';
-  let currentFillCS='default';
-  let currentStrokeColor=[0];
-  let currentFillColor=[0];
-  let currentLineWidth=1;
-  let currentPath=[];
-
-  // Spot color palette — assign colors by colorspace name
-  const spotPalette=['#CC0000','#0055CC','#00AA44','#FF6600','#9900CC','#CC6600','#006666'];
-  let csColorMap={};
-  let csIdx=0;
-  function csToHex(csName){
-    if(!csColorMap[csName]){
-      csColorMap[csName]=spotPalette[csIdx%spotPalette.length];
-      csIdx++;
-    }
-    return csColorMap[csName];
+  // Spot color palette
+  const palette = ['#CC0000','#0055CC','#00AA44','#FF6600','#9900CC','#CC6600','#008888'];
+  const csColors = {};
+  let csIdx = 0;
+  function csHex(cs){
+    if(!csColors[cs]){ csColors[cs]=palette[csIdx%palette.length]; csIdx++; }
+    return csColors[cs];
   }
-  function colorKey(cs, vals){
-    return cs+':'+vals.join(',');
-  }
-  function colorToHex(cs, vals){
-    if(cs!=='default') return csToHex(cs);
-    if(vals.length===1){const v=Math.round((1-vals[0])*255);return '#'+[v,v,v].map(x=>x.toString(16).padStart(2,'0')).join('');}
-    if(vals.length===3) return '#'+vals.map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('');
-    if(vals.length===4){const[c,m,y,k]=vals;const r=Math.round(255*(1-c)*(1-k));const g=Math.round(255*(1-m)*(1-k));const b=Math.round(255*(1-y)*(1-k));return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');}
+  function getHex(cs, vals){
+    if(cs !== 'default' && cs !== 'rgb' && cs !== 'cmyk' && cs !== 'gray') return csHex(cs);
+    if(cs === 'gray'){ const v=Math.round((1-(vals[0]||0))*255); return '#'+[v,v,v].map(x=>x.toString(16).padStart(2,'0')).join(''); }
+    if(cs === 'rgb') return '#'+vals.slice(0,3).map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('');
+    if(cs === 'cmyk'){ const[c,m,y,k]=vals; const r=Math.round(255*(1-c)*(1-k)),g=Math.round(255*(1-m)*(1-k)),b=Math.round(255*(1-y)*(1-k)); return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join(''); }
     return '#000000';
   }
+  function colorKey(cs, vals){ return cs+':'+vals.map(v=>Math.round(v*100)).join(','); }
 
-  function recordPath(useStroke){
-    if(currentPath.length<2) return;
-    const cs=useStroke?currentStrokeCS:currentFillCS;
-    const vals=useStroke?currentStrokeColor:currentFillColor;
-    const key=colorKey(cs,vals);
-    const hex=colorToHex(cs,vals);
-    if(!groups[key]) groups[key]={hex,cs,vals,paths:[],selected:false};
+  // Path accumulator
+  let pathPts = [];
+  let groups = {};
+
+  function addRect(x,y,w,h){
+    // rectangle in PDF coords (y from bottom) -> canvas coords (y from top)
+    const cx = x;
+    const cy = pH - y - h;
+    pathPts = [[cx,cy],[cx+w,cy],[cx+w,cy+h],[cx,cy+h],[cx,cy]];
+  }
+
+  function flushPath(isStroke){
+    if(pathPts.length < 2) return;
+    const cs = isStroke ? strokeCS : fillCS;
+    const vals = isStroke ? strokeVals : fillVals;
+    const key = colorKey(cs, vals);
+    const hex = getHex(cs, vals);
+    if(!groups[key]) groups[key] = {hex, cs, vals, paths:[], selected:false};
+
     let x0=Infinity,y0=Infinity,x1=-Infinity,y1=-Infinity;
-    currentPath.forEach(([x,y])=>{x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);});
-    groups[key].paths.push({points:[...currentPath],x0,y0,x1,y1,w:x1-x0,h:y1-y0,lineWidth:currentLineWidth,stroke:useStroke});
-    currentPath=[];
+    pathPts.forEach(([px,py])=>{ x0=Math.min(x0,px); y0=Math.min(y0,py); x1=Math.max(x1,px); y1=Math.max(y1,py); });
+    groups[key].paths.push({ x0, y0, x1, y1, w:x1-x0, h:y1-y0, lineWidth, pts:[...pathPts] });
+    pathPts = [];
   }
 
   for(let i=0;i<fnArray.length;i++){
-    const fn=fnArray[i];
-    const args=argsArray[i]||[];
+    const fn = fnArray[i];
+    const args = argsArray[i] || [];
 
-    if(fn===OPS.setLineWidth) currentLineWidth=args[0]||1;
-    else if(fn===OPS.setStrokeColorSpace) currentStrokeCS=args[0]||'default';
-    else if(fn===OPS.setFillColorSpace) currentFillCS=args[0]||'default';
-    else if(fn===OPS.setStrokeRGBColor){currentStrokeCS='rgb';currentStrokeColor=[...args];}
-    else if(fn===OPS.setFillRGBColor){currentFillCS='rgb';currentFillColor=[...args];}
-    else if(fn===OPS.setStrokeGray){currentStrokeCS='gray';currentStrokeColor=[args[0]];}
-    else if(fn===OPS.setFillGray){currentFillCS='gray';currentFillColor=[args[0]];}
-    else if(fn===OPS.setStrokeCMYKColor){currentStrokeCS='cmyk';currentStrokeColor=[...args];}
-    else if(fn===OPS.setFillCMYKColor){currentFillCS='cmyk';currentFillColor=[...args];}
-    else if(fn===OPS.setStrokeColor) currentStrokeColor=[...args];
-    else if(fn===OPS.setFillColor) currentFillColor=[...args];
-    else if(fn===OPS.setStrokeColorN) currentStrokeColor=[...args];
-    else if(fn===OPS.setFillColorN) currentFillColor=[...args];
-    else if(fn===OPS.moveTo) currentPath=[[args[0],pH-args[1]]];
-    else if(fn===OPS.lineTo) currentPath.push([args[0],pH-args[1]]);
-    else if(fn===OPS.curveTo||fn===OPS.curveTo2||fn===OPS.curveTo3) currentPath.push([args[args.length-2],pH-args[args.length-1]]);
-    else if(fn===OPS.rectangle){const[x,y,w,h]=args;const py=pH-y;currentPath=[[x,py],[x+w,py],[x+w,py-h],[x,py-h],[x,py]];}
-    else if(fn===OPS.stroke){recordPath(true);}
-    else if(fn===OPS.fill||fn===OPS.eoFill){currentPath=[];}
-    else if(fn===OPS.fillStroke||fn===OPS.eoFillStroke){recordPath(true);currentPath=[];}
-    else if(fn===OPS.endPath||fn===OPS.closePath){currentPath=[];}
-    else if(fn===OPS.restore) currentPath=[];
+    switch(fn){
+      case OPS.setLineWidth: lineWidth = args[0]||1; break;
+      case OPS.setStrokeColorSpace: strokeCS = String(args[0]||'default'); break;
+      case OPS.setFillColorSpace:   fillCS   = String(args[0]||'default'); break;
+      case OPS.setStrokeRGBColor:   strokeCS='rgb';  strokeVals=[...args]; break;
+      case OPS.setFillRGBColor:     fillCS='rgb';    fillVals=[...args]; break;
+      case OPS.setStrokeGray:       strokeCS='gray'; strokeVals=[args[0]]; break;
+      case OPS.setFillGray:         fillCS='gray';   fillVals=[args[0]]; break;
+      case OPS.setStrokeCMYKColor:  strokeCS='cmyk'; strokeVals=[...args]; break;
+      case OPS.setFillCMYKColor:    fillCS='cmyk';   fillVals=[...args]; break;
+      case OPS.setStrokeColor:      strokeVals=[...args]; break;
+      case OPS.setFillColor:        fillVals=[...args]; break;
+      case OPS.setStrokeColorN:     strokeVals=[...args]; break;
+      case OPS.setFillColorN:       fillVals=[...args]; break;
+
+      case OPS.moveTo:
+        pathPts = [[args[0], pH-args[1]]];
+        break;
+      case OPS.lineTo:
+        pathPts.push([args[0], pH-args[1]]);
+        break;
+      case OPS.curveTo:
+      case OPS.curveTo2:
+      case OPS.curveTo3:
+        pathPts.push([args[args.length-2], pH-args[args.length-1]]);
+        break;
+      case OPS.rectangle:
+        // KEY FIX: rectangle is a self-contained path
+        // First flush any existing path, then create rect
+        if(pathPts.length > 1) flushPath(true);
+        addRect(args[0], args[1], args[2], args[3]);
+        break;
+      case OPS.stroke:
+        flushPath(true);
+        break;
+      case OPS.fill:
+      case OPS.eoFill:
+        flushPath(false);
+        break;
+      case OPS.fillStroke:
+      case OPS.eoFillStroke:
+        flushPath(true);
+        break;
+      case OPS.endPath:
+      case OPS.closePath:
+        pathPts = [];
+        break;
+      case OPS.restore:
+        pathPts = [];
+        break;
+    }
   }
 
-  detectedPaths=groups;
+  // Filter out tiny paths and full-page backgrounds
+  const pvp = pageVps[curPage];
+  const pageW = pvp ? pvp.width/RS : 1000;
+  const pageH = pvp ? pvp.height/RS : 1000;
+
+  Object.keys(groups).forEach(key => {
+    groups[key].paths = groups[key].paths.filter(p => {
+      if(p.w < 2 && p.h < 2) return false; // too tiny
+      return true;
+    });
+    if(!groups[key].paths.length) delete groups[key];
+  });
+
+  detectedPaths = groups;
   renderPathGroups(groups, vp);
 }
 
-function renderPathGroups(groups, vp){
-  const container=document.getElementById('pathGroups');
-  const entries=Object.entries(groups);
-  
-  if(!entries.length){
-    container.innerHTML='<div class="obj-empty">Ei vektoripolkuja löydetty</div>';
-    return;
-  }
-  
-  // Sort by path count descending, no auto-selection logic
-  entries.sort(([,a],[,b])=>b.paths.length-a.paths.length);
-  
-  // Reset all selections
-  entries.forEach(([,g])=>g.selected=false);
-  
-  container.innerHTML='<p style="font-size:11px;color:var(--ink2);margin-bottom:8px">Valitse checkbox-merkinnällä mitkä viivat ovat leikkausrajoja.</p>';
-  
-  const SPOT_PRESETS=['DK1','DK2','CREASE','Kiss Cut','CUT1','Die Cut','Perf'];
 
-  entries.forEach(([key,group],idx)=>{
-    const totalPaths=group.paths.length;
-    const lw=avgLW(group.paths).toFixed(2);
-    const widths=group.paths.map(p=>p.w).filter(w=>w>1);
-    const sizeInfo=widths.length?` · ${Math.min(...widths).toFixed(0)}–${Math.max(...widths).toFixed(0)}pt`:'';
 
-    const div=document.createElement('div');
-    div.className='path-group';
-    div.innerHTML=`
-      <div class="path-group-header" onclick="toggleGroup('${key}')">
-        <div class="color-swatch" style="background:${group.hex};outline:1px solid rgba(0,0,0,.15)"></div>
-        <div class="path-group-info">
-          <div class="path-group-name" style="font-size:11px">${group.hex}</div>
-          <div class="path-group-meta">${totalPaths} viivaa · lw ${lw}pt${sizeInfo}</div>
-        </div>
-        <input type="checkbox" class="path-group-check" id="chk_${key}"
-          onclick="event.stopPropagation();toggleGroupSel('${key}',this.checked);updateSpotMappings()">
-      </div>
-      <div class="path-group-body" id="body_${key}">
-        ${group.paths.slice(0,10).map((p,i)=>'<div class="path-item">'+(i+1)+'. '+p.w.toFixed(1)+'\u00d7'+p.h.toFixed(1)+'pt @ ('+p.x0.toFixed(1)+','+p.y0.toFixed(1)+') lw='+p.lineWidth.toFixed(2)+'</div>').join('')}
-        ${group.paths.length>10?('<div class="path-item" style="color:var(--ink3)">... ja '+(group.paths.length-10)+' lisää</div>'):''}
-      </div>`;
-    container.appendChild(div);
-    group.selected=false;
-    group.spotName=SPOT_PRESETS[idx]||'Die Cut';
-    group.previewColor='#FF0099';
-  });
-
-  updateSpotMappings();
-  redraw();
-}
-
-function updateSpotMappings(){
-  const mappings=document.getElementById('spotMappings');
-  if(!mappings) return;
-  const selected=Object.entries(detectedPaths).filter(([k])=>{
-    const el=document.getElementById('chk_'+k);
-    return el&&el.checked;
-  });
-  if(!selected.length){
-    mappings.innerHTML='<p style="font-size:11px;color:var(--ink3)">Valitse ensin viivaryhmät yllä.</p>';
-    return;
-  }
-  const SPOT_PRESETS=['DK1','DK2','CREASE','Kiss Cut','CUT1','Die Cut','Perf'];
-  const presetOpts=SPOT_PRESETS.map(n=>`<option value="${n}">${n}</option>`).join('');
-  mappings.innerHTML=selected.map(([key,group],i)=>`
-    <div style="display:flex;align-items:center;gap:6px;padding:6px 8px;background:var(--paper2);border-radius:var(--r);border:1px solid var(--paper3)">
-      <div style="width:12px;height:12px;border-radius:2px;background:${group.hex};flex-shrink:0;outline:1px solid rgba(0,0,0,.15)"></div>
-      <span style="font-size:10px;font-family:monospace;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis">${group.paths.length} viivaa</span>
-      <select id="smap_${key}" style="width:110px;font-size:11px;padding:3px 5px" onchange="detectedPaths['${key}'].spotName=this.value">
-        ${presetOpts}
-        <option value="custom_${i}">Mukautettu...</option>
-      </select>
-      <input type="color" id="smcol_${key}" value="${group.previewColor||'#FF0099'}" style="width:28px;height:24px;padding:1px;border:1px solid var(--paper3);border-radius:3px;cursor:pointer" oninput="detectedPaths['${key}'].previewColor=this.value;redraw()">
-    </div>`).join('');
-  // Restore saved values
-  selected.forEach(([key,group])=>{
-    const sel=document.getElementById('smap_'+key);
-    if(sel&&group.spotName) sel.value=SPOT_PRESETS.includes(group.spotName)?group.spotName:sel.value;
-  });
-}
-
-function isBlackOrWhiteHex(hex){
-  const h=hex.toLowerCase();
-  return h==='#000000'||h==='#010101'||h==='#ffffff'||h==='#fefefe'||h==='#1c1917';
-}
-function colorName(hex){
-  const h=hex.toLowerCase();
-  if(h==='#ff0000'||h==='#fe0000') return 'Punainen';
-  if(h.startsWith('#ff')&&h.endsWith('00')) return 'Keltainen';
-  if(h==='#0000ff') return 'Sininen';
-  if(h==='#00ff00') return 'Vihreä';
-  if(h==='#ff00ff') return 'Magenta';
-  if(h==='#00ffff') return 'Syaani';
-  if(isBlackOrWhiteHex(h)) return 'Musta/valkoinen';
-  return hex;
-}
-function avgLW(paths){
-  if(!paths.length) return 0;
-  return paths.reduce((s,p)=>s+p.lineWidth,0)/paths.length;
-}
-function toggleGroup(key){
-  const body=document.getElementById('body_'+key);
-  if(body) body.classList.toggle('open');
-}
-function toggleGroupSel(key,val){
-  if(detectedPaths[key]) detectedPaths[key].selected=val;
-}
-
-function isBlackOrWhite(rgb){return isBlackOrWhiteHex(colorToHex2(rgb));}
-function colorToHex2(rgb){
-  if(!rgb||!rgb.length) return '#000000';
-  if(rgb.length===1){const v=Math.round(rgb[0]*255);return '#'+[v,v,v].map(x=>x.toString(16).padStart(2,'0')).join('');}
-  if(rgb.length===3){return '#'+rgb.map(v=>Math.round(v*255).toString(16).padStart(2,'0')).join('');}
-  if(rgb.length===4){const[c,m,y,k]=rgb;const r=Math.round(255*(1-c)*(1-k));const g=Math.round(255*(1-m)*(1-k));const b=Math.round(255*(1-y)*(1-k));return '#'+[r,g,b].map(v=>v.toString(16).padStart(2,'0')).join('');}
-  return '#000000';
-}
-
-// ─── Convert to spot color ────────────────────────────────────────────────
-function convertToSpot(){
-  const vp=pageVps[curPage];
-  if(!vp){ss('Lataa PDF ensin','warn');return;}
-
-  // Get selected groups with their spot name mappings
-  const selectedGroups=Object.entries(detectedPaths).filter(([key,g])=>{
-    const el=document.getElementById('chk_'+key);
-    return el&&el.checked;
-  }).map(([key,g])=>{
-    const sel=document.getElementById('smap_'+key);
-    const col=document.getElementById('smcol_'+key);
-    return{
-      group:g,
-      spotName:sel?sel.value:g.spotName||'Die Cut',
-      previewColor:col?col.value:g.previewColor||'#FF0099'
-    };
-  });
-
-  if(!selectedGroups.length){ss('Valitse ensin viivaryhmät checkbox-merkinnällä','warn');return;}
-
-  const lineWidth=parseFloat(document.getElementById('t1LineWidth').value)||0.5;
-  let totalPaths=0;
-
-  selectedGroups.forEach(({group,spotName,previewColor})=>{
-    group.paths.forEach(path=>{
-      if(path.w<2&&path.h<2) return;
-      const x=path.x0*RS, y=path.y0*RS;
-      const w=path.w*RS, h=path.h*RS;
-      // Detect shape: if w≈h it might be circle (rough check)
-      const isCircleish=Math.abs(path.w-path.h)<path.w*0.05&&path.w>10;
-      addObjDirect({
-        name:spotName+' '+(++objCtr),
-        shape:isCircleish?'circle':'rect',
-        x, y, w, h,
-        color:previewColor,
-        lineWidth,
-        spotName,
-        dash:'solid',
-        margin:0, pos:'center', regMarks:false
-      });
-      totalPaths++;
-    });
-  });
-
-  // Add CCD registration marks
-  if(addCCD){
-    const ccdSizeMM=parseFloat(document.getElementById('ccdSize').value)||5;
-    const ccdOffMM=parseFloat(document.getElementById('ccdOff2').value)||5;
-    const pg=pageVps[curPage];
-    const pageWpt=pg.width/RS, pageHpt=pg.height/RS;
-    const ccdPt=mmToPt(ccdSizeMM)*RS;
-    const offPt=mmToPt(ccdOffMM)*RS;
-    // 4 corners: top-left, top-right, bottom-right, bottom-left
-    const corners=[
-      {x:offPt, y:offPt, name:'CCD-TL'},
-      {x:pg.width-offPt-ccdPt, y:offPt, name:'CCD-TR'},
-      {x:pg.width-offPt-ccdPt, y:pg.height-offPt-ccdPt, name:'CCD-BR'},
-      {x:offPt, y:pg.height-offPt-ccdPt, name:'CCD-BL'},
-    ];
-    corners.forEach(({x,y,name})=>{
-      addObjDirect({
-        name, shape:'circle',
-        x, y, w:ccdPt, h:ccdPt,
-        color:'#000000',
-        lineWidth:0,
-        spotName:'CCD',
-        dash:'solid',
-        margin:0, pos:'center', regMarks:false,
-        filled:true
-      });
-    });
-    ss(`Muunnettu: ${totalPaths} viivaa + 4 CCD-merkkiä`,'ok');
-  } else {
-    ss(`Muunnettu: ${totalPaths} viivaa spot-väreiksi`,'ok');
-  }
-
-  switchTab(2);
-  redraw();
-}
-
-// ─── Thumbnails & render ──────────────────────────────────────────────────
-async function buildThumbs(){
-  const row=document.getElementById('thumbs');row.innerHTML='';
-  for(let i=1;i<=Math.min(totalPages,12);i++){
-    const pg=await pdfDoc.getPage(i);
-    const vp=pg.getViewport({scale:.1});
-    const tc=document.createElement('canvas');tc.width=vp.width;tc.height=vp.height;
-    await pg.render({canvasContext:tc.getContext('2d'),viewport:vp}).promise;
-    const w=document.createElement('div');
-    w.className='thumb'+(i===1?' active':'');w.dataset.p=i;
-    w.appendChild(tc);
-    w.onclick=()=>{curPage=i;renderPage(i);updThumbs();analyzeVectorPaths();checkResolution();};
-    row.appendChild(w);
-  }
-}
-function updThumbs(){document.querySelectorAll('.thumb').forEach(t=>t.classList.toggle('active',parseInt(t.dataset.p)===curPage))}
-
-async function renderPage(n){
-  if(!pdfDoc)return;
-  if(renderTask){try{renderTask.cancel()}catch(e){}}
-  curPage=n;
-  document.getElementById('pageLbl').textContent=n+' / '+totalPages;
-  const pg=await pdfDoc.getPage(n);
-  const vp=pg.getViewport({scale:RS});
-  pageVps[n]=vp;
-  pdfCan.width=vp.width;pdfCan.height=vp.height;
-  ovrCan.width=vp.width;ovrCan.height=vp.height;
-  renderTask=pg.render({canvasContext:pdfCtx,viewport:vp});
-  await renderTask.promise;
-  redraw();updObjList();
-}
-function chPage(d){const n=curPage+d;if(n<1||n>totalPages)return;renderPage(n);updThumbs();analyzeVectorPaths();checkResolution();}
-
-// ─── Zoom ─────────────────────────────────────────────────────────────────
-function doZoom(delta){
-  if(delta===0){
-    const area=document.getElementById('canvasArea');
-    const vp=pageVps[curPage];if(!vp)return;
-    const fit=Math.min((area.clientWidth-48)/vp.width,(area.clientHeight-48)/vp.height,1.5);
-    zoomLevel=Math.round(fit*4)/4;
-  } else {
-    zoomLevel=Math.max(0.25,Math.min(4,zoomLevel+delta));
-  }
-  document.getElementById('zoomLbl').textContent=Math.round(zoomLevel*100)+'%';
-  document.getElementById('canvasOuter').style.transform=`scale(${zoomLevel})`;
-  document.getElementById('canvasOuter').style.transformOrigin='top center';
-}
-
-// ─── Objects ──────────────────────────────────────────────────────────────
-function mkObj(p={}){
-  const vp=pageVps[curPage]||{width:400,height:400};
-  const id=++objCtr;
-  return{id,name:p.name||('Kohde '+id),shape:p.shape||'rect',
-    x:p.x!==undefined?p.x:vp.width*.1, y:p.y!==undefined?p.y:vp.height*.1,
-    w:p.w!==undefined?p.w:vp.width*.8, h:p.h!==undefined?p.h:vp.height*.8,
-    points:p.points||null, closed:p.closed||false,
-    radius:p.radius||0, color:p.color||'#FF0099',
-    lineWidth:p.lineWidth||0.5, spotName:p.spotName||'Die Cut',
-    dash:p.dash||'solid', margin:p.margin||0, pos:p.pos||'center',
-    regMarks:false, nx:0,ny:0,nw:0,nh:0};
-}
-function addObj(p={}){if(!pdfDoc){ss('Lataa PDF ensin','warn');return;}const o=mkObj(p);getObjs().push(o);selObj(o.id);updObjList();redraw();return o;}
-function addObjDirect(p){const o=Object.assign(mkObj({}),p,{id:++objCtr});getObjs().push(o);updObjList();redraw();return o;}
-function deleteAllObjs(){pageData[curPage]=[];selId=null;document.getElementById('editPanel').className='edit-panel';updObjList();redraw();}
-
-function selObj(id){
-  selId=id;const o=getSel();
-  document.getElementById('editPanel').className='edit-panel'+(o?' vis':'');
-  if(!o){updObjList();return;}
-  document.getElementById('editLbl').textContent=o.name;
-  document.getElementById('eShape').value=o.shape;
-  document.getElementById('eRad').value=o.radius;
-  document.getElementById('eRadVal').textContent=o.radius;
-  document.getElementById('eRadRow').classList.toggle('hidden',o.shape!=='rounded');
-  document.getElementById('eColor').value=o.color;
-  document.getElementById('eW').value=o.lineWidth;
-  document.getElementById('eWVal').textContent=o.lineWidth+'pt';
-  document.getElementById('eM').value=o.margin;
-  document.getElementById('eMVal').textContent=o.margin+'pt';
-  document.getElementById('eSpot').value=o.spotName;
-  setDash(o.dash,false);setPos(o.pos,false);setReg(o.regMarks,false);
-  ['x','y','w','h'].forEach(k=>document.getElementById('n'+k.toUpperCase()).textContent=Math.round(o['n'+k]||0));
-  updObjList();
-}
-function updObj(){
-  const o=getSel();if(!o)return;
-  o.shape=document.getElementById('eShape').value;
-  o.radius=parseInt(document.getElementById('eRad').value);
-  document.getElementById('eRadVal').textContent=o.radius;
-  document.getElementById('eRadRow').classList.toggle('hidden',o.shape!=='rounded');
-  o.color=document.getElementById('eColor').value;
-  o.lineWidth=parseFloat(document.getElementById('eW').value);
-  document.getElementById('eWVal').textContent=o.lineWidth+'pt';
-  o.margin=parseInt(document.getElementById('eM').value);
-  document.getElementById('eMVal').textContent=o.margin+'pt';
-  o.spotName=document.getElementById('eSpot').value;
-  redraw();
-}
-function setDash(m,upd=true){
-  ['S','D','Dt'].forEach(d=>document.getElementById('d'+d).classList.remove('on'));
-  const map={'solid':'S','dashed':'D','dotted':'Dt'};
-  document.getElementById('d'+map[m])?.classList.add('on');
-  if(upd){const o=getSel();if(o){o.dash=m;redraw();}}
-}
-function setPos(m,upd=true){
-  ['I','C','O'].forEach(d=>document.getElementById('p'+d).classList.remove('on'));
-  const map={'inside':'I','center':'C','outside':'O'};
-  document.getElementById('p'+map[m])?.classList.add('on');
-  if(upd){const o=getSel();if(o){o.pos=m;redraw();}}
-}
-function setReg(v,upd=true){
-  document.getElementById('rOff').classList.toggle('on',!v);
-  document.getElementById('rOn').classList.toggle('on',v);
-  if(upd){const o=getSel();if(o){o.regMarks=v;redraw();}}
-}
-function nudge(ax,val){
-  const o=getSel();if(!o)return;
-  o['n'+ax]=(o['n'+ax]||0)+val;
-  document.getElementById('n'+ax.toUpperCase()).textContent=Math.round(o['n'+ax]);
-  redraw();
-}
-function delObj(id){
-  const obs=getObjs();const i=obs.findIndex(o=>o.id===id);if(i>=0)obs.splice(i,1);
-  if(selId===id){selId=null;document.getElementById('editPanel').className='edit-panel';}
-  updObjList();redraw();
-}
-function updObjList(){
-  const list=document.getElementById('objList');const obs=getObjs();
-  if(!obs.length){list.innerHTML='<div class="obj-empty">Ei kohteita</div>';return;}
-  list.innerHTML=obs.map(o=>`<div class="obj-row${o.id===selId?' sel':''}" onclick="selObj(${o.id})"><div class="obj-dot" style="color:${o.color}"></div><span class="obj-name">${o.name}</span><span class="obj-shape">${o.points?'pen':o.shape}</span><span class="obj-del" onclick="event.stopPropagation();delObj(${o.id})">×</span></div>`).join('');
-}
-
-// ─── Cut rect calc ────────────────────────────────────────────────────────
-function getCR(o){
-  const off=o.pos==='inside'?o.margin:o.pos==='outside'?-o.margin:o.margin/2;
-  return{x:o.x+off+(o.nx||0),y:o.y+off+(o.ny||0),w:o.w-off*2+(o.nw||0),h:o.h-off*2+(o.nh||0)};
-}
-
-// ─── Drawing ──────────────────────────────────────────────────────────────
-function applyDash(ctx,d){
-  if(d==='dashed')ctx.setLineDash([8,5]);
-  else if(d==='dotted')ctx.setLineDash([2,4]);
-  else ctx.setLineDash([]);
-}
-function getHandles(x,y,w,h){
-  const mx=x+w/2,my=y+h/2;
-  return[{x,y,n:'nw'},{x:mx,y,n:'n'},{x:x+w,y,n:'ne'},{x:x+w,y:my,n:'e'},
-    {x:x+w,y:y+h,n:'se'},{x:mx,y:y+h,n:'s'},{x,y:y+h,n:'sw'},{x,y:my,n:'w'}];
-}
-function drawObj(ctx,o,sel){
-  if(o.points&&o.points.length>1){
-    ctx.strokeStyle=o.color;ctx.lineWidth=o.lineWidth*RS;applyDash(ctx,o.dash);
-    ctx.beginPath();ctx.moveTo(o.points[0].x,o.points[0].y);
-    for(let i=1;i<o.points.length;i++)ctx.lineTo(o.points[i].x,o.points[i].y);
-    if(o.closed)ctx.closePath();ctx.stroke();
-    if(sel){ctx.setLineDash([]);o.points.forEach((p,i)=>{ctx.fillStyle=i===0?o.color:'#fff';ctx.strokeStyle=o.color;ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(p.x,p.y,4,0,Math.PI*2);ctx.fill();ctx.stroke();});}
-    return;
-  }
-  const{x,y,w,h}=getCR(o);
-  if(sel){
-    ctx.strokeStyle='rgba(37,99,235,.3)';ctx.lineWidth=1;ctx.setLineDash([4,3]);ctx.strokeRect(x-6,y-6,w+12,h+12);ctx.setLineDash([]);
-    getHandles(x,y,w,h).forEach(hh=>{ctx.fillStyle='#fff';ctx.strokeStyle=o.color;ctx.lineWidth=1.5;ctx.setLineDash([]);ctx.beginPath();ctx.rect(hh.x-4,hh.y-4,8,8);ctx.fill();ctx.stroke();});
-  }
-  // Filled objects (CCD marks)
-  if(o.filled){
-    ctx.fillStyle=o.color;
-    ctx.beginPath();
-    if(o.shape==='circle'){ctx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);}
-    else{ctx.rect(x,y,w,h);}
-    ctx.fill();
-    return;
-  }
-  ctx.strokeStyle=o.color;ctx.lineWidth=o.lineWidth*RS;applyDash(ctx,o.dash);
-  ctx.beginPath();
-  if(o.shape==='circle'){ctx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);}
-  else if(o.shape==='rounded'){const r=Math.min(o.radius,w/2,h/2);ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.arcTo(x+w,y,x+w,y+r,r);ctx.lineTo(x+w,y+h-r);ctx.arcTo(x+w,y+h,x+w-r,y+h,r);ctx.lineTo(x+r,y+h);ctx.arcTo(x,y+h,x,y+h-r,r);ctx.lineTo(x,y+r);ctx.arcTo(x,y,x+r,y,r);ctx.closePath();}
-  else{ctx.rect(x,y,w,h);}
-  ctx.stroke();
-  if(o.regMarks){ctx.setLineDash([]);const s=10*RS;[[x,y],[x+w,y],[x+w,y+h],[x,y+h]].forEach(([cx,cy])=>{ctx.beginPath();ctx.moveTo(cx-s,cy);ctx.lineTo(cx+s,cy);ctx.moveTo(cx,cy-s);ctx.lineTo(cx,cy+s);ctx.arc(cx,cy,s*.4,0,Math.PI*2);ctx.stroke();});}
-}
-
-function drawTab1Overlay(ctx){
-  // Draw detected paths with their actual colors, highlight selected
-  Object.values(detectedPaths).forEach(group=>{
-    if(!group.selected) return;
-    const spotColor=document.getElementById('t1Color').value;
-    ctx.strokeStyle=spotColor;
-    ctx.lineWidth=1.5;
-    ctx.setLineDash([4,3]);
-    group.paths.forEach(path=>{
-      if(path.w<2&&path.h<2) return;
-      // path coords are in PDF pt (scale=1), convert to canvas (scale=RS)
-      const x=path.x0*RS, y=path.y0*RS;
-      const w=path.w*RS, h=path.h*RS;
-      ctx.beginPath();ctx.rect(x,y,w,h);ctx.stroke();
-    });
-    ctx.setLineDash([]);
-  });
-}
-
-function drawImpOverlay(ctx){
-  if(!impData) return;
-  const{rows,cols,cellW,cellH,offX,offY,gapX,gapY,bleedPx,shape,radPx,
-        dk1Color,dk2Color,useCCD,ccdSizeMM,ccdOffMM}=impData;
-  const vp=pageVps[curPage];if(!vp)return;
-  const scale=vp.width/impData.sheetW;
-
-  function drawShape(ctx,x,y,w,h,r){
-    ctx.beginPath();
-    if(shape==='circle'){ctx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);}
-    else if(shape==='rounded'){const rv=Math.min(r,w/2,h/2);ctx.moveTo(x+rv,y);ctx.lineTo(x+w-rv,y);ctx.arcTo(x+w,y,x+w,y+rv,rv);ctx.lineTo(x+w,y+h-rv);ctx.arcTo(x+w,y+h,x+w-rv,y+h,rv);ctx.lineTo(x+rv,y+h);ctx.arcTo(x,y+h,x,y+h-rv,rv);ctx.lineTo(x,y+rv);ctx.arcTo(x,y,x+rv,y,rv);ctx.closePath();}
-    else{ctx.rect(x,y,w,h);}
-  }
-
-  for(let r=0;r<rows;r++){
-    for(let c=0;c<cols;c++){
-      const x=offX+c*(cellW+gapX);
-      const y=offY+r*(cellH+gapY);
-
-      // DK2 — outer bleed rect (dashed blue)
-      if(bleedPx>0){
-        ctx.strokeStyle=dk2Color;ctx.lineWidth=1;ctx.setLineDash([5,3]);
-        drawShape(ctx,x-bleedPx,y-bleedPx,cellW+bleedPx*2,cellH+bleedPx*2,radPx+bleedPx);
-        ctx.stroke();
-      }
-
-      // DK1 — exact sticker (solid pink)
-      ctx.strokeStyle=dk1Color;ctx.lineWidth=1.5;ctx.setLineDash([]);
-      drawShape(ctx,x,y,cellW,cellH,radPx);
-      ctx.stroke();
-    }
-  }
-
-  // CCD marks — filled black circles at 4 corners
-  if(useCCD&&ccdSizeMM>0){
-    const ccdPx=ccdSizeMM*scale;
-    const ccdOff=ccdOffMM*scale;
-    const W=vp.width, H=vp.height;
-    ctx.fillStyle='#000000';ctx.setLineDash([]);
-    [
-      [ccdOff, ccdOff],
-      [W-ccdOff-ccdPx, ccdOff],
-      [W-ccdOff-ccdPx, H-ccdOff-ccdPx],
-      [ccdOff, H-ccdOff-ccdPx]
-    ].forEach(([cx,cy])=>{
-      ctx.beginPath();ctx.ellipse(cx+ccdPx/2,cy+ccdPx/2,ccdPx/2,ccdPx/2,0,0,Math.PI*2);
-      ctx.fill();
-    });
-  }
-}
-
-function redraw(){
-  ovrCtx.clearRect(0,0,ovrCan.width,ovrCan.height);
-  if(activeTab===1){
-    drawTab1Overlay(ovrCtx);
-  } else if(activeTab===2){
-    getObjs().forEach(o=>drawObj(ovrCtx,o,o.id===selId));
-    if(penPts.length>0){
-      ovrCtx.strokeStyle='#FF0099';ovrCtx.lineWidth=1.5;ovrCtx.setLineDash([4,3]);
-      ovrCtx.beginPath();ovrCtx.moveTo(penPts[0].x,penPts[0].y);
-      for(let i=1;i<penPts.length;i++)ovrCtx.lineTo(penPts[i].x,penPts[i].y);
-      if(penPrev)ovrCtx.lineTo(penPrev.x,penPrev.y);
-      ovrCtx.stroke();ovrCtx.setLineDash([]);
-      penPts.forEach((p,i)=>{ovrCtx.fillStyle=i===0?'#FF0099':'#fff';ovrCtx.strokeStyle='#FF0099';ovrCtx.lineWidth=1.5;ovrCtx.beginPath();ovrCtx.arc(p.x,p.y,4,0,Math.PI*2);ovrCtx.fill();ovrCtx.stroke();});
-    }
-    if(dragSt&&(dragSt.type==='dRect'||dragSt.type==='dCirc')){
-      const{sx,sy,cx,cy}=dragSt;const x=Math.min(sx,cx),y=Math.min(sy,cy),w=Math.abs(cx-sx),h=Math.abs(cy-sy);
-      ovrCtx.strokeStyle='#FF0099';ovrCtx.lineWidth=1.5;ovrCtx.setLineDash([4,3]);
-      ovrCtx.beginPath();if(dragSt.type==='dCirc')ovrCtx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);else ovrCtx.rect(x,y,w,h);
-      ovrCtx.stroke();ovrCtx.setLineDash([]);
-    }
-  } else if(activeTab===3){
-    drawImpOverlay(ovrCtx);
-  }
-}
-
-// ─── Tool ─────────────────────────────────────────────────────────────────
-function setTool(t){
-  tool=t;penPts=[];penPrev=null;
-  ['Select','Pen','Rect','Circle'].forEach(n=>document.getElementById('tool'+n).classList.toggle('active',n.toLowerCase()===t));
-  ovrCan.style.cursor=t==='select'?'default':'crosshair';
-  redraw();
-}
-document.addEventListener('keydown',e=>{
-  if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;
-  if(activeTab!==2)return;
-  if(e.key==='v')setTool('select');if(e.key==='p')setTool('pen');
-  if(e.key==='r')setTool('rect');if(e.key==='e')setTool('circle');
-  if(e.key==='Escape'){penPts=[];penPrev=null;redraw();}
-  if((e.key==='Delete'||e.key==='Backspace')&&selId)delObj(selId);
-});
-
-// ─── Mouse ────────────────────────────────────────────────────────────────
-function cXY(e){const r=ovrCan.getBoundingClientRect();return{x:(e.clientX-r.left)*(ovrCan.width/r.width)/zoomLevel,y:(e.clientY-r.top)*(ovrCan.height/r.height)/zoomLevel};}
-function hitHandle(o,mx,my){const{x,y,w,h}=getCR(o);for(const hh of getHandles(x,y,w,h)){if(Math.abs(mx-hh.x)<7&&Math.abs(my-hh.y)<7)return hh.n;}return null;}
-function hitObj(mx,my){const obs=getObjs();for(let i=obs.length-1;i>=0;i--){const o=obs[i];if(o.points){for(let j=1;j<o.points.length;j++){const p1=o.points[j-1],p2=o.points[j];if(distSeg(mx,my,p1.x,p1.y,p2.x,p2.y)<8)return o;}continue;}const{x,y,w,h}=getCR(o);if(mx>=x-4&&mx<=x+w+4&&my>=y-4&&my<=y+h+4)return o;}return null;}
-function distSeg(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay;if(!dx&&!dy)return Math.hypot(px-ax,py-ay);const t=Math.max(0,Math.min(1,((px-ax)*dx+(py-ay)*dy)/(dx*dx+dy*dy)));return Math.hypot(px-(ax+t*dx),py-(ay+t*dy));}
-function cursorForHandle(n){if(n==='n'||n==='s')return 'n-resize';if(n==='e'||n==='w')return 'e-resize';if(n==='nw'||n==='se')return 'nw-resize';return 'ne-resize';}
-
-ovrCan.addEventListener('mousemove',e=>{
-  if(activeTab!==2)return;
-  const{x,y}=cXY(e);
-  if(tool==='pen'&&penPts.length>0){penPrev={x,y};redraw();return;}
-  if(dragSt){
-    const ds=dragSt;
-    if(ds.type==='move'){const o=getObjs().find(o=>o.id===ds.id);if(o){o.x=ds.ox+(x-ds.sx);o.y=ds.oy+(y-ds.sy);}redraw();}
-    else if(ds.type==='resize'){const o=getObjs().find(o=>o.id===ds.id);if(!o)return;const dx=x-ds.sx,dy=y-ds.sy;let nx=ds.ox,ny=ds.oy,nw=ds.ow,nh=ds.oh;if(ds.h.includes('e'))nw=Math.max(10,ds.ow+dx);if(ds.h.includes('s'))nh=Math.max(10,ds.oh+dy);if(ds.h.includes('w')){nx=ds.ox+dx;nw=Math.max(10,ds.ow-dx);}if(ds.h.includes('n')){ny=ds.oy+dy;nh=Math.max(10,ds.oh-dy);}o.x=nx;o.y=ny;o.w=nw;o.h=nh;redraw();}
-    else if(ds.type==='dRect'||ds.type==='dCirc'){ds.cx=x;ds.cy=y;redraw();}
-    return;
-  }
-  if(tool==='select'){const o=getSel();if(o&&!o.points){const hh=hitHandle(o,x,y);if(hh){ovrCan.style.cursor=cursorForHandle(hh);return;}}ovrCan.style.cursor=hitObj(x,y)?'move':'default';}
-});
-ovrCan.addEventListener('mousedown',e=>{
-  if(activeTab!==2)return;
-  const{x,y}=cXY(e);
-  if(tool==='pen'){if(penPts.length>2&&Math.hypot(x-penPts[0].x,y-penPts[0].y)<10){addObj({type:'pen',shape:'pen',points:[...penPts],closed:true,x:0,y:0,w:0,h:0});penPts=[];penPrev=null;redraw();return;}penPts.push({x,y});redraw();return;}
-  if(tool==='rect'||tool==='circle'){dragSt={type:tool==='rect'?'dRect':'dCirc',sx:x,sy:y,cx:x,cy:y};return;}
-  const o=getSel();if(o&&!o.points){const hh=hitHandle(o,x,y);if(hh){dragSt={type:'resize',id:o.id,h:hh,sx:x,sy:y,ox:o.x,oy:o.y,ow:o.w,oh:o.h};return;}}
-  const hit=hitObj(x,y);
-  if(hit){selObj(hit.id);if(!hit.points)dragSt={type:'move',id:hit.id,sx:x,sy:y,ox:hit.x,oy:hit.y};}
-  else{selId=null;document.getElementById('editPanel').className='edit-panel';updObjList();redraw();}
-});
-ovrCan.addEventListener('mouseup',e=>{
-  if(activeTab!==2)return;
-  const{x,y}=cXY(e);
-  if(dragSt&&(dragSt.type==='dRect'||dragSt.type==='dCirc')){const{sx,sy}=dragSt;const rx=Math.min(sx,x),ry=Math.min(sy,y),rw=Math.abs(x-sx),rh=Math.abs(y-sy);if(rw>5&&rh>5)addObj({shape:dragSt.type==='dCirc'?'circle':'rect',x:rx,y:ry,w:rw,h:rh});dragSt=null;redraw();return;}
-  dragSt=null;
-});
-ovrCan.addEventListener('dblclick',e=>{
-  if(activeTab!==2)return;
-  if(tool==='pen'&&penPts.length>=2){addObj({type:'pen',shape:'pen',points:[...penPts],closed:false,x:0,y:0,w:0,h:0});penPts=[];penPrev=null;redraw();}
-});
-
-// ─── AI Suggest (tab2) ────────────────────────────────────────────────────
 async function runAISuggest(){
   if(!pdfDoc)return;
   const btn=document.getElementById('aiSuggestBtn');
