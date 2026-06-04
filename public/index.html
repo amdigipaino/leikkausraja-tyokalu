@@ -435,28 +435,47 @@ async function checkRes(){
   }catch(e){}
 }
 async function analyzeVectorPaths(){
-  if(!pdfDoc||!pdfBytes)return;
+  if(!pdfDoc||!pdfBytes) return;
   const el=document.getElementById('pgroups');
   el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Analysoidaan...<br><small>(ensimmäinen kutsu voi kestää 15s)</small></div>';
   try{
-    const b64=pdfB64;
+    const u8=new Uint8Array(pdfBytes);
+    let bin=''; for(let i=0;i<u8.length;i+=8192) bin+=String.fromCharCode(...u8.subarray(i,i+8192));
+    const b64=btoa(bin);
     const resp=await fetch(BACKEND+'/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pdf:b64})});
-    if(!resp.ok)throw new Error('Backend: '+resp.status);
+    if(!resp.ok) throw new Error('Backend: '+resp.status);
     const data=await resp.json();
-    if(data.error)throw new Error(data.error);
+    if(data.error) throw new Error(data.error);
     const pal=['#CC0000','#0055CC','#00AA44','#FF6600','#9900CC','#CC6600','#008888'];
     const groups={};
     data.groups.forEach((g,i)=>{
       const hex=pal[i%pal.length];
-      groups[g.key]={hex,name:g.name,paths:g.paths.map(p=>({x0:p.x*2.8346*RS,y0:p.y*2.8346*RS,w:p.w*2.8346*RS,h:p.h*2.8346*RS,lw:p.lw})),selected:false,previewColor:hex,spotName:g.name};
+      // Store full path ops for accurate rendering
+      groups[g.key]={
+        hex, name:g.name,
+        paths:g.paths.map(p=>({
+          ops:p.ops,        // full bezier ops in mm
+          bbox:p.bbox,      // bounding box in mm
+          lw:p.lw,
+          isRect:p.isRect,
+          isCurve:p.isCurve
+        })),
+        selected:false, previewColor:hex, spotName:g.name
+      };
     });
-    if(!Object.keys(groups).length){el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Ei vektoripolkuja löydetty</div>';document.getElementById('smaps').innerHTML='';return;}
+    if(!Object.keys(groups).length){
+      el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Ei vektoripolkuja löydetty</div>';
+      document.getElementById('smaps').innerHTML='';
+      return;
+    }
     detectedPaths=groups;
     renderPathGroups(groups);
   }catch(e){
     el.innerHTML='<div style="font-size:12px;color:var(--red);padding:8px">Analyysi epäonnistui:<br>'+e.message+'</div>';
   }
 }
+
+
 const SPOTS=['DK1','DK2','CREASE','Kiss Cut','CUT1','Die Cut','Perf'];
 const SPOT_COLORS={
   'DK1':'#0055CC',
@@ -627,18 +646,78 @@ function drawObj(ctx,o,sel){
   else ctx.rect(x,y,w,h);
   ctx.stroke();
 }
-function drawTab1(ctx){
-  const vp=pageVps[curPage];
-  const pageW=vp?vp.width:9999, pageH=vp?vp.height:9999;
-  Object.values(detectedPaths).filter(g=>g.selected).forEach(g=>{
-    ctx.strokeStyle=g.previewColor||'#FF0099';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);
-    g.paths.forEach(p=>{
-      // Skip full-page-size paths (these are crop marks / page borders, not sticker cuts)
-      if(p.w>pageW*0.85&&p.h>pageH*0.85)return;
-      ctx.beginPath();ctx.rect(p.x0,p.y0,p.w,p.h);ctx.stroke();
-    });
-    ctx.setLineDash([]);
+function mm2px(mm){return mm*2.8346*RS;}
+
+function drawPathOps(ctx, ops, color, lw){
+  // Draw path from backend ops (mm coords) to canvas px
+  ctx.strokeStyle=color;
+  ctx.lineWidth=Math.max(1, lw*2.8346*RS);
+  ctx.setLineDash([4,3]);
+  ctx.beginPath();
+  let started=false;
+  ops.forEach(op=>{
+    const a=op.args;
+    if(op.op==='re'&&a.length>=4){
+      const x=mm2px(a[0]),y=mm2px(a[1]),w=mm2px(a[2]),h=mm2px(a[3]);
+      ctx.rect(x,y,w,h); started=true;
+    } else if(op.op==='m'&&a.length>=2){
+      ctx.moveTo(mm2px(a[0]),mm2px(a[1])); started=true;
+    } else if(op.op==='l'&&a.length>=2){
+      ctx.lineTo(mm2px(a[0]),mm2px(a[1]));
+    } else if(op.op==='c'&&a.length>=6){
+      ctx.bezierCurveTo(mm2px(a[0]),mm2px(a[1]),mm2px(a[2]),mm2px(a[3]),mm2px(a[4]),mm2px(a[5]));
+    } else if(op.op==='v'&&a.length>=4){
+      // v: current point is first control point
+      ctx.bezierCurveTo(ctx.currentX||0,ctx.currentY||0,mm2px(a[0]),mm2px(a[1]),mm2px(a[2]),mm2px(a[3]));
+    } else if(op.op==='h'){
+      ctx.closePath();
+    }
   });
+  if(started) ctx.stroke();
+  ctx.setLineDash([]);
+}
+
+function drawTab1(ctx){
+  Object.values(detectedPaths).filter(g=>g.selected).forEach(g=>{
+    g.paths.forEach(p=>{
+      drawPathOps(ctx, p.ops, g.previewColor||'#FF0099', p.lw||0.5);
+    });
+  });
+}
+
+// Hit test: is point (mx,my) near a detected path?
+function hitTestPaths(mx,my){
+  const threshold=8; // px
+  for(const[key,g] of Object.entries(detectedPaths)){
+    for(const p of g.paths){
+      // Check bbox first (quick reject)
+      if(!p.bbox) continue;
+      const bx=mm2px(p.bbox.x), by=mm2px(p.bbox.y);
+      const bw=mm2px(p.bbox.w), bh=mm2px(p.bbox.h);
+      if(mx<bx-threshold||mx>bx+bw+threshold||my<by-threshold||my>by+bh+threshold) continue;
+      // More precise: check against ops
+      if(p.isRect){
+        const dist=Math.max(0,Math.max(bx-mx,mx-(bx+bw)),Math.max(by-my,my-(by+bh)));
+        if(dist<threshold) return key;
+      } else {
+        // Check distance to path segments
+        let pts=[];
+        p.ops.forEach(op=>{
+          const a=op.args;
+          if(op.op==='m'||op.op==='l') pts.push([mm2px(a[0]),mm2px(a[1])]);
+          else if(op.op==='c') pts.push([mm2px(a[4]),mm2px(a[5])]);
+        });
+        for(let i=1;i<pts.length;i++){
+          const[x1,y1]=pts[i-1],[x2,y2]=pts[i];
+          const dx=x2-x1,dy=y2-y1,len=Math.hypot(dx,dy)||1;
+          const t=Math.max(0,Math.min(1,((mx-x1)*dx+(my-y1)*dy)/(len*len)));
+          const dist=Math.hypot(mx-(x1+t*dx),my-(y1+t*dy));
+          if(dist<threshold) return key;
+        }
+      }
+    }
+  }
+  return null;
 }
 function drawImpOverlay(ctx){
   if(!impData)return;
@@ -714,6 +793,48 @@ function setTool(t){
 }
 document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;if(activeTab!==2)return;if(e.key==='v')setTool('select');if(e.key==='p')setTool('pen');if(e.key==='r')setTool('rect');if(e.key==='e')setTool('circle');if(e.key==='Escape'){penPts=[];penPrev=null;redraw();}if((e.key==='Delete'||e.key==='Backspace')&&selId)delObj(selId);});
 function cXY(e){const r=oc.getBoundingClientRect();return{x:(e.clientX-r.left)*(oc.width/r.width)/zoom,y:(e.clientY-r.top)*(oc.height/r.height)/zoom};}
+function showSpotPopup(key, clientX, clientY){
+  // Remove existing popup
+  const existing=document.getElementById('spotPopup');
+  if(existing) existing.remove();
+  const g=detectedPaths[key];
+  if(!g||!g.selected) return;
+  const opts=SPOTS.map(n=>'<option value="'+n+'"'+(g.spotName===n?' selected':'')+'>'+n+'</option>').join('');
+  const popup=document.createElement('div');
+  popup.id='spotPopup';
+  popup.style.cssText='position:fixed;z-index:1000;background:#fff;border:1px solid #e7e5e4;border-radius:8px;padding:12px;box-shadow:0 4px 20px rgba(0,0,0,.15);min-width:180px;font-family:inherit';
+  popup.style.left=(clientX+10)+'px';
+  popup.style.top=(clientY-20)+'px';
+  popup.innerHTML='<div style="font-size:11px;font-weight:600;margin-bottom:8px;color:#57534e">'+g.name+' — '+g.paths.length+' viivaa</div>'
+    +'<label style="font-size:11px;display:block;margin-bottom:4px">Spot-värinimi</label>'
+    +'<select id="popupSpot" style="width:100%;padding:5px;border:1px solid #e7e5e4;border-radius:6px;font-size:12px;margin-bottom:8px">'+opts+'</select>'
+    +'<label style="font-size:11px;display:block;margin-bottom:4px">Väri</label>'
+    +'<input type="color" id="popupColor" value="'+g.previewColor+'" style="width:100%;height:28px;margin-bottom:10px">'
+    +'<div style="display:flex;gap:6px">'
+    +'<button onclick="applySpotFromPopup(\"'+key+'\")" style="flex:1;padding:6px;background:#1c1917;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px">Aseta</button>'
+    +'<button onclick="document.getElementById(\'spotPopup\')?.remove()" style="padding:6px 10px;border:1px solid #e7e5e4;border-radius:6px;cursor:pointer;font-size:12px">✕</button>'
+    +'</div>';
+  document.body.appendChild(popup);
+  // Close on outside click
+  setTimeout(()=>{
+    document.addEventListener('click', function handler(ev){
+      if(!popup.contains(ev.target)){popup.remove();document.removeEventListener('click',handler);}
+    });
+  },100);
+}
+
+function applySpotFromPopup(key){
+  const g=detectedPaths[key];if(!g)return;
+  const spot=document.getElementById('popupSpot')?.value||g.spotName;
+  const col=document.getElementById('popupColor')?.value||g.previewColor;
+  g.spotName=spot; g.previewColor=col;
+  // Update smaps if visible
+  const sm=document.getElementById('sm_'+key);if(sm)sm.value=spot;
+  const sc=document.getElementById('smc_'+key);if(sc)sc.value=col;
+  document.getElementById('spotPopup')?.remove();
+  updSmaps(); redraw();
+}
+
 function hitH(o,mx,my){const{x,y,w,h}=getCR(o);for(const hh of handles(x,y,w,h)){if(Math.abs(mx-hh.x)<7&&Math.abs(my-hh.y)<7)return hh.n;}return null;}
 function hitO(mx,my){const obs=getObjs();for(let i=obs.length-1;i>=0;i--){const o=obs[i];if(o.points){for(let j=1;j<o.points.length;j++){const p1=o.points[j-1],p2=o.points[j];const dx=p2.x-p1.x,dy=p2.y-p1.y,t=Math.max(0,Math.min(1,((mx-p1.x)*dx+(my-p1.y)*dy)/(dx*dx+dy*dy||1)));if(Math.hypot(mx-(p1.x+t*dx),my-(p1.y+t*dy))<8)return o;}continue;}const{x,y,w,h}=getCR(o);if(mx>=x-4&&mx<=x+w+4&&my>=y-4&&my<=y+h+4)return o;}return null;}
 function curH(n){if(n==='n'||n==='s')return 'n-resize';if(n==='e'||n==='w')return 'e-resize';if(n==='nw'||n==='se')return 'nw-resize';return 'ne-resize';}
@@ -731,6 +852,22 @@ oc.addEventListener('mousemove',e=>{
   if(tool==='select'){const o=getSel();if(o&&!o.points){const hh=hitH(o,x,y);if(hh){oc.style.cursor=curH(hh);return;}}oc.style.cursor=hitO(x,y)?'move':'default';}
 });
 oc.addEventListener('mousedown',e=>{
+  // Tab1: click to select/deselect path groups
+  if(activeTab===1){
+    const{x,y}=cXY(e);
+    const hitKey=hitTestPaths(x,y);
+    if(hitKey){
+      const g=detectedPaths[hitKey];
+      g.selected=!g.selected;
+      const chk=document.getElementById('chk_'+hitKey);
+      if(chk) chk.checked=g.selected;
+      updSmaps();
+      redraw();
+      // Show spot selector popup
+      showSpotPopup(hitKey, e.clientX, e.clientY);
+    }
+    return;
+  }
   if(activeTab!==2)return;
   const{x,y}=cXY(e);
   if(tool==='pen'){if(penPts.length>2&&Math.hypot(x-penPts[0].x,y-penPts[0].y)<10){addObj({type:'pen',shape:'pen',points:[...penPts],closed:true,x:0,y:0,w:0,h:0});penPts=[];penPrev=null;redraw();return;}penPts.push({x,y});redraw();return;}
