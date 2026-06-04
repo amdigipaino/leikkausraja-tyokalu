@@ -468,10 +468,11 @@ async function analyzeVectorPaths(){
     const timer=setTimeout(()=>controller.abort(),60000);
     let resp;
     try{
+      // Send as binary to reduce payload (2.4MB vs 3.3MB)
       resp=await fetch(BACKEND+'/analyze',{
         method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({pdf:pdfB64}),
+        headers:{'Content-Type':'application/octet-stream'},
+        body:new Uint8Array(pdfBytes),
         signal:controller.signal
       });
     }finally{clearTimeout(timer);}
