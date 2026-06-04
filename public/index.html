@@ -390,13 +390,19 @@ async function renderPage(n){
   pageVps[n]=vp;
 
   if(activeTab===3){
-    // Tab3: size canvas to SRA3 sheet, draw white background
+    // Tab3: size canvas to SRA3 sheet
     const sra3W=Math.round(mm2pt(320)*RS);
     const sra3H=Math.round(mm2pt(450)*RS);
     pc.width=sra3W; pc.height=sra3H; oc.width=sra3W; oc.height=sra3H;
-    pCtx.fillStyle='#f0f0f0'; pCtx.fillRect(0,0,sra3W,sra3H);
-    // Store SRA3 viewport for overlay calculations
+    // White SRA3 background
+    pCtx.fillStyle='#ffffff';
+    pCtx.fillRect(0,0,sra3W,sra3H);
+    // Light border
+    pCtx.strokeStyle='#cccccc';pCtx.lineWidth=1;pCtx.strokeRect(0,0,sra3W,sra3H);
+    // Store SRA3 viewport
     pageVps[n]={width:sra3W,height:sra3H,scale:RS};
+    // Draw tiled PDF thumbnails if impData exists
+    await drawTab3Thumbs(n, sra3W, sra3H);
   } else {
     pc.width=vp.width;pc.height=vp.height;
     oc.width=vp.width;oc.height=vp.height;
@@ -435,6 +441,33 @@ async function checkRes(){
       :'<span class="res-badge ok">Vektori — '+sz+'</span>';
   }catch(e){}
 }
+async function drawTab3Thumbs(pageN, sra3W, sra3H){
+  if(!impData) return;
+  const{rows,cols,effWMM,effHMM,gapMM,marMM}=impData;
+  const sc=sra3W/mm2pt(320);
+  const cW=mm2pt(effWMM)*sc, cH=mm2pt(effHMM)*sc;
+  const gX=mm2pt(gapMM)*sc, gY=mm2pt(gapMM)*sc;
+  const oX=mm2pt(marMM)*sc+mm2pt(impOffX)*sc;
+  const oY=mm2pt(marMM)*sc+mm2pt(impOffY)*sc;
+  try{
+    const pg=await pdfDoc.getPage(pageN);
+    const thumbScale=Math.min(cW/pg.getViewport({scale:1}).width, cH/pg.getViewport({scale:1}).height);
+    const thumbVp=pg.getViewport({scale:thumbScale});
+    const tc=document.createElement('canvas');
+    tc.width=Math.round(thumbVp.width); tc.height=Math.round(thumbVp.height);
+    await pg.render({canvasContext:tc.getContext('2d'),viewport:thumbVp}).promise;
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        const x=oX+c*(cW+gX);
+        const y=oY+r*(cH+gY);
+        // Center thumb in cell
+        const dx=(cW-tc.width)/2, dy=(cH-tc.height)/2;
+        pCtx.drawImage(tc, x+dx, y+dy);
+      }
+    }
+  }catch(e){ console.warn('drawTab3Thumbs',e); }
+}
+
 async function analyzeVectorPaths(){
   if(!pdfDoc) return;
   const el=document.getElementById('pgroups');
@@ -1122,7 +1155,10 @@ function drawImp(){
     +'Käytetty: '+totalW.toFixed(1)+'×'+totalH.toFixed(1)+'mm<br>'
     +(fits?'<span style="color:var(--green)">✓ Mahtuu arkille</span>':'<span style="color:var(--red)">⚠ Ylittää arkin</span>');
   res.style.borderColor=fits?'#fcd34d':'#fecaca';
-  if(activeTab===3)redraw();
+  if(activeTab===3){
+    if(pdfDoc) renderPage(curPage);
+    else redraw();
+  }
 }
 
 
@@ -1207,20 +1243,35 @@ async function doExport(){
       const doc=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));
       const page=doc.getPages()[curPage-1];
       const{width:pW,height:pH}=page.getSize();
-      const vp=pageVps[curPage];
       const lw=parseFloat(document.getElementById('t1lw').value)||0.5;
-      // Build cut lines directly using PDFLib drawing methods
+      function hexRgb(h){return PDFLib.rgb(parseInt(h.slice(1,3),16)/255,parseInt(h.slice(3,5),16)/255,parseInt(h.slice(5,7),16)/255);}
       sel.forEach(g=>{
-        const c=g.previewColor||'#FF0099';
-        const r2=parseInt(c.slice(1,3),16)/255;
-        const g2=parseInt(c.slice(3,5),16)/255;
-        const b2=parseInt(c.slice(5,7),16)/255;
+        const col=hexRgb(g.previewColor||'#FF0099');
         g.paths.forEach(p=>{
-          const pageHpt=vp.height/RS;
-          const x=p.x0/RS, y2=p.y0/RS, w2=p.w/RS, h2=p.h/RS;
-          const pdfY=pageHpt-y2-h2;
-          if(isNaN(x)||isNaN(pdfY)||isNaN(w2)||isNaN(h2))return;
-          page.drawRectangle({x,y:pdfY,width:w2,height:h2,borderColor:PDFLib.rgb(r2,g2,b2),borderWidth:lw,color:undefined,opacity:1,borderOpacity:1});
+          if(!p.ops) return;
+          // Draw each op
+          let prevPts=[], startPt=null;
+          p.ops.forEach(op=>{
+            const a=op.args;
+            if(op.op==='re'&&a.length>=4){
+              const x=mm2pt(a[0]), y=pH-mm2pt(a[1])-mm2pt(a[3]);
+              if(!isNaN(x)&&!isNaN(y))
+                page.drawRectangle({x,y,width:mm2pt(a[2]),height:mm2pt(a[3]),borderColor:col,borderWidth:lw,color:PDFLib.rgb(1,1,1),opacity:0,borderOpacity:1});
+            } else if(op.op==='m'&&a.length>=2){
+              prevPts=[[mm2pt(a[0]),pH-mm2pt(a[1])]]; startPt=[mm2pt(a[0]),pH-mm2pt(a[1])];
+            } else if(op.op==='l'&&a.length>=2){
+              const nx=mm2pt(a[0]),ny=pH-mm2pt(a[1]);
+              if(prevPts.length){const[px,py]=prevPts[prevPts.length-1];if(!isNaN(px)&&!isNaN(nx))page.drawLine({start:{x:px,y:py},end:{x:nx,y:ny},color:col,thickness:lw});}
+              prevPts.push([nx,ny]);
+            } else if(op.op==='c'&&a.length>=6){
+              // Approximate bezier
+              const[x0,y0]=prevPts.length?prevPts[prevPts.length-1]:[0,0];
+              const x1=mm2pt(a[0]),y1=pH-mm2pt(a[1]),x2=mm2pt(a[2]),y2=pH-mm2pt(a[3]),x3=mm2pt(a[4]),y3=pH-mm2pt(a[5]);
+              for(let t=1;t<=8;t++){const tt=t/8,mt=1-tt;const bx=mt*mt*mt*x0+3*mt*mt*tt*x1+3*mt*tt*tt*x2+tt*tt*tt*x3;const by=mt*mt*mt*y0+3*mt*mt*tt*y1+3*mt*tt*tt*y2+tt*tt*tt*y3;const[ppx,ppy]=prevPts[prevPts.length-1];if(!isNaN(ppx))page.drawLine({start:{x:ppx,y:ppy},end:{x:bx,y:by},color:col,thickness:lw});prevPts.push([bx,by]);}
+            } else if(op.op==='h'&&startPt&&prevPts.length){
+              const[px,py]=prevPts[prevPts.length-1];if(!isNaN(px))page.drawLine({start:{x:px,y:py},end:{x:startPt[0],y:startPt[1]},color:col,thickness:lw});
+            }
+          });
         });
       });
       dlPDF(await doc.save(),'leikkausraja_spotcolor.pdf');
