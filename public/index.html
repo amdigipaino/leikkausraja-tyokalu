@@ -447,11 +447,36 @@ async function analyzeVectorPaths(){
   try{
     // Use pre-computed base64 to avoid ArrayBuffer detachment issues
     if(!pdfB64) throw new Error('PDF ei ole ladattu oikein — yritä ladata uudelleen');
-    el.innerHTML='<div style="font-size:11px;font-family:monospace;padding:8px;background:#f5f5f4">Kutsutaan backendia...<br>'+BACKEND+'</div>';
-    const resp=await fetch(BACKEND+'/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pdf:pdfB64})});
+    // Wake up backend first, then send PDF
+    el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:8px">Herätetään backendia...<br><small>Kestää 15-30s ensimmäisellä kerralla</small></div>';
+    
+    // Step 1: wake with health check, retry up to 4 times
+    let woken=false;
+    for(let attempt=0;attempt<4;attempt++){
+      try{
+        const wakeResp=await fetch(BACKEND+'/health',{signal:AbortSignal.timeout(12000)});
+        if(wakeResp.ok){woken=true;break;}
+      }catch(e){ /* keep trying */ }
+      el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:8px">Herätetään... ('+(attempt+2)+'/4)<br><small>Hetki...</small></div>';
+      await new Promise(r=>setTimeout(r,3000));
+    }
+    
+    // Step 2: send PDF
+    el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:8px">Analysoidaan PDF...</div>';
+    const controller=new AbortController();
+    const timer=setTimeout(()=>controller.abort(),60000);
+    let resp;
+    try{
+      resp=await fetch(BACKEND+'/analyze',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({pdf:pdfB64}),
+        signal:controller.signal
+      });
+    }finally{clearTimeout(timer);}
+    
     const rawText=await resp.text();
-    el.innerHTML='<div style="font-size:10px;font-family:monospace;padding:8px;background:#f5f5f4;word-break:break-all">Status: '+resp.status+'<br>'+rawText.slice(0,500)+'</div>';
-    if(!resp.ok) throw new Error('Backend '+resp.status);
+    if(!resp.ok) throw new Error('Backend '+resp.status+': '+rawText.slice(0,200));
     const data=JSON.parse(rawText);
     if(data.error) throw new Error(data.error);
     const pal=['#CC0000','#0055CC','#00AA44','#FF6600','#9900CC','#CC6600','#008888'];
