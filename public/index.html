@@ -440,73 +440,34 @@ async function checkRes(){
   }catch(e){}
 }
 async function analyzeVectorPaths(){
-  if(!pdfDoc||!pdfBytes) return;
+  if(!pdfDoc) return;
   const el=document.getElementById('pgroups');
-  el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Analysoidaan...<br><small>(ensimmäinen kutsu voi kestää 15s)</small></div>';
+  el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Analysoidaan...</div>';
   const sp=document.getElementById('analyzeSpin');if(sp)sp.style.display='inline-block';
   const ab=document.getElementById('analyzeBtn');if(ab)ab.disabled=true;
   try{
-    if(!pdfBytes) throw new Error('PDF ei ole ladattu — lataa uudelleen');
-    
-    // Compress PDF with gzip before sending
-    el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:8px">Pakataan ja lähetetään...</div>';
-    const rawBytes=new Uint8Array(pdfBytes);
-    const cs=new CompressionStream('gzip');
-    const writer=cs.writable.getWriter();
-    writer.write(rawBytes); writer.close();
-    const chunks=[]; const reader=cs.readable.getReader();
-    while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value);}
-    let compLen=0; chunks.forEach(c=>compLen+=c.length);
-    const compressed=new Uint8Array(compLen); let off2=0;
-    chunks.forEach(c=>{compressed.set(c,off2);off2+=c.length;});
-    el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:8px">Lähetetään '+(Math.round(compLen/1024))+'KB (pakattu '+(Math.round(rawBytes.length/1024))+'KB:sta)...</div>';
-    
+    if(!pdfB64) throw new Error('PDF ei ole ladattu oikein');
     const controller=new AbortController();
-    const timer=setTimeout(()=>controller.abort(),90000);
+    const timer=setTimeout(()=>controller.abort(),60000);
     let resp;
     try{
       resp=await fetch(BACKEND+'/analyze',{
         method:'POST',
-        headers:{'Content-Type':'application/octet-stream','Content-Encoding':'gzip'},
-        body:compressed,
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({pdf:pdfB64}),
         signal:controller.signal
       });
     }finally{clearTimeout(timer);}
-    
     const rawText=await resp.text();
-    // Show raw response for debugging
-    el.innerHTML='<div style="font-size:9px;font-family:monospace;padding:6px;background:#1c1917;color:#a8e6cf;word-break:break-all;max-height:200px;overflow-y:auto">'+rawText.slice(0,2000)+'</div>';
-    if(!resp.ok) throw new Error('Backend '+resp.status+': '+rawText.slice(0,200));
+    if(!resp.ok) throw new Error('Backend '+resp.status+': '+rawText.slice(0,300));
     const data=JSON.parse(rawText);
     if(data.error) throw new Error(data.error);
-    // Spot name → color mapping (matches backend)
-    const SPOT_COLORS_FE={
-      'DK1':'#0055CC','DK2':'#CC0000','CREASE':'#00AA44',
-      'Kiss Cut':'#0055CC','KissCut':'#0055CC',
-      'CUT1':'#CC0000','Die Cut':'#0055CC',
-      'Perf':'#FF6600','Score':'#00AA44','ccd':'#000000'
-    };
-    function spotColor(name){
-      for(const[k,v] of Object.entries(SPOT_COLORS_FE)){
-        if(k.toLowerCase()===name.toLowerCase()||name.toLowerCase().includes(k.toLowerCase())) return v;
-      }
-      return '#FF0099';
-    }
+    const SPOT_COLORS_FE={'DK1':'#0055CC','DK2':'#CC0000','CREASE':'#00AA44','Kiss Cut':'#0055CC','KissCut':'#0055CC','CUT1':'#CC0000','Die Cut':'#0055CC','Perf':'#FF6600','Score':'#00AA44','ccd':'#000000'};
+    function spotColor(name){for(const[k,v] of Object.entries(SPOT_COLORS_FE)){if(k.toLowerCase()===name.toLowerCase()||name.toLowerCase().includes(k.toLowerCase()))return v;}return '#FF0099';}
     const groups={};
     data.groups.forEach((g,i)=>{
-      // Use color from backend if provided, otherwise determine from name
       const hex=g.color||spotColor(g.name);
-      groups[g.key]={
-        hex, name:g.name,
-        paths:g.paths.map(p=>({
-          ops:p.ops,
-          bbox:p.bbox,
-          lw:p.lw,
-          isRect:p.isRect,
-          isCurve:p.isCurve
-        })),
-        selected:false, previewColor:hex, spotName:g.name
-      };
+      groups[g.key]={hex,name:g.name,paths:g.paths.map(p=>({ops:p.ops,bbox:p.bbox,lw:p.lw,isRect:p.isRect,isCurve:p.isCurve})),selected:false,previewColor:hex,spotName:g.name};
     });
     if(!Object.keys(groups).length){
       el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Ei vektoripolkuja löydetty</div>';
@@ -516,8 +477,8 @@ async function analyzeVectorPaths(){
     detectedPaths=groups;
     renderPathGroups(groups);
   }catch(e){
-    el.innerHTML='<div style="font-size:12px;color:var(--red);padding:8px">Analyysi epäonnistui:<br>'+e.message+'</div>';
-  } finally {
+    el.innerHTML='<div style="font-size:12px;color:var(--red);padding:8px">Virhe: '+e.message+'</div>';
+  }finally{
     const sp2=document.getElementById('analyzeSpin');if(sp2)sp2.style.display='none';
     const ab2=document.getElementById('analyzeBtn');if(ab2)ab2.disabled=false;
   }
