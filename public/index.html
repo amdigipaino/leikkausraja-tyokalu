@@ -223,12 +223,25 @@ input[type=range]{width:100%;height:3px}
       <div class="r2" style="margin-top:8px"><div><label class="lbl">DK1 väri</label><input type="color" id="iC1" value="#FF0099" oninput="drawImp()"></div><div><label class="lbl">DK2 väri</label><input type="color" id="iC2" value="#0055CC" oninput="drawImp()"></div></div>
     </div>
     <div class="sec">
+      <div class="slbl">Kuvan suunta</div>
+      <div class="tgl">
+        <button id="rotN" class="on" onclick="setRot(0)">0°</button>
+        <button id="rot90" onclick="setRot(90)">90°</button>
+        <button id="rot180" onclick="setRot(180)">180°</button>
+        <button id="rot270" onclick="setRot(270)">270°</button>
+      </div>
+      <p style="font-size:11px;color:var(--ink3);margin-top:6px">Kääntäminen vaikuttaa automaattisesti tarran mittoihin ja asemointiin.</p>
+    </div>
+    <div class="sec">
       <div class="slbl">CCD-kohdistusmerkit</div>
-      <div class="tgl"><button id="iCCDOff" class="on" onclick="setICCD(false)">Ei</button><button id="iCCDOn" onclick="setICCD(true)">Kyllä</button></div>
-      <div id="iCCDSet" class="hidden" style="margin-top:8px">
-        <label class="lbl">Spot-nimi</label><input type="text" id="iCCDN" value="ccd">
-        <label class="lbl">Halkaisija (mm) <span id="iCSV">5</span></label><input type="range" id="iCS" min="2" max="15" value="5" oninput="document.getElementById('iCSV').textContent=this.value;drawImp()">
-        <label class="lbl">Etäisyys (mm) <span id="iCOV">10</span></label><input type="range" id="iCO" min="3" max="30" value="10" oninput="document.getElementById('iCOV').textContent=this.value;drawImp()">
+      <p style="font-size:11px;color:var(--ink3);margin-bottom:8px">CCD-merkit lisätään vain SRA3-arkille (320×450mm). Muut arkkikoot eivät tue CCD-kohdistusta.</p>
+      <div id="iCCDWrap">
+        <div class="tgl"><button id="iCCDOff" class="on" onclick="setICCD(false)">Ei</button><button id="iCCDOn" onclick="setICCD(true)">Kyllä</button></div>
+        <div id="iCCDSet" class="hidden" style="margin-top:8px">
+          <label class="lbl">Spot-nimi</label><input type="text" id="iCCDN" value="ccd">
+          <label class="lbl">Halkaisija (mm) <span id="iCSV">5</span></label><input type="range" id="iCS" min="2" max="15" value="5" oninput="document.getElementById('iCSV').textContent=this.value;drawImp()">
+          <label class="lbl">Etäisyys (mm) <span id="iCOV">10</span></label><input type="range" id="iCO" min="3" max="30" value="10" oninput="document.getElementById('iCOV').textContent=this.value;drawImp()">
+        </div>
       </div>
     </div>
   </div>
@@ -292,7 +305,7 @@ const BACKEND='https://leikkausraja-backend.onrender.com';
 let pdfDoc=null,pdfBytes=null,curPage=1,totalPages=0,RS=1.8,zoom=1;
 let pageData={},pageVps={},selId=null,objCtr=0,tool='select',activeTab=1;
 let dragSt=null,penPts=[],penPrev=null,renderTask=null;
-let detectedPaths={},impData=null,addCCD_=false,pdfB64=null;
+let detectedPaths={},impData=null,addCCD_=false,pdfB64=null,impRot=0;
 const pc=document.getElementById('pc'),oc=document.getElementById('oc');
 const pCtx=pc.getContext('2d'),oCtx=oc.getContext('2d');
 function getObjs(){return pageData[curPage]||(pageData[curPage]=[])}
@@ -457,6 +470,23 @@ function onSpotChange(key, spotName){
   }
 }
 function setCCD(v){addCCD_=v;document.getElementById('ccdOff').classList.toggle('on',!v);document.getElementById('ccdOn').classList.toggle('on',v);document.getElementById('ccdSet').classList.toggle('hidden',!v);}
+function setRot(deg){
+  impRot=deg;
+  ['N','90','180','270'].forEach(d=>{
+    const id='rot'+(d==='N'?'N':d);
+    const el=document.getElementById(id);
+    if(el) el.classList.toggle('on', parseInt(d==='N'?0:d)===deg);
+  });
+  // Swap W/H if 90 or 270
+  if(deg===90||deg===270){
+    const w=document.getElementById('sW').value;
+    const h=document.getElementById('sH').value;
+    document.getElementById('sW').value=h;
+    document.getElementById('sH').value=w;
+  }
+  calcImp();
+}
+
 function setICCD(v){document.getElementById('iCCDOff').classList.toggle('on',!v);document.getElementById('iCCDOn').classList.toggle('on',v);document.getElementById('iCCDSet').classList.toggle('hidden',!v);drawImp();}
 function convertToSpot(){
   const vp=pageVps[curPage];if(!vp){ss('Lataa PDF ensin','warn');return;}
@@ -573,15 +603,40 @@ function drawImpOverlay(ctx){
   const vp=pageVps[curPage];if(!vp)return;
   const sc=vp.width/impData.sheetW;
   function sh(x,y,w,h,r){ctx.beginPath();if(shape==='circle')ctx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);else if(shape==='rounded'){const rv=Math.min(r,w/2,h/2);ctx.moveTo(x+rv,y);ctx.lineTo(x+w-rv,y);ctx.arcTo(x+w,y,x+w,y+rv,rv);ctx.lineTo(x+w,y+h-rv);ctx.arcTo(x+w,y+h,x+w-rv,y+h,rv);ctx.lineTo(x+rv,y+h);ctx.arcTo(x,y+h,x,y+h-rv,rv);ctx.lineTo(x,y+rv);ctx.arcTo(x,y,x+rv,y,rv);ctx.closePath();}else ctx.rect(x,y,w,h);}
+
   for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
     const x=oX+c*(cW+gX),y=oY+r*(cH+gY);
     if(bPx>0){ctx.strokeStyle=c2;ctx.lineWidth=1;ctx.setLineDash([5,3]);sh(x-bPx,y-bPx,cW+bPx*2,cH+bPx*2,rPx+bPx);ctx.stroke();}
-    ctx.strokeStyle=c1;ctx.lineWidth=1.5;ctx.setLineDash([]);sh(x,y,cW,cH,rPx);ctx.stroke();
+    ctx.strokeStyle=c1;ctx.lineWidth=1.5;ctx.setLineDash([]);
+
+    // Draw rotation indicator inside cell
+    if(impRot!==0){
+      ctx.save();
+      ctx.translate(x+cW/2,y+cH/2);
+      ctx.rotate(impRot*Math.PI/180);
+      // Draw small arrow to show rotation
+      ctx.strokeStyle=c1;ctx.lineWidth=1;ctx.setLineDash([2,2]);
+      ctx.beginPath();ctx.moveTo(-cW*0.3,0);ctx.lineTo(cW*0.3,0);
+      ctx.moveTo(cW*0.2,-cH*0.1);ctx.lineTo(cW*0.3,0);ctx.lineTo(cW*0.2,cH*0.1);
+      ctx.stroke();ctx.setLineDash([]);
+      ctx.restore();
+    }
+
+    sh(x,y,cW,cH,rPx);ctx.stroke();
   }
+
+  // CCD marks — only shown for SRA3
   if(useCCD&&cSz>0){
-    const cpx=cSz*sc,cofx=cOff*sc;const W=vp.width,H=vp.height;
+    const sheet=getShMM();
+    const isSRA3=(sheet.w===320&&sheet.h===450)||(sheet.w===450&&sheet.h===320);
+    if(!isSRA3)return;
+    // Place CCD marks at SRA3 sheet corners (not canvas corners)
+    const sheetWpx=sheet.w*sc,sheetHpx=sheet.h*sc;
+    const cpx=cSz*sc,cofx=cOff*sc;
     ctx.fillStyle='#000';ctx.setLineDash([]);
-    [[cofx,cofx],[W-cofx-cpx,cofx],[W-cofx-cpx,H-cofx-cpx],[cofx,H-cofx-cpx]].forEach(([cx,cy])=>{ctx.beginPath();ctx.ellipse(cx+cpx/2,cy+cpx/2,cpx/2,cpx/2,0,0,Math.PI*2);ctx.fill();});
+    [[cofx,cofx],[sheetWpx-cofx-cpx,cofx],[sheetWpx-cofx-cpx,sheetHpx-cofx-cpx],[cofx,sheetHpx-cofx-cpx]].forEach(([cx,cy])=>{
+      ctx.beginPath();ctx.ellipse(cx+cpx/2,cy+cpx/2,cpx/2,cpx/2,0,0,Math.PI*2);ctx.fill();
+    });
   }
 }
 function redraw(){
@@ -680,7 +735,22 @@ async function runAIMeas(){
   btn.disabled=false;sp.style.display='none';
 }
 function onSShape(){document.getElementById('sRadRow').classList.toggle('hidden',document.getElementById('sShape').value!=='rounded');calcImp();}
-function onSheet(){document.getElementById('shCust').classList.toggle('hidden',document.getElementById('shSz').value!=='custom');calcImp();}
+function onSheet(){
+  document.getElementById('shCust').classList.toggle('hidden',document.getElementById('shSz').value!=='custom');
+  const sheet=getShMM();
+  const isSRA3=(sheet.w===320&&sheet.h===450)||(sheet.w===450&&sheet.h===320);
+  const ccdWrap=document.getElementById('iCCDWrap');
+  if(ccdWrap){
+    ccdWrap.style.opacity=isSRA3?'1':'0.4';
+    ccdWrap.style.pointerEvents=isSRA3?'':'none';
+  }
+  if(!isSRA3){
+    document.getElementById('iCCDOff').classList.add('on');
+    document.getElementById('iCCDOn').classList.remove('on');
+    document.getElementById('iCCDSet').classList.add('hidden');
+  }
+  calcImp();
+}
 function getShMM(){const v=document.getElementById('shSz').value;if(v==='custom')return{w:parseFloat(document.getElementById('shW').value)||320,h:parseFloat(document.getElementById('shH').value)||450};const[a,b]=v.split('x').map(Number);return{w:a,h:b};}
 function calcImp(){
   if(!pdfDoc)return;
@@ -850,13 +920,13 @@ async function doExport(){
       const pW=mm2pt(sheetW),pH=mm2pt(sheetH);
       if(mode==='combo'){
         const docO=await PDFLib.PDFDocument.create();const pg=docO.addPage([pW,pH]);
-        if(pdfBytes){const src=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));const[emb]=await docO.embedPages([src.getPages()[curPage-1]]);const{rows,cols,swMM,shMM,gapMM,marMM}=impData;const oX=mm2pt(marMM),swPt=mm2pt(swMM),shPt=mm2pt(shMM),gPt=mm2pt(gapMM);for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=oX+c*(swPt+gPt),y=pH-mm2pt(marMM)-shPt-r*(shPt+gPt);pg.drawPage(emb,{x,y,width:swPt,height:shPt});}}
+        if(pdfBytes){const src=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));const[emb]=await docO.embedPages([src.getPages()[curPage-1]]);const{rows,cols,swMM,shMM,gapMM,marMM}=impData;const oX=mm2pt(marMM),swPt=mm2pt(swMM),shPt=mm2pt(shMM),gPt=mm2pt(gapMM);const rotRad=impRot*Math.PI/180;for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=oX+c*(swPt+gPt),y=pH-mm2pt(marMM)-shPt-r*(shPt+gPt);pg.drawPage(emb,{x:x+(impRot===90?swPt:impRot===180?swPt:0),y:y+(impRot===180?shPt:impRot===270?shPt:0),width:swPt,height:shPt,rotate:PDFLib.degrees(impRot)});}}
         pg.drawRectangle({x:0,y:0,width:0,height:0,opacity:0});pg.pushOperators({toString:()=>buildImpOps(impData,pW,pH)});
         dlPDF(await docO.save(),'arkki_leikkausraja.pdf');ss('Arkki ladattu','ok');
       } else {
         const docC=await PDFLib.PDFDocument.create(),docK=await PDFLib.PDFDocument.create();
         const pgC=docC.addPage([pW,pH]),pgK=docK.addPage([pW,pH]);
-        if(pdfBytes){const src=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));const[emb]=await docC.embedPages([src.getPages()[curPage-1]]);const{rows,cols,swMM,shMM,gapMM,marMM}=impData;const oX=mm2pt(marMM),swPt=mm2pt(swMM),shPt=mm2pt(shMM),gPt=mm2pt(gapMM);for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=oX+c*(swPt+gPt),y=pH-mm2pt(marMM)-shPt-r*(shPt+gPt);pgC.drawPage(emb,{x,y,width:swPt,height:shPt});}}
+        if(pdfBytes){const src=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));const[emb]=await docC.embedPages([src.getPages()[curPage-1]]);const{rows,cols,swMM,shMM,gapMM,marMM}=impData;const oX=mm2pt(marMM),swPt=mm2pt(swMM),shPt=mm2pt(shMM),gPt=mm2pt(gapMM);for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x=oX+c*(swPt+gPt),y=pH-mm2pt(marMM)-shPt-r*(shPt+gPt);pgC.drawPage(emb,{x:x+(impRot===90?swPt:impRot===180?swPt:0),y:y+(impRot===180?shPt:impRot===270?shPt:0),width:swPt,height:shPt,rotate:PDFLib.degrees(impRot)});}}
         pgK.drawRectangle({x:0,y:0,width:0,height:0,opacity:0});pgK.pushOperators({toString:()=>buildImpOps(impData,pW,pH)});
         dlPDF(await docC.save(),'arkki_tulostus.pdf');await new Promise(r=>setTimeout(r,400));dlPDF(await docK.save(),'arkki_leikkaus.pdf');ss('Kaksi arkkitiedostoa ladattu','ok');
       }
