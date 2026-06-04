@@ -246,6 +246,7 @@ input[type=range]{width:100%;height:3px}
         <div><label class="lbl">Sarakkeita</label><input type="number" id="iC" value="2" min="1" oninput="drawImp()"></div>
       </div>
       <div id="iRes" class="imp-res"></div>
+      <button class="btn sm" onclick="impOffX=0;impOffY=0;drawImp()" style="margin-top:6px;width:100%;justify-content:center">↺ Nollaa sijainti</button>
     </div>
     <div class="sec">
       <div class="slbl">Leikkausrajat</div>
@@ -283,50 +284,35 @@ input[type=range]{width:100%;height:3px}
   <div class="toolbar">
     <div class="pnav">
       <button onclick="chPage(-1)">‹</button>
-      <span id="plbl">– / –</span>
+      <span id="plbl" style="font-size:12px;font-family:monospace;min-width:40px;text-align:center">– / –</span>
       <button onclick="chPage(1)">›</button>
     </div>
     <div class="sep"></div>
     <div class="zc">
-      <button onclick="doZoom(-0.25)">−</button>
+      <button onclick="doZoom(-0.25)" style="width:28px;height:28px">−</button>
       <span class="zlbl" id="zlbl">100%</span>
-      <button onclick="doZoom(0.25)">+</button>
-      <button class="zfit" onclick="doZoom(0)">Sovita</button>
+      <button onclick="doZoom(0.25)" style="width:28px;height:28px">+</button>
+      <button onclick="doZoom(0)" style="height:28px;padding:0 8px;font-size:11px;border:1px solid var(--paper3);border-radius:var(--r);background:var(--paper);cursor:pointer">Sovita</button>
     </div>
     <div class="sep"></div>
     <div class="tg" id="dtg">
-      <button class="tb on" id="tSel" onclick="setTool('select')">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3l14 9-7 1-3 7z"/></svg>
-        Valitse
-      </button>
-      <button class="tb" id="tPen" onclick="setTool('pen')">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/></svg>
-        Pen
-      </button>
-      <button class="tb" id="tRect" onclick="setTool('rect')">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-        Rect
-      </button>
-      <button class="tb" id="tCirc" onclick="setTool('circle')">
-        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
-        Ellipsi
-      </button>
+      <button class="tb on" id="tSel" onclick="setTool('select')">▶ Valitse</button>
+      <button class="tb" id="tRect" onclick="setTool('rect')">▭ Rect</button>
+      <button class="tb" id="tCirc" onclick="setTool('circle')">◯ Ellipsi</button>
+      <button class="tb" id="tPen" onclick="setTool('pen')">✏ Pen</button>
     </div>
     <div class="sep"></div>
-    <div style="display:flex;align-items:center;gap:8px;margin-left:auto">
-      <select id="expMode" style="padding:6px 10px;border:1px solid var(--paper3);border-radius:var(--r);font-size:12px;background:var(--paper);font-family:inherit;height:32px">
+    <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+      <select id="expMode" style="height:30px;padding:0 8px;border:1px solid var(--paper3);border-radius:var(--r);font-size:12px;background:var(--paper);font-family:inherit">
         <option value="combo">Yhdistetty PDF</option>
         <option value="split">Erilliset PDF:t</option>
         <option value="cutonly">Vain leikkaus</option>
       </select>
-      <button class="btn green" onclick="doExport()" id="expBtn" disabled style="height:32px;padding:0 14px;font-size:12px;gap:6px">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Vie PDF
+      <button class="btn green" onclick="doExport()" id="expBtn" disabled style="height:30px;padding:0 12px;font-size:12px;white-space:nowrap">
+        ↓ Vie PDF
       </button>
-      <div style="display:flex;gap:4px">
-        <button class="btn sm" onclick="expScript('ai')" id="aiScr" disabled style="height:32px">Ai .jsx</button>
-        <button class="btn sm" onclick="expScript('id')" id="idScr" disabled style="height:32px">Id .jsx</button>
-      </div>
+      <button class="btn sm" onclick="expScript('ai')" id="aiScr" disabled style="height:30px;white-space:nowrap">Ai .jsx</button>
+      <button class="btn sm" onclick="expScript('id')" id="idScr" disabled style="height:30px;white-space:nowrap">Id .jsx</button>
     </div>
   </div>
   <div class="ca"><div class="co" id="co"><div class="cw"><canvas id="pc"></canvas><canvas id="oc"></canvas></div></div></div>
@@ -338,7 +324,7 @@ const BACKEND='https://leikkausraja-backend.onrender.com';
 let pdfDoc=null,pdfBytes=null,curPage=1,totalPages=0,RS=1.8,zoom=1;
 let pageData={},pageVps={},selId=null,objCtr=0,tool='select',activeTab=1;
 let dragSt=null,penPts=[],penPrev=null,renderTask=null;
-let detectedPaths={},impData=null,addCCD_=false,pdfB64=null,impRot=0;
+let detectedPaths={},impData=null,addCCD_=false,pdfB64=null,impRot=0,impOffX=0,impOffY=0,dragPath=null,dragPathOrig=null;
 const pc=document.getElementById('pc'),oc=document.getElementById('oc');
 const pCtx=pc.getContext('2d'),oCtx=oc.getContext('2d');
 function getObjs(){return pageData[curPage]||(pageData[curPage]=[])}
@@ -430,6 +416,7 @@ function switchTab(n){
   activeTab=n;
   [1,2,3].forEach(i=>{document.getElementById('t'+i).classList.toggle('on',i===n);document.getElementById('tc'+i).classList.toggle('on',i===n)});
   document.getElementById('dtg').classList.toggle('hidden',n!==2);
+  oc.style.cursor=n===3?'move':n===1?'crosshair':'default';
   if(pdfDoc) renderPage(curPage);
   else redraw();
 }
@@ -534,14 +521,18 @@ function updSmaps(){
   sel.forEach(([key,g])=>{const s=document.getElementById('sm_'+key);if(s&&SPOTS.includes(g.spotName))s.value=g.spotName;});
 }
 function onSpotChange(key, spotName){
-  detectedPaths[key].spotName=spotName;
-  // Auto-set preview color based on spot name
-  if(SPOT_COLORS[spotName]){
-    detectedPaths[key].previewColor=SPOT_COLORS[spotName];
-    const colEl=document.getElementById('smc_'+key);
-    if(colEl) colEl.value=SPOT_COLORS[spotName];
-    redraw();
-  }
+  const g=detectedPaths[key]; if(!g) return;
+  g.spotName=spotName;
+  // Always update color to match spot name
+  const newColor=SPOT_COLORS[spotName]||spotColor(spotName)||g.previewColor;
+  g.previewColor=newColor;
+  g.hex=newColor;
+  const colEl=document.getElementById('smc_'+key);
+  if(colEl) colEl.value=newColor;
+  // Update swatch in group header
+  const sw=document.querySelector('#chk_'+key)?.closest('.pg-group')?.querySelector('.swatch');
+  if(sw) sw.style.background=newColor;
+  updSmaps(); redraw();
 }
 function setCCD(v){addCCD_=v;document.getElementById('ccdOff').classList.toggle('on',!v);document.getElementById('ccdOn').classList.toggle('on',v);document.getElementById('ccdSet').classList.toggle('hidden',!v);}
 function setRot(deg){
@@ -696,8 +687,14 @@ function drawPathOps(ctx, ops, color, lw){
 }
 
 function drawTab1(ctx){
+  const vp=pageVps[curPage];
+  const pgWmm=vp?pt2mm(vp.width/RS):9999;
+  const pgHmm=vp?pt2mm(vp.height/RS):9999;
   Object.values(detectedPaths).filter(g=>g.selected).forEach(g=>{
     g.paths.forEach(p=>{
+      if(!p.bbox) return;
+      // Skip paths covering >85% of page (page border, not cut line)
+      if(p.bbox.w>pgWmm*0.85 && p.bbox.h>pgHmm*0.85) return;
       drawPathOps(ctx, p.ops, g.previewColor||'#FF0099', p.lw||0.5);
     });
   });
@@ -746,6 +743,9 @@ function drawImpOverlay(ctx){
   const sc=vp.width/mm2pt(sheetW);
   const shWpx=mm2pt(sheetW)*sc;
   const shHpx=mm2pt(sheetH)*sc;
+  // Apply user drag offset
+  const adjOX=oX+mm2pt(impOffX)*sc;
+  const adjOY=oY+mm2pt(impOffY)*sc;
 
   // Draw white sheet background
   ctx.fillStyle='#ffffff';
@@ -766,8 +766,8 @@ function drawImpOverlay(ctx){
   // Draw tarra cells with PDF content
   for(let r=0;r<rows;r++){
     for(let c=0;c<cols;c++){
-      const x=oX+c*(cW+gX);
-      const y=oY+r*(cH+gY);
+      const x=adjOX+c*(cW+gX);
+      const y=adjOY+r*(cH+gY);
 
       // Light grey fill for tarra area
       ctx.fillStyle='rgba(200,200,200,0.15)';
@@ -930,6 +930,38 @@ oc.addEventListener('mousemove',e=>{
   if(activeTab!==2)return;
   const{x,y}=cXY(e);
   if(tool==='pen'&&penPts.length>0){penPrev={x,y};redraw();return;}
+  // Tab1/Tab3 drag
+  if(dragPath){
+    const dx=x-dragPath.sx, dy=y-dragPath.sy;
+    if(dragPath.tab3){
+      // Move tarra grid offset (px to mm)
+      const vp=pageVps[curPage];
+      const sc=vp?vp.width/mm2pt(320):1;
+      impOffX=dragPath.ox+dx/(mm2pt(1)*sc);
+      impOffY=dragPath.oy+dy/(mm2pt(1)*sc);
+      redraw(); return;
+    }
+    if(dragPath.key){
+      // Move detected path
+      const vp=pageVps[curPage];
+      const sc=vp?vp.width/(vp.width):1; // RS already baked in
+      const dxMM=dx/RS/2.8346, dyMM=dy/RS/2.8346;
+      const g=detectedPaths[dragPath.key];
+      g.paths.forEach((p,pi)=>{
+        const orig=dragPath.origOps[pi];
+        p.ops=orig.ops.map(op=>{
+          const a=[...op.args];
+          if(op.op==='re'&&a.length>=4) return{op:'re',args:[a[0]+dxMM,a[1]+dyMM,a[2],a[3]]};
+          if(op.op==='m'&&a.length>=2) return{op:'m',args:[a[0]+dxMM,a[1]+dyMM]};
+          if(op.op==='l'&&a.length>=2) return{op:'l',args:[a[0]+dxMM,a[1]+dyMM]};
+          if(op.op==='c'&&a.length>=6) return{op:'c',args:[a[0]+dxMM,a[1]+dyMM,a[2]+dxMM,a[3]+dyMM,a[4]+dxMM,a[5]+dyMM]};
+          return op;
+        });
+        if(p.bbox) p.bbox={x:p.bbox.x+dxMM,y:p.bbox.y+dyMM,w:p.bbox.w,h:p.bbox.h};
+      });
+      redraw(); return;
+    }
+  }
   if(dragSt){
     const ds=dragSt;
     if(ds.type==='move'){const o=getObjs().find(o=>o.id===ds.id);if(o){o.x=ds.ox+(x-ds.sx);o.y=ds.oy+(y-ds.sy);}redraw();}
@@ -940,20 +972,24 @@ oc.addEventListener('mousemove',e=>{
   if(tool==='select'){const o=getSel();if(o&&!o.points){const hh=hitH(o,x,y);if(hh){oc.style.cursor=curH(hh);return;}}oc.style.cursor=hitO(x,y)?'move':'default';}
 });
 oc.addEventListener('mousedown',e=>{
-  // Tab1: click to select/deselect path groups
+  // Tab1: click/drag detected paths
   if(activeTab===1){
     const{x,y}=cXY(e);
     const hitKey=hitTestPaths(x,y);
     if(hitKey){
       const g=detectedPaths[hitKey];
-      g.selected=!g.selected;
-      const chk=document.getElementById('chk_'+hitKey);
-      if(chk) chk.checked=g.selected;
-      updSmaps();
-      redraw();
-      // Show spot selector popup
-      showSpotPopup(hitKey, e.clientX, e.clientY);
+      // Start drag
+      dragPath={key:hitKey, sx:x, sy:y, origOps:g.paths.map(p=>({...p,ops:[...p.ops]}))};
+      // Select on click (mouseup without move)
+      oc.style.cursor='grabbing';
     }
+    return;
+  }
+  // Tab3: drag to offset tarra position
+  if(activeTab===3){
+    const{x,y}=cXY(e);
+    dragPath={tab3:true, sx:x, sy:y, ox:impOffX, oy:impOffY};
+    oc.style.cursor='grabbing';
     return;
   }
   if(activeTab!==2)return;
@@ -966,6 +1002,24 @@ oc.addEventListener('mousedown',e=>{
   else{selId=null;document.getElementById('ep').className='ep';updOList();redraw();}
 });
 oc.addEventListener('mouseup',e=>{
+  if(activeTab===1||activeTab===3){
+    const{x,y}=cXY(e);
+    if(dragPath){
+      const moved=Math.abs(x-dragPath.sx)>3||Math.abs(y-dragPath.sy)>3;
+      if(!moved&&dragPath.key){
+        // It was a click, not drag — toggle select + show popup
+        const g=detectedPaths[dragPath.key];
+        g.selected=!g.selected;
+        const chk=document.getElementById('chk_'+dragPath.key);
+        if(chk) chk.checked=g.selected;
+        updSmaps(); redraw();
+        if(g.selected) showSpotPopup(dragPath.key, e.clientX, e.clientY);
+      }
+      dragPath=null;
+      oc.style.cursor=activeTab===3?'move':'default';
+    }
+    return;
+  }
   if(activeTab!==2)return;
   const{x,y}=cXY(e);
   if(dragSt&&(dragSt.type==='dR'||dragSt.type==='dC')){const{sx,sy}=dragSt;const rx=Math.min(sx,x),ry=Math.min(sy,y),rw=Math.abs(x-sx),rh=Math.abs(y-sy);if(rw>5&&rh>5)addObj({shape:dragSt.type==='dC'?'circle':'rect',x:rx,y:ry,w:rw,h:rh});dragSt=null;redraw();return;}
@@ -1023,6 +1077,8 @@ function calcImp(){
   const rows=effH>availH?1:Math.max(1,Math.floor((availH+gap)/(effH+gap)));
   document.getElementById('iR').value=rows;
   document.getElementById('iC').value=cols;
+  // Keep existing offset if already set
+  if(!impData) { impOffX=0; impOffY=0; }
   drawImp();
 }
 
@@ -1332,8 +1388,8 @@ async function exportImposition(){
 
     for(let r=0;r<rows;r++){
       for(let c=0;c<cols;c++){
-        const cellXmm=marMM+c*(effWMM+gapMM);
-        const cellYmm=marMM+r*(effHMM+gapMM);
+        const cellXmm=marMM+c*(effWMM+gapMM)+impOffX;
+        const cellYmm=marMM+r*(effHMM+gapMM)+impOffY;
         const x=mm2pt(cellXmm), y=pH-mm2pt(cellYmm)-shPt;
         // Draw tarra image
         if(impRot===0){
@@ -1356,8 +1412,8 @@ async function exportImposition(){
 
     for(let r=0;r<rows;r++){
       for(let c=0;c<cols;c++){
-        const cellXmm=marMM+c*(effWMM+gapMM);
-        const cellYmm=marMM+r*(effHMM+gapMM);
+        const cellXmm=marMM+c*(effWMM+gapMM)+impOffX;
+        const cellYmm=marMM+r*(effHMM+gapMM)+impOffY;
         if(cutPaths.length>0){
           drawCutPathsAtCell(pgCut,cellXmm,cellYmm,cutPaths);
         } else {
