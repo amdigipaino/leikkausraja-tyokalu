@@ -142,10 +142,11 @@ input[type=range]{width:100%;height:3px}
     <div class="sec">
       <div class="slbl">Löydetyt viivat</div>
       <p style="font-size:12px;color:var(--ink2);margin-bottom:8px">Klikkaa viivaa kuvasta tai valitse listasta. Klikkaus avaa spot-väri valinnan.</p>
-      <button class="btn blue" id="analyzeBtn" style="width:100%;justify-content:center;margin-bottom:8px" onclick="analyzeVectorPaths()" disabled>
+      <button class="btn blue" id="analyzeBtn" style="width:100%;justify-content:center;margin-bottom:4px" onclick="analyzeVectorPaths()" disabled>
         <div class="spin" id="analyzeSpin"></div>
         🔍 Analysoi viivat
       </button>
+      <button style="width:100%;padding:5px;font-size:10px;font-family:monospace;border:1px solid #ccc;border-radius:4px;cursor:pointer;margin-bottom:8px" onclick="testBackend()">Testaa backend yhteys</button>
       <div id="pgroups"><div style="font-size:12px;color:var(--ink3);text-align:center;padding:12px 0">Lataa PDF nähdäksesi viivat</div></div>
     </div>
     <div class="sec">
@@ -841,6 +842,18 @@ function setTool(t){
 }
 document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;if(activeTab!==2)return;if(e.key==='v')setTool('select');if(e.key==='p')setTool('pen');if(e.key==='r')setTool('rect');if(e.key==='e')setTool('circle');if(e.key==='Escape'){penPts=[];penPrev=null;redraw();}if((e.key==='Delete'||e.key==='Backspace')&&selId)delObj(selId);});
 function cXY(e){const r=oc.getBoundingClientRect();return{x:(e.clientX-r.left)*(oc.width/r.width)/zoom,y:(e.clientY-r.top)*(oc.height/r.height)/zoom};}
+async function testBackend(){
+  const el=document.getElementById('pgroups');
+  el.innerHTML='<div style="font-size:10px;font-family:monospace;padding:8px;background:#f5f5f4">Testataan yhteyttä...<br>'+BACKEND+'</div>';
+  try{
+    const r=await fetch(BACKEND+'/health',{signal:AbortSignal.timeout(30000)});
+    const txt=await r.text();
+    el.innerHTML='<div style="font-size:10px;font-family:monospace;padding:8px;background:#d1fae5">✓ Backend vastaa!<br>Status: '+r.status+'<br>'+txt+'</div>';
+  }catch(e){
+    el.innerHTML='<div style="font-size:10px;font-family:monospace;padding:8px;background:#fee2e2">✗ Yhteys epäonnistui:<br>'+e.message+'</div>';
+  }
+}
+
 function showSpotPopup(key, clientX, clientY){
   // Remove existing popup
   const existing=document.getElementById('spotPopup');
