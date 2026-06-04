@@ -209,14 +209,15 @@ input[type=range]{width:100%;height:3px}
       </button>
       <div id="aiMR"></div>
       <div class="r2">
-        <div><label class="lbl">Leveys (mm)</label><input type="number" id="sW" value="125" min="1" oninput="calcImp()"></div>
-        <div><label class="lbl">Korkeus (mm)</label><input type="number" id="sH" value="35" min="1" oninput="calcImp()"></div>
+        <div><label class="lbl">Leveys (mm)</label><input type="number" id="sW" value="102" min="1" step="0.1" oninput="calcImp()"></div>
+        <div><label class="lbl">Korkeus (mm)</label><input type="number" id="sH" value="68" min="1" step="0.1" oninput="calcImp()"></div>
       </div>
       <label class="lbl">Muoto</label>
       <select id="sShape" onchange="onSShape()">
         <option value="rect">Suorakulmio</option>
         <option value="rounded">Pyöristetty</option>
         <option value="circle">Ellipsi</option>
+        <option value="custom">Tunnistettu polku</option>
       </select>
       <div id="sRadRow" class="hidden">
         <label class="lbl">Pyöristys (mm) <span id="sRadV">5</span></label>
@@ -234,39 +235,34 @@ input[type=range]{width:100%;height:3px}
     </div>
     <div class="sec">
       <div class="slbl">Arkkiasemointi — SRA3 (320×450mm)</div>
-      <p style="font-size:11px;color:var(--ink3);margin-bottom:10px">Arkkikoko on kiinteästi SRA3. Työkalu laskee montako tarraa mahtuu ja tuottaa kaksi PDF:ää.</p>
       <label class="lbl">Arkkireunus (mm)</label>
       <input type="number" id="shM" value="23" min="0" oninput="calcImp()">
-      <label class="lbl">DK1→DK2 bleed (mm)</label>
-      <input type="number" id="shBl" value="1.5" min="0" step="0.5" oninput="calcImp()">
       <label class="lbl">Väli tarrojen välillä (mm)</label>
-      <input type="number" id="shGap" value="13.8" min="0" step="0.1" oninput="calcImp()">
+      <input type="number" id="shGap" value="3" min="0" step="0.1" oninput="calcImp()">
+      <label class="lbl">DK2 bleed yli DK1 (mm)</label>
+      <input type="number" id="shBl" value="1.5" min="0" step="0.5" oninput="calcImp()">
       <div class="r2" style="margin-top:8px">
-        <div><label class="lbl">Rivejä</label><input type="number" id="iR" value="4" min="1" oninput="drawImp()"></div>
+        <div><label class="lbl">Rivejä</label><input type="number" id="iR" value="5" min="1" oninput="drawImp()"></div>
         <div><label class="lbl">Sarakkeita</label><input type="number" id="iC" value="2" min="1" oninput="drawImp()"></div>
       </div>
       <div id="iRes" class="imp-res"></div>
     </div>
     <div class="sec">
       <div class="slbl">Leikkausrajat</div>
+      <p style="font-size:11px;color:var(--ink3);margin-bottom:8px">Käytetään tunnistus-välilehdeltä löydettyjä polkuja. Jos viivoja ei ole tunnistettu, piirretään DK2 tarran koon mukaan.</p>
       <div class="r2">
-        <div><label class="lbl">DK1 spot-nimi</label><input type="text" id="iDK1" value="DK1"></div>
-        <div><label class="lbl">DK2 spot-nimi</label><input type="text" id="iDK2" value="DK2"></div>
-      </div>
-      <div class="r2" style="margin-top:8px">
         <div><label class="lbl">DK1 väri</label><input type="color" id="iC1" value="#0055CC" oninput="drawImp()"></div>
         <div><label class="lbl">DK2 väri</label><input type="color" id="iC2" value="#CC0000" oninput="drawImp()"></div>
       </div>
     </div>
     <div class="sec">
       <div class="slbl">CCD-kohdistusmerkit</div>
-      <p style="font-size:11px;color:var(--ink3);margin-bottom:8px">Mustat täytetyt pallot lisätään automaattisesti SRA3-arkin neljään kulmaan — sekä tulostus- että leikkaus-PDF:ään.</p>
+      <p style="font-size:11px;color:var(--ink3);margin-bottom:8px">Mustat pallot SRA3-arkin neljään kulmaan — identtiset molemmissa PDF:issä.</p>
       <div class="tgl">
         <button id="iCCDOff" onclick="setICCD(false)">Ei</button>
-        <button id="iCCDOn" class="on" onclick="setICCD(true)">Kyllä — pakollinen</button>
+        <button id="iCCDOn" class="on" onclick="setICCD(true)">Kyllä</button>
       </div>
       <div id="iCCDSet" style="margin-top:8px">
-        <label class="lbl">Spot-nimi</label><input type="text" id="iCCDN" value="ccd">
         <label class="lbl">Halkaisija (mm) <span id="iCSV">5</span></label>
         <input type="range" id="iCS" min="2" max="15" value="5" oninput="document.getElementById('iCSV').textContent=this.value;drawImp()">
         <label class="lbl">Etäisyys kulmasta (mm) <span id="iCOV">10</span></label>
@@ -278,9 +274,10 @@ input[type=range]{width:100%;height:3px}
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
         Vie 2 PDF:ää (tulostus + leikkaus)
       </button>
-      <p style="font-size:11px;color:var(--ink3);margin-top:8px;text-align:center">Tuottaa: <strong>tulostus.pdf</strong> ja <strong>leikkaus.pdf</strong></p>
+      <p style="font-size:11px;color:var(--ink3);margin-top:6px;text-align:center">tulostus.pdf · leikkaus.pdf</p>
     </div>
   </div>
+
 </div>
 <div class="main">
   <div class="toolbar">
@@ -730,50 +727,66 @@ function hitTestPaths(mx,my){
 }
 function drawImpOverlay(ctx){
   if(!impData)return;
-  const{rows,cols,cW,cH,oX,oY,gX,gY,bPx,shape,rPx,c1,c2,useCCD,cSz,cOff}=impData;
+  const{cW,cH,oX,oY,gX,gY,bPx,rPx,c1,c2,cSz,cOff,sheetW,sheetH}=impData;
   const vp=pageVps[curPage];if(!vp)return;
-  const sc=vp.width/impData.sheetW;
-  function sh(x,y,w,h,r){ctx.beginPath();if(shape==='circle')ctx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);else if(shape==='rounded'){const rv=Math.min(r,w/2,h/2);ctx.moveTo(x+rv,y);ctx.lineTo(x+w-rv,y);ctx.arcTo(x+w,y,x+w,y+rv,rv);ctx.lineTo(x+w,y+h-rv);ctx.arcTo(x+w,y+h,x+w-rv,y+h,rv);ctx.lineTo(x+rv,y+h);ctx.arcTo(x,y+h,x,y+h-rv,rv);ctx.lineTo(x,y+rv);ctx.arcTo(x,y,x+rv,y,rv);ctx.closePath();}else ctx.rect(x,y,w,h);}
+  const sc=vp.width/mm2pt(sheetW);
+  const rows=impData.rows, cols=impData.cols;
+  const shape=impData.shape||'rect';
 
-  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){
-    const x=oX+c*(cW+gX),y=oY+r*(cH+gY);
-    if(bPx>0){ctx.strokeStyle=c2;ctx.lineWidth=1;ctx.setLineDash([5,3]);sh(x-bPx,y-bPx,cW+bPx*2,cH+bPx*2,rPx+bPx);ctx.stroke();}
-    ctx.strokeStyle=c1;ctx.lineWidth=1.5;ctx.setLineDash([]);
-
-    // Draw rotation indicator inside cell
-    if(impRot!==0){
-      ctx.save();
-      ctx.translate(x+cW/2,y+cH/2);
-      ctx.rotate(impRot*Math.PI/180);
-      // Draw small arrow to show rotation
-      ctx.strokeStyle=c1;ctx.lineWidth=1;ctx.setLineDash([2,2]);
-      ctx.beginPath();ctx.moveTo(-cW*0.3,0);ctx.lineTo(cW*0.3,0);
-      ctx.moveTo(cW*0.2,-cH*0.1);ctx.lineTo(cW*0.3,0);ctx.lineTo(cW*0.2,cH*0.1);
-      ctx.stroke();ctx.setLineDash([]);
-      ctx.restore();
-    }
-
-    sh(x,y,cW,cH,rPx);ctx.stroke();
+  function drawShape(x,y,w,h,r){
+    ctx.beginPath();
+    if(shape==='circle') ctx.ellipse(x+w/2,y+h/2,w/2,h/2,0,0,Math.PI*2);
+    else if(shape==='rounded'){const rv=Math.min(r,w/2,h/2);ctx.moveTo(x+rv,y);ctx.lineTo(x+w-rv,y);ctx.arcTo(x+w,y,x+w,y+rv,rv);ctx.lineTo(x+w,y+h-rv);ctx.arcTo(x+w,y+h,x+w-rv,y+h,rv);ctx.lineTo(x+rv,y+h);ctx.arcTo(x,y+h,x,y+h-rv,rv);ctx.lineTo(x,y+rv);ctx.arcTo(x,y,x+rv,y,rv);ctx.closePath();}
+    else ctx.rect(x,y,w,h);
   }
 
-  // CCD marks — all 4 corners of SRA3 sheet
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const x=oX+c*(cW+gX), y=oY+r*(cH+gY);
+
+      // Draw detected cut paths if available
+      const hasPaths=Object.values(detectedPaths).some(g=>g.selected);
+      if(hasPaths){
+        Object.values(detectedPaths).filter(g=>g.selected).forEach(g=>{
+          ctx.strokeStyle=g.previewColor||'#FF0099';
+          ctx.lineWidth=1;ctx.setLineDash([3,2]);
+          g.paths.forEach(p=>{
+            ctx.beginPath();
+            p.ops.forEach(op=>{
+              const a=op.args;
+              if(op.op==='re'&&a.length>=4){ctx.rect(x+mm2pt(a[0])*sc,y+mm2pt(a[1])*sc,mm2pt(a[2])*sc,mm2pt(a[3])*sc);}
+              else if(op.op==='m'&&a.length>=2){ctx.moveTo(x+mm2pt(a[0])*sc,y+mm2pt(a[1])*sc);}
+              else if(op.op==='l'&&a.length>=2){ctx.lineTo(x+mm2pt(a[0])*sc,y+mm2pt(a[1])*sc);}
+              else if(op.op==='c'&&a.length>=6){ctx.bezierCurveTo(x+mm2pt(a[0])*sc,y+mm2pt(a[1])*sc,x+mm2pt(a[2])*sc,y+mm2pt(a[3])*sc,x+mm2pt(a[4])*sc,y+mm2pt(a[5])*sc);}
+              else if(op.op==='h'){ctx.closePath();}
+            });
+            ctx.stroke();
+          });
+          ctx.setLineDash([]);
+        });
+      } else {
+        // Fallback: draw DK2 outer, DK1 inner
+        if(bPx>0){ctx.strokeStyle=c2;ctx.lineWidth=1;ctx.setLineDash([4,3]);drawShape(x-bPx,y-bPx,cW+bPx*2,cH+bPx*2,rPx+bPx);ctx.stroke();}
+        ctx.strokeStyle=c1;ctx.lineWidth=1.5;ctx.setLineDash([]);drawShape(x,y,cW,cH,rPx);ctx.stroke();
+      }
+      // Cell outline
+      ctx.strokeStyle='rgba(100,100,100,0.2)';ctx.lineWidth=0.5;ctx.setLineDash([]);
+      ctx.strokeRect(x,y,cW,cH);
+    }
+  }
+
+  // CCD marks
   if(cSz>0){
-    const sheetWpx=impData.sheetW*sc;
-    const sheetHpx=impData.sheetH*sc;
-    const cpx=cSz*sc, cofx=cOff*sc;
+    const shWpx=mm2pt(sheetW)*sc, shHpx=mm2pt(sheetH)*sc;
+    const cpx=mm2pt(cSz)*sc, cofx=mm2pt(cOff)*sc;
     ctx.fillStyle='#000';ctx.setLineDash([]);
-    [
-      [cofx,                  cofx],
-      [sheetWpx-cofx-cpx,     cofx],
-      [sheetWpx-cofx-cpx,     sheetHpx-cofx-cpx],
-      [cofx,                  sheetHpx-cofx-cpx]
-    ].forEach(([cx,cy])=>{
-      ctx.beginPath();
-      ctx.ellipse(cx+cpx/2, cy+cpx/2, cpx/2, cpx/2, 0, 0, Math.PI*2);
-      ctx.fill();
+    [[cofx,cofx],[shWpx-cofx-cpx,cofx],[shWpx-cofx-cpx,shHpx-cofx-cpx],[cofx,shHpx-cofx-cpx]].forEach(([cx,cy])=>{
+      ctx.beginPath();ctx.ellipse(cx+cpx/2,cy+cpx/2,cpx/2,cpx/2,0,0,Math.PI*2);ctx.fill();
     });
   }
 }
+
+
 function redraw(){
   oCtx.clearRect(0,0,oc.width,oc.height);
   if(activeTab===1){drawTab1(oCtx);return;}
@@ -946,9 +959,8 @@ function calcImp(){
   if(!pdfDoc)return;
   const sw=parseFloat(document.getElementById('sW').value)||50;
   const sh=parseFloat(document.getElementById('sH').value)||50;
-  const gap=parseFloat(document.getElementById('shGap').value)||13.8;
+  const gap=parseFloat(document.getElementById('shGap').value)||3;
   const margin=parseFloat(document.getElementById('shM').value)||23;
-  // SRA3 fixed: 320x450mm, account for rotation
   const rot=impRot===90||impRot===270;
   const effW=rot?sh:sw, effH=rot?sw:sh;
   const cols=Math.max(1,Math.floor((320-margin*2+gap)/(effW+gap)));
@@ -957,51 +969,51 @@ function calcImp(){
   document.getElementById('iC').value=cols;
   drawImp();
 }
+
+
 function drawImp(){
   if(!pdfDoc)return;
   const sw=parseFloat(document.getElementById('sW').value)||50;
   const sh=parseFloat(document.getElementById('sH').value)||50;
   const bl=parseFloat(document.getElementById('shBl').value)||1.5;
-  const gap=parseFloat(document.getElementById('shGap').value)||13.8;
+  const gap=parseFloat(document.getElementById('shGap').value)||3;
   const margin=parseFloat(document.getElementById('shM').value)||23;
   const rows=parseInt(document.getElementById('iR').value)||1;
   const cols=parseInt(document.getElementById('iC').value)||1;
   const shape=document.getElementById('sShape').value;
-  const radMM=parseFloat(document.getElementById('sRad').value)||0;
+  const radMM=parseFloat(document.getElementById('sRad')?.value)||0;
   const c1=document.getElementById('iC1').value;
   const c2=document.getElementById('iC2').value;
   const vp=pageVps[curPage];if(!vp)return;
   const sheetW=320,sheetH=450;
-  const sc=vp.width/sheetW;
-  // Effective sticker size considering rotation
+  const sc=vp.width/mm2pt(sheetW);
   const rot=impRot===90||impRot===270;
   const effW=rot?sh:sw, effH=rot?sw:sh;
-  const cSz=parseFloat(document.getElementById('iCS').value)||5;
-  const cOff=parseFloat(document.getElementById('iCO').value)||10;
+  const cSz=parseFloat(document.getElementById('iCS')?.value)||5;
+  const cOff=parseFloat(document.getElementById('iCO')?.value)||10;
   const totalW=cols*effW+(cols-1)*gap+margin*2;
   const totalH=rows*effH+(rows-1)*gap+margin*2;
   const fits=totalW<=sheetW&&totalH<=sheetH;
   impData={rows,cols,shape,c1,c2,
-    cW:effW*sc,cH:effH*sc,
-    oX:margin*sc,oY:margin*sc,
-    gX:gap*sc,gY:gap*sc,
-    bPx:bl*sc,rPx:radMM*sc,
+    cW:mm2pt(effW)*sc,cH:mm2pt(effH)*sc,
+    oX:mm2pt(margin)*sc,oY:mm2pt(margin)*sc,
+    gX:mm2pt(gap)*sc,gY:mm2pt(gap)*sc,
+    bPx:mm2pt(bl)*sc,rPx:mm2pt(radMM)*sc,
     swMM:sw,shMM:sh,blMM:bl,gapMM:gap,marMM:margin,
-    effWMM:effW,effHMM:effH,
-    radMM,sheetW,sheetH,
-    useCCD:true,cSz,cOff,
-    ccdN:document.getElementById('iCCDN')?.value||'ccd'};
+    effWMM:effW,effHMM:effH,radMM,
+    sheetW,sheetH,cSz,cOff};
   const res=document.getElementById('iRes');
   res.classList.add('on');
   res.innerHTML='<strong>'+(rows*cols)+' tarraa</strong> ('+rows+'×'+cols+')  SRA3 320×450mm<br>'
-    +'Tarra: '+effW+'×'+effH+'mm'+(impRot?'  (kierretty '+impRot+'°)':'')+'<br>'
-    +'DK1: '+effW+'×'+effH+'mm · DK2: '+(effW+bl*2).toFixed(1)+'×'+(effH+bl*2).toFixed(1)+'mm<br>'
+    +'Tarra: '+effW+'×'+effH+'mm'+(impRot?'  ('+impRot+'°)':'')+'<br>'
+    +'DK2: '+(effW+bl*2).toFixed(1)+'×'+(effH+bl*2).toFixed(1)+'mm<br>'
     +'Käytetty: '+totalW.toFixed(1)+'×'+totalH.toFixed(1)+'mm<br>'
-    +'CCD: 4 kulmamerkkiä ⌀'+cSz+'mm<br>'
     +(fits?'<span style="color:var(--green)">✓ Mahtuu arkille</span>':'<span style="color:var(--red)">⚠ Ylittää arkin</span>');
   res.style.borderColor=fits?'#fcd34d':'#fecaca';
   if(activeTab===3)redraw();
 }
+
+
 function rgb(hex){const r=parseInt(hex.slice(1,3),16)/255,g=parseInt(hex.slice(3,5),16)/255,b=parseInt(hex.slice(5,7),16)/255;return r.toFixed(3)+' '+g.toFixed(3)+' '+b.toFixed(3);}
 function buildOps(o,pW,pH,vp){
   const sx=pW/(vp.width/RS),sy=pH/(vp.height/RS);
@@ -1145,81 +1157,108 @@ async function exportImposition(){
   if(!pdfDoc||!impData){ss('Lataa PDF ja aseta tarran tiedot ensin','warn');return;}
   ss('Luodaan PDF:t...','info');
   try{
-    const{rows,cols,effWMM,effHMM,blMM,gapMM,marMM,radMM,shape,c1,c2,cSz,cOff,ccdN}=impData;
-    const sheetW=320,sheetH=450;
-    const pW=mm2pt(sheetW),pH=mm2pt(sheetH);
+    const{rows,cols,effWMM,effHMM,blMM,gapMM,marMM,cSz,cOff}=impData;
+    const shW=320,shH=450;
+    const pW=mm2pt(shW),pH=mm2pt(shH);
     const swPt=mm2pt(effWMM),shPt=mm2pt(effHMM);
     const blPt=mm2pt(blMM),gPt=mm2pt(gapMM),marPt=mm2pt(marMM);
-    const radPt=mm2pt(radMM);
     const cSzPt=mm2pt(cSz),cOffPt=mm2pt(cOff);
+    const c1=document.getElementById('iC1').value;
+    const c2=document.getElementById('iC2').value;
+    const useCCD=document.getElementById('iCCDOn').classList.contains('on');
 
-    // Helper: draw CCD marks (identical in both PDFs)
+    function hexRgb(h){return PDFLib.rgb(parseInt(h.slice(1,3),16)/255,parseInt(h.slice(3,5),16)/255,parseInt(h.slice(5,7),16)/255);}
+
+    // CCD marks — identical in both PDFs
     function addCCDMarks(page){
-      // 4 corners of SRA3 sheet
+      if(!useCCD||cSz<=0) return;
       const corners=[
-        [cOffPt,             pH-cOffPt-cSzPt],  // top-left  (PDF y from bottom)
-        [pW-cOffPt-cSzPt,    pH-cOffPt-cSzPt],  // top-right
-        [pW-cOffPt-cSzPt,    cOffPt],            // bottom-right
-        [cOffPt,             cOffPt]             // bottom-left
+        [cOffPt,           pH-cOffPt-cSzPt],
+        [pW-cOffPt-cSzPt,  pH-cOffPt-cSzPt],
+        [pW-cOffPt-cSzPt,  cOffPt],
+        [cOffPt,           cOffPt]
       ];
       corners.forEach(([x,y])=>{
-        page.drawEllipse({
-          x: x+cSzPt/2, y: y+cSzPt/2,
-          xScale: cSzPt/2, yScale: cSzPt/2,
-          color: PDFLib.rgb(0,0,0),
-          opacity: 1, borderOpacity: 0
-        });
+        page.drawEllipse({x:x+cSzPt/2,y:y+cSzPt/2,xScale:cSzPt/2,yScale:cSzPt/2,color:PDFLib.rgb(0,0,0),opacity:1});
       });
     }
 
-    // Helper: draw cut lines for one sticker at position (x,y) in PDF coords
-    function hexRgb(hex){return PDFLib.rgb(parseInt(hex.slice(1,3),16)/255,parseInt(hex.slice(3,5),16)/255,parseInt(hex.slice(5,7),16)/255);}
-    function addCutLines(page,x,y,w,h,r,dk1col,dk2col){
-      const col1=hexRgb(dk1col||'#0055CC');
-      const col2=hexRgb(dk2col||'#CC0000');
-      const none=PDFLib.rgb(0,0,0); // will be overridden by opacity
-      // DK2 outer bleed rect
+    // Get cut path ops from detected paths (DK1, DK2, CREASE)
+    // Returns array of {spotName, color, ops} where ops are in mm relative to tarra origin
+    function getCutPaths(){
+      const cuts=[];
+      const sel=Object.values(detectedPaths).filter(g=>g.selected||true); // use all detected
+      sel.forEach(g=>{
+        g.paths.forEach(p=>{
+          cuts.push({spotName:g.spotName||g.name, color:g.previewColor||'#FF0099', ops:p.ops, lw:p.lw||0.25});
+        });
+      });
+      return cuts;
+    }
+
+    // Draw cut paths for one sticker cell at PDF position (cellXmm, cellYmm)
+    // ops are in mm relative to tarra top-left
+    function drawCutPathsAtCell(page, cellXmm, cellYmm, cutPaths){
+      const rot=impRot*Math.PI/180;
+      cutPaths.forEach(cut=>{
+        const col=hexRgb(cut.color);
+        // Build path string in PDF ops
+        let pathStr='';
+        cut.ops.forEach(op=>{
+          const a=op.args;
+          if(op.op==='re'&&a.length>=4){
+            const x=mm2pt(cellXmm+a[0]), y=pH-mm2pt(cellYmm+a[1])-mm2pt(a[3]);
+            const w=mm2pt(a[2]),h=mm2pt(a[3]);
+            pathStr+=`${x.toFixed(3)} ${y.toFixed(3)} ${w.toFixed(3)} ${h.toFixed(3)} re `;
+          } else if(op.op==='m'&&a.length>=2){
+            const x=mm2pt(cellXmm+a[0]), y=pH-mm2pt(cellYmm+a[1]);
+            pathStr+=`${x.toFixed(3)} ${y.toFixed(3)} m `;
+          } else if(op.op==='l'&&a.length>=2){
+            const x=mm2pt(cellXmm+a[0]), y=pH-mm2pt(cellYmm+a[1]);
+            pathStr+=`${x.toFixed(3)} ${y.toFixed(3)} l `;
+          } else if(op.op==='c'&&a.length>=6){
+            const x1=mm2pt(cellXmm+a[0]),y1=pH-mm2pt(cellYmm+a[1]);
+            const x2=mm2pt(cellXmm+a[2]),y2=pH-mm2pt(cellYmm+a[3]);
+            const x3=mm2pt(cellXmm+a[4]),y3=pH-mm2pt(cellYmm+a[5]);
+            pathStr+=`${x1.toFixed(3)} ${y1.toFixed(3)} ${x2.toFixed(3)} ${y2.toFixed(3)} ${x3.toFixed(3)} ${y3.toFixed(3)} c `;
+          } else if(op.op==='h'){
+            pathStr+='h ';
+          }
+        });
+        if(pathStr){
+          const r=col.red.toFixed(3),g=col.green.toFixed(3),b=col.blue.toFixed(3);
+          const lw=(cut.lw*2.8346).toFixed(3);
+          page.pushOperators({toString:()=>`q ${r} ${g} ${b} RG [] 0 d ${lw} w ${pathStr}S Q\n`});
+        }
+      });
+    }
+
+    // Fallback: draw simple DK1/DK2 rects if no cut paths detected
+    function drawSimpleCuts(page, cellXmm, cellYmm){
+      const col1=hexRgb(c1), col2=hexRgb(c2);
+      const x=mm2pt(cellXmm), y=pH-mm2pt(cellYmm)-shPt;
+      // DK2 outer
       if(blMM>0){
-        page.drawRectangle({
-          x:x-blPt, y:y-blPt,
-          width:w+blPt*2, height:h+blPt*2,
-          borderColor:col2, borderWidth:0.5,
-          color:PDFLib.rgb(1,1,1), opacity:0, borderOpacity:1
-        });
+        page.drawRectangle({x:x-blPt,y:y-blPt,width:swPt+blPt*2,height:shPt+blPt*2,borderColor:col2,borderWidth:0.5,color:PDFLib.rgb(1,1,1),opacity:0,borderOpacity:1});
       }
-      // DK1 exact cut line
-      if(shape==='circle'){
-        page.drawEllipse({
-          x:x+w/2, y:y+h/2,
-          xScale:w/2, yScale:h/2,
-          borderColor:col1, borderWidth:0.5,
-          color:PDFLib.rgb(1,1,1), opacity:0, borderOpacity:1
-        });
-      } else {
-        page.drawRectangle({
-          x, y, width:w, height:h,
-          borderColor:col1, borderWidth:0.5,
-          color:PDFLib.rgb(1,1,1), opacity:0, borderOpacity:1
-        });
-      }
+      // DK1 inner
+      page.drawRectangle({x,y,width:swPt,height:shPt,borderColor:col1,borderWidth:0.5,color:PDFLib.rgb(1,1,1),opacity:0,borderOpacity:1});
     }
 
     // ── TULOSTUS PDF ──────────────────────────────────────────────
     const docPrint=await PDFLib.PDFDocument.create();
     const pgPrint=docPrint.addPage([pW,pH]);
 
-    // Embed and tile sticker images
-    // Scale embedded page to fit exactly into the sticker cell (swPt x shPt)
     const srcDoc=await PDFLib.PDFDocument.load(new Uint8Array(pdfBytes));
-    const srcPage=srcDoc.getPages()[curPage-1];
-    const[embPage]=await docPrint.embedPages([srcPage]);
+    const[embPage]=await docPrint.embedPages([srcDoc.getPages()[curPage-1]]);
 
     for(let r=0;r<rows;r++){
       for(let c=0;c<cols;c++){
-        const x=marPt+c*(swPt+gPt);
-        const y=pH-marPt-shPt-r*(shPt+gPt);
+        const cellXmm=marMM+c*(effWMM+gapMM);
+        const cellYmm=marMM+r*(effHMM+gapMM);
+        const x=mm2pt(cellXmm), y=pH-mm2pt(cellYmm)-shPt;
+        // Draw tarra image
         if(impRot===0){
-          // Scale to fit cell exactly
           pgPrint.drawPage(embPage,{x,y,width:swPt,height:shPt});
         } else if(impRot===90){
           pgPrint.drawPage(embPage,{x:x+swPt,y,width:shPt,height:swPt,rotate:PDFLib.degrees(90)});
@@ -1230,37 +1269,41 @@ async function exportImposition(){
         }
       }
     }
-    // Add CCD marks to print PDF
     addCCDMarks(pgPrint);
 
     // ── LEIKKAUS PDF ──────────────────────────────────────────────
     const docCut=await PDFLib.PDFDocument.create();
     const pgCut=docCut.addPage([pW,pH]);
+    const cutPaths=getCutPaths();
 
-    // Draw cut lines for each sticker
     for(let r=0;r<rows;r++){
       for(let c=0;c<cols;c++){
-        const x=marPt+c*(swPt+gPt);
-        const y=pH-marPt-shPt-r*(shPt+gPt);
-        addCutLines(pgCut,x,y,swPt,shPt,radPt,c1,c2);
+        const cellXmm=marMM+c*(effWMM+gapMM);
+        const cellYmm=marMM+r*(effHMM+gapMM);
+        if(cutPaths.length>0){
+          drawCutPathsAtCell(pgCut,cellXmm,cellYmm,cutPaths);
+        } else {
+          drawSimpleCuts(pgCut,cellXmm,cellYmm);
+        }
       }
     }
-    // Add CCD marks to cut PDF — identical positions
     addCCDMarks(pgCut);
 
-    // Download both
-    const printBytes=await docPrint.save();
-    const cutBytes=await docCut.save();
-    dlPDF(printBytes,'tulostus.pdf');
-    await new Promise(r=>setTimeout(r,500));
-    dlPDF(cutBytes,'leikkaus.pdf');
+    // Download
+    const pBytes=await docPrint.save();
+    const cBytes=await docCut.save();
+    dlPDF(pBytes,'tulostus.pdf');
+    await new Promise(r=>setTimeout(r,600));
+    dlPDF(cBytes,'leikkaus.pdf');
+    ss('Valmis — tulostus.pdf + leikkaus.pdf','ok');
 
-    ss('Valmis — tulostus.pdf + leikkaus.pdf ladattu','ok');
   }catch(e){
     console.error(e);
     ss('Virhe: '+e.message,'err');
   }
 }
+
+
 
 function dlPDF(bytes,name){const a=document.createElement('a');a.download=name;a.href=URL.createObjectURL(new Blob([bytes],{type:'application/pdf'}));a.click();}
 function expScript(type){
