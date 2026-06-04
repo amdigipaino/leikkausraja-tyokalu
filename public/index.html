@@ -479,16 +479,28 @@ async function analyzeVectorPaths(){
     if(!resp.ok) throw new Error('Backend '+resp.status+': '+rawText.slice(0,200));
     const data=JSON.parse(rawText);
     if(data.error) throw new Error(data.error);
-    const pal=['#CC0000','#0055CC','#00AA44','#FF6600','#9900CC','#CC6600','#008888'];
+    // Spot name → color mapping (matches backend)
+    const SPOT_COLORS_FE={
+      'DK1':'#0055CC','DK2':'#CC0000','CREASE':'#00AA44',
+      'Kiss Cut':'#0055CC','KissCut':'#0055CC',
+      'CUT1':'#CC0000','Die Cut':'#0055CC',
+      'Perf':'#FF6600','Score':'#00AA44','ccd':'#000000'
+    };
+    function spotColor(name){
+      for(const[k,v] of Object.entries(SPOT_COLORS_FE)){
+        if(k.toLowerCase()===name.toLowerCase()||name.toLowerCase().includes(k.toLowerCase())) return v;
+      }
+      return '#FF0099';
+    }
     const groups={};
     data.groups.forEach((g,i)=>{
-      const hex=pal[i%pal.length];
-      // Store full path ops for accurate rendering
+      // Use color from backend if provided, otherwise determine from name
+      const hex=g.color||spotColor(g.name);
       groups[g.key]={
         hex, name:g.name,
         paths:g.paths.map(p=>({
-          ops:p.ops,        // full bezier ops in mm
-          bbox:p.bbox,      // bounding box in mm
+          ops:p.ops,
+          bbox:p.bbox,
           lw:p.lw,
           isRect:p.isRect,
           isCurve:p.isCurve
@@ -534,10 +546,10 @@ function renderPathGroups(groups){
     div.innerHTML='<div class="pg-hdr" onclick="togglePG(\''+key+'\')"><div class="swatch" style="background:'+g.hex+'"></div><div class="pg-info"><div class="pg-name">'+g.name+'</div><div class="pg-meta">'+g.paths.length+' viivaa · lw '+avgLW+'pt</div></div><input type="checkbox" class="pg-chk" id="chk_'+key+'" onclick="event.stopPropagation();toggleSel(\''+key+'\',this.checked);updSmaps();redraw()"></div><div class="pg-body" id="body_'+key+'">'+g.paths.slice(0,6).map((p,j)=>'<div class="pg-item">'+(j+1)+'. '+(p.w/RS/2.8346).toFixed(1)+'x'+(p.h/RS/2.8346).toFixed(1)+'mm @ ('+(p.x0/RS/2.8346).toFixed(1)+','+(p.y0/RS/2.8346).toFixed(1)+')</div>').join('')+(g.paths.length>6?'<div class="pg-item">... ja '+(g.paths.length-6)+' lisää</div>':'')+'</div>';
     el.appendChild(div);
     g.selected=false;
-    // Try to match detected name to known spot names
-    const matchedSpot=SPOTS.find(s=>g.name.toLowerCase().includes(s.toLowerCase())||s.toLowerCase().includes(g.name.toLowerCase()));
-    g.spotName=matchedSpot||SPOTS[i]||g.name;
-    g.previewColor=SPOT_COLORS[g.spotName]||g.hex;
+    // Auto-match spot name
+    const matchedSpot=SPOTS.find(s=>s.toLowerCase()===g.name.toLowerCase()||g.name.toLowerCase().includes(s.toLowerCase()));
+    g.spotName=matchedSpot||g.name;
+    g.previewColor=g.hex; // color already set correctly
   });
   updSmaps();redraw();
 }
