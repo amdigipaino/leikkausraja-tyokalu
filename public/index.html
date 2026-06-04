@@ -477,6 +477,8 @@ async function analyzeVectorPaths(){
     }finally{clearTimeout(timer);}
     
     const rawText=await resp.text();
+    // Show raw response for debugging
+    el.innerHTML='<div style="font-size:9px;font-family:monospace;padding:6px;background:#1c1917;color:#a8e6cf;word-break:break-all;max-height:200px;overflow-y:auto">'+rawText.slice(0,2000)+'</div>';
     if(!resp.ok) throw new Error('Backend '+resp.status+': '+rawText.slice(0,200));
     const data=JSON.parse(rawText);
     if(data.error) throw new Error(data.error);
