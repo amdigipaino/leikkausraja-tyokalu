@@ -446,8 +446,20 @@ async function analyzeVectorPaths(){
   const sp=document.getElementById('analyzeSpin');if(sp)sp.style.display='inline-block';
   const ab=document.getElementById('analyzeBtn');if(ab)ab.disabled=true;
   try{
-    if(!pdfB64) throw new Error('PDF ei ole ladattu — lataa uudelleen');
-    el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:8px">Lähetetään backendille...<br><small>b64 koko: '+Math.round(pdfB64.length/1024)+'KB</small></div>';
+    if(!pdfBytes) throw new Error('PDF ei ole ladattu — lataa uudelleen');
+    
+    // Compress PDF with gzip before sending
+    el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:8px">Pakataan ja lähetetään...</div>';
+    const rawBytes=new Uint8Array(pdfBytes);
+    const cs=new CompressionStream('gzip');
+    const writer=cs.writable.getWriter();
+    writer.write(rawBytes); writer.close();
+    const chunks=[]; const reader=cs.readable.getReader();
+    while(true){const{done,value}=await reader.read();if(done)break;chunks.push(value);}
+    let compLen=0; chunks.forEach(c=>compLen+=c.length);
+    const compressed=new Uint8Array(compLen); let off2=0;
+    chunks.forEach(c=>{compressed.set(c,off2);off2+=c.length;});
+    el.innerHTML='<div style="font-size:12px;color:var(--ink3);text-align:center;padding:8px">Lähetetään '+(Math.round(compLen/1024))+'KB (pakattu '+(Math.round(rawBytes.length/1024))+'KB:sta)...</div>';
     
     const controller=new AbortController();
     const timer=setTimeout(()=>controller.abort(),90000);
@@ -455,8 +467,8 @@ async function analyzeVectorPaths(){
     try{
       resp=await fetch(BACKEND+'/analyze',{
         method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({pdf:pdfB64}),
+        headers:{'Content-Type':'application/octet-stream','Content-Encoding':'gzip'},
+        body:compressed,
         signal:controller.signal
       });
     }finally{clearTimeout(timer);}
