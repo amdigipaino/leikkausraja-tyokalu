@@ -447,12 +447,12 @@ async function analyzeVectorPaths(){
   try{
     // Use pre-computed base64 to avoid ArrayBuffer detachment issues
     if(!pdfB64) throw new Error('PDF ei ole ladattu oikein — yritä ladata uudelleen');
+    el.innerHTML='<div style="font-size:11px;font-family:monospace;padding:8px;background:#f5f5f4">Kutsutaan backendia...<br>'+BACKEND+'</div>';
     const resp=await fetch(BACKEND+'/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pdf:pdfB64})});
-    if(!resp.ok){
-      const errText=await resp.text();
-      throw new Error('Backend '+resp.status+': '+errText.slice(0,200));
-    }
-    const data=await resp.json();
+    const rawText=await resp.text();
+    el.innerHTML='<div style="font-size:10px;font-family:monospace;padding:8px;background:#f5f5f4;word-break:break-all">Status: '+resp.status+'<br>'+rawText.slice(0,500)+'</div>';
+    if(!resp.ok) throw new Error('Backend '+resp.status);
+    const data=JSON.parse(rawText);
     if(data.error) throw new Error(data.error);
     const pal=['#CC0000','#0055CC','#00AA44','#FF6600','#9900CC','#CC6600','#008888'];
     const groups={};
